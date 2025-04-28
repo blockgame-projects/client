@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Start Game" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="com.james090500.Main" />
+    <module name="blockgame-client.main" />
+    <option name="VM_PARAMETERS" value="-XstartOnFirstThread" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
