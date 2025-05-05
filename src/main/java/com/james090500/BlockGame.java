@@ -36,7 +36,7 @@ public class BlockGame {
 
     public void loop(ClientWindow clientWindow) {
         // Set the clear color
-        glClearColor(1.0f, 0.0f, 0.0f, 0.0f);
+        glClearColor(0.529f, 0.808f, 0.922f, 1.0f);
 
         // Run the rendering loop until the user has attempted to close
         // the window or has pressed the ESCAPE key.
@@ -44,7 +44,6 @@ public class BlockGame {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear the framebuffer
 
             // Render all pending objects
-
             RenderManager.render();
 
             // Swap the buffers
