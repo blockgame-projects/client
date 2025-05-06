@@ -5,7 +5,6 @@ import com.james090500.client.ClientWindow;
 import com.james090500.renderer.RenderManager;
 import com.james090500.world.World;
 import lombok.Getter;
-import org.lwjgl.opengl.GL;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
@@ -25,7 +24,7 @@ public class BlockGame {
         clientWindow = new ClientWindow();
         clientWindow.create();
 
-        camera = new Camera();
+        camera = new Camera(0, 0, 0);
         world = new World();
 
         // Create the world
@@ -42,6 +41,9 @@ public class BlockGame {
         // the window or has pressed the ESCAPE key.
         while ( !glfwWindowShouldClose(clientWindow.getWindow()) ) {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear the framebuffer
+
+            // Inputs etc
+            clientWindow.loop();
 
             // Render all pending objects
             RenderManager.render();
