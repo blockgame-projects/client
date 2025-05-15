@@ -16,36 +16,23 @@ public class Block {
         this.id = id;
     }
 
-    @Deprecated
-    public int[] uv() {
-        int tileScale = 16 / 256;
-
-        double x = this.texture % 16;
-        double y = (double) this.texture / 16;
-
-        int u = (int) (x * tileScale);
-        int v = (int) (1 - y * tileScale);
-
-        return new int[] { u, v, tileScale, tileScale };
-    }
-
-    public int[] getTexture() {
+    public float[] getTexture() {
         return this.textureOffset(this.texture);
     }
 
-    public int[] getTexture(String face) {
+    public float[] getTexture(String face) {
         return this.textureOffset(this.texture);
     }
 
-    public int[] textureOffset(int texture) {
+    public float[] textureOffset(int texture) {
         int tileScale = 1 / 16;
 
         double x = texture % 16;
         double y = (double) texture / 16;
 
         int u = (int) (x * tileScale);
-        int v = (int) (1 - y * tileScale - tileScale);
+        int v = (int) (y * tileScale - tileScale);
 
-        return new int[] { u, v };
+        return new float[] { u, v };
     }
 }

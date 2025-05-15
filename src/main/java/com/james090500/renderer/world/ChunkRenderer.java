@@ -5,6 +5,7 @@ import com.james090500.blocks.Block;
 import com.james090500.blocks.Blocks;
 import com.james090500.renderer.Renderer;
 import com.james090500.renderer.ShaderManager;
+import com.james090500.utils.TextureManager;
 import com.james090500.world.Chunk;
 import com.james090500.world.World;
 import org.joml.Matrix4f;
@@ -44,16 +45,16 @@ public class ChunkRenderer implements Renderer {
 
         // Allocate buffers with exact size
         FloatBuffer vertexBuffer = ByteBuffer.allocateDirect(numVertices * 3 * Float.BYTES).order(ByteOrder.nativeOrder()).asFloatBuffer();
+        FloatBuffer normalBuffer = ByteBuffer.allocateDirect(numVertices * 2 * Float.BYTES).order(ByteOrder.nativeOrder()).asFloatBuffer();
+        FloatBuffer texOffsetBuffer = ByteBuffer.allocateDirect(numFaces * 2 * Float.BYTES).order(ByteOrder.nativeOrder()).asFloatBuffer();
+        FloatBuffer aoBuffer = ByteBuffer.allocateDirect(numFaces * 4 * Float.BYTES).order(ByteOrder.nativeOrder()).asFloatBuffer();
         IntBuffer indexBuffer = ByteBuffer.allocateDirect(numFaces * 6 * Integer.BYTES).order(ByteOrder.nativeOrder()).asIntBuffer();
-        IntBuffer texOffsetBuffer = ByteBuffer.allocateDirect(numFaces * 2 * Integer.BYTES).order(ByteOrder.nativeOrder()).asIntBuffer();
-        IntBuffer aoBuffer = ByteBuffer.allocateDirect(numFaces * 4 * Integer.BYTES).order(ByteOrder.nativeOrder()).asIntBuffer();
-
 
         for (int i = 0; i < chunkMesh.vertices.size(); i++) {
             int[] v = chunkMesh.vertices.get(i);
-            vertexBuffer.put((float) v[0]);
-            vertexBuffer.put((float) v[1]);
-            vertexBuffer.put((float) v[2]);
+            vertexBuffer.put(v[0]);
+            vertexBuffer.put(v[1]);
+            vertexBuffer.put(v[2]);
         }
 
         for (int i = 0; i < chunkMesh.faces.size(); i++) {
@@ -67,11 +68,17 @@ public class ChunkRenderer implements Renderer {
             indexBuffer.put(fi[2]);
             indexBuffer.put(fi[3]);
 
-            int[] to = face.texOffset;
+            float[] normal = face.faceAO;
+            normalBuffer.put(normal[0]);
+            normalBuffer.put(normal[1]);
+            normalBuffer.put(normal[2]);
+
+
+            float[] to = face.texOffset;
             texOffsetBuffer.put(to[0]);
             texOffsetBuffer.put(to[1]);
 
-            int[] ao = face.faceAO;
+            float[] ao = face.faceAO;
             aoBuffer.put(ao[0]);
             aoBuffer.put(ao[1]);
             aoBuffer.put(ao[2]);
@@ -80,27 +87,55 @@ public class ChunkRenderer implements Renderer {
 
         // Flip for OpenGL
         vertexBuffer.flip();
-        indexBuffer.flip();
+        normalBuffer.flip();
         texOffsetBuffer.flip();
         aoBuffer.flip();
+        indexBuffer.flip();
 
         vertexCount = indexBuffer.limit();
 
         vao = glGenVertexArrays();
         glBindVertexArray(vao);
 
-        int vbo = glGenBuffers();
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        // --- Vertex Positions (Attribute 0) ---
+        int vertexVBO = glGenBuffers();
+        glBindBuffer(GL_ARRAY_BUFFER, vertexVBO);
         glBufferData(GL_ARRAY_BUFFER, vertexBuffer, GL_STATIC_DRAW);
 
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
+
+        // --- Normal Coords (Attribute 1) ---
+        int normalVBO = glGenBuffers();
+        glBindBuffer(GL_ARRAY_BUFFER, normalVBO);
+        glBufferData(GL_ARRAY_BUFFER, normalBuffer, GL_STATIC_DRAW);
+
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 2, GL_FLOAT, false, 0, 0);
+
+        // --- Texture Offset (Attribute 2) ---
+        int texOffsetVBO = glGenBuffers();
+        glBindBuffer(GL_ARRAY_BUFFER, texOffsetVBO);
+        glBufferData(GL_ARRAY_BUFFER, texOffsetBuffer, GL_STATIC_DRAW);
+
+        glEnableVertexAttribArray(2);
+        glVertexAttribIPointer(2, 2, GL_FLOAT, 0, 0);
+
+        // --- Ambient Occlusion (Attribute 3) ---
+        int aoVBO = glGenBuffers();
+        glBindBuffer(GL_ARRAY_BUFFER, aoVBO);
+        glBufferData(GL_ARRAY_BUFFER, aoBuffer, GL_STATIC_DRAW);
+
+        glEnableVertexAttribArray(3);
+        glVertexAttribIPointer(3, 1, GL_FLOAT, 0, 0);
+
+        // --- Index Buffer ---
         int ibo = glGenBuffers();
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBuffer, GL_STATIC_DRAW);
 
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, false, 3 * Float.BYTES, 0);
-
-        glBindVertexArray(0); // unbind for safety
+        // Unbind VAO (good practice)
+        glBindVertexArray(0);
     }
 
     @Override
@@ -109,6 +144,9 @@ public class ChunkRenderer implements Renderer {
 
         ShaderManager.chunk.use();
         ShaderManager.chunk.setUniformMat4("model", model);
+
+        glBindTexture(GL_TEXTURE_2D, TextureManager.terrainTexture);
+
         glBindVertexArray(vao);
         glDrawElements(GL_TRIANGLES, vertexCount, GL_UNSIGNED_INT, 0L);
         glBindVertexArray(0);
@@ -127,11 +165,13 @@ public class ChunkRenderer implements Renderer {
 
     private static class MeshFace {
         int[] faceIndicies;
-        int[] texOffset;
-        int[] faceAO;
+        float[] normal;
+        float[] texOffset;
+        float[] faceAO;
 
-        public MeshFace(int[] faceIndices, int[] texOffset, int[] faceAO) {
+        public MeshFace(int[] faceIndices, float[] normal, float[] texOffset, float[] faceAO) {
             this.faceIndicies = faceIndices;
+            this.normal = normal;
             this.texOffset = texOffset;
             this.faceAO = faceAO;
         }
@@ -363,7 +403,7 @@ public class ChunkRenderer implements Renderer {
 
                             // Get block and texture offset
                             Block block = Blocks.ids[blockId];
-                            int[] texOffset = block.getTexture();
+                            float[] texOffset = block.getTexture();
                             if (axis == 1) {
                                 texOffset = block.getTexture(isPositiveFace ? "top" : "bottom");
                             }
@@ -384,9 +424,9 @@ public class ChunkRenderer implements Renderer {
                             };
 
                             // Rotate AO per axis and face direction
-                            int[] faceAO = isPositiveFace ? new int[]{ao[2], ao[3], ao[1], ao[0]} : new int[]{ao[2], ao[0], ao[1], ao[3]};
+                            float[] faceAO = isPositiveFace ? new float[]{ao[2], ao[3], ao[1], ao[0]} : new float[]{ao[2], ao[0], ao[1], ao[3]};
                             if (axis == 1) {
-                                faceAO = isPositiveFace ? new int[]{ao[2], ao[0], ao[1], ao[3]} : new int[]{ao[2], ao[3], ao[1], ao[0]};
+                                faceAO = isPositiveFace ? new float[]{ao[2], ao[0], ao[1], ao[3]} : new float[]{ao[2], ao[3], ao[1], ao[0]};
                             }
 
                             // Choose diagonal based on AO
@@ -407,7 +447,7 @@ public class ChunkRenderer implements Renderer {
                                 };
 
                                 // Reverse AO
-                                faceAO = new int[]{faceAO[3], faceAO[2], faceAO[1], faceAO[0]};
+                                faceAO = new float[]{faceAO[3], faceAO[2], faceAO[1], faceAO[0]};
                             } else {
                                 vertices.add(v0);
                                 vertices.add(v1);
@@ -422,8 +462,15 @@ public class ChunkRenderer implements Renderer {
                                 };
                             }
 
+                            float[] normal = switch (axis) {
+                                case 0 -> new float[]{isPositiveFace ? 1 : -1, 0, 0};  // X
+                                case 1 -> new float[]{0, isPositiveFace ? 1 : -1, 0};  // Y
+                                case 2 -> new float[]{0, 0, isPositiveFace ? 1 : -1};  // Z
+                                default -> new float[]{0, 0, 0};
+                            };
+
                             // Push face data
-                            faces.add(new MeshFace(faceIndices, texOffset, faceAO));
+                            faces.add(new MeshFace(faceIndices, normal, texOffset, faceAO));
 
                             // Zero the mask
                             for (int dy = 0; dy < height; ++dy) {

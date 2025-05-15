@@ -7,7 +7,7 @@ public class LogBlock extends Block {
     }
 
     @Override
-    public int[] getTexture(String face) {
+    public float[] getTexture(String face) {
         if (face.equalsIgnoreCase("top") || face.equalsIgnoreCase("bottom")) {
             return this.textureOffset(21);
         } else {
