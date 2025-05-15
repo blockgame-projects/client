@@ -8,12 +8,13 @@ public class GrassBlock extends Block {
 
     @Override
     public float[] getTexture(String face) {
-        if (face.equalsIgnoreCase("top")) {
-            return this.textureOffset(0);
-        } else if (face.equalsIgnoreCase("bottom")) {
-            return this.textureOffset(2);
-        } else {
-            return this.textureOffset(this.texture);
-        }
+        return this.textureOffset(0);
+//        if (face.equalsIgnoreCase("top")) {
+//            return this.textureOffset(0);
+//        } else if (face.equalsIgnoreCase("bottom")) {
+//            return this.textureOffset(2);
+//        } else {
+//            return this.textureOffset(this.texture);
+//        }
     }
 }

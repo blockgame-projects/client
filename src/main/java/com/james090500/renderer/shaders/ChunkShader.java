@@ -7,7 +7,7 @@ public class ChunkShader extends Shader {
                 """
                 #version 330 core
                 layout(location = 0) in vec3 position;
-                layout(location = 1) in vec2 normal;
+                layout(location = 1) in vec3 normal;
                 layout(location = 2) in vec2 textureOffset;
                 layout(location = 3) in float ao;
                
@@ -15,7 +15,7 @@ public class ChunkShader extends Shader {
                 uniform mat4 view;
                 uniform mat4 projection;
                
-                out vec2 vNormal;
+                out vec3 vNormal;
                 out vec3 vPosition;
                 out vec2 vTexOffset;
                 out float vAo;
@@ -37,7 +37,7 @@ public class ChunkShader extends Shader {
                 uniform sampler2D baseTexture;
 
                 in vec2 vUv;
-                in vec2 vNormal;
+                in vec3 vNormal;
                 in vec3 vPosition;
                 in vec2 vTexOffset;
                 in float vAo;
@@ -67,8 +67,7 @@ public class ChunkShader extends Shader {
                     vec4 texel = texture(baseTexture, texCoord);
                     float finalAO = mix(0.15, 1.0, vAo / 3.0);
 
-                    FragColor = vec4(1.0, 1.0, 1.0, 1.0);
-                    //FragColor = vec4(texel.rgb, texel.a);
+                    FragColor = vec4(texel.rgb, texel.a);
                     //FragColor = vec4(texel.rgb * finalAO * faceLight, texel.a);
                     //FragColor = vec4(vec2(vAo / 3.0), 1.0, 1.0);
                 }

@@ -45,7 +45,7 @@ public class ChunkRenderer implements Renderer {
 
         // Allocate buffers with exact size
         FloatBuffer vertexBuffer = ByteBuffer.allocateDirect(numVertices * 3 * Float.BYTES).order(ByteOrder.nativeOrder()).asFloatBuffer();
-        FloatBuffer normalBuffer = ByteBuffer.allocateDirect(numVertices * 2 * Float.BYTES).order(ByteOrder.nativeOrder()).asFloatBuffer();
+        FloatBuffer normalBuffer = ByteBuffer.allocateDirect(numVertices * 3 * Float.BYTES).order(ByteOrder.nativeOrder()).asFloatBuffer();
         FloatBuffer texOffsetBuffer = ByteBuffer.allocateDirect(numFaces * 2 * Float.BYTES).order(ByteOrder.nativeOrder()).asFloatBuffer();
         FloatBuffer aoBuffer = ByteBuffer.allocateDirect(numFaces * 4 * Float.BYTES).order(ByteOrder.nativeOrder()).asFloatBuffer();
         IntBuffer indexBuffer = ByteBuffer.allocateDirect(numFaces * 6 * Integer.BYTES).order(ByteOrder.nativeOrder()).asIntBuffer();
@@ -111,7 +111,7 @@ public class ChunkRenderer implements Renderer {
         glBufferData(GL_ARRAY_BUFFER, normalBuffer, GL_STATIC_DRAW);
 
         glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 2, GL_FLOAT, false, 0, 0);
+        glVertexAttribPointer(1, 3, GL_FLOAT, false, 0, 0);
 
         // --- Texture Offset (Attribute 2) ---
         int texOffsetVBO = glGenBuffers();
@@ -119,7 +119,7 @@ public class ChunkRenderer implements Renderer {
         glBufferData(GL_ARRAY_BUFFER, texOffsetBuffer, GL_STATIC_DRAW);
 
         glEnableVertexAttribArray(2);
-        glVertexAttribIPointer(2, 2, GL_FLOAT, 0, 0);
+        glVertexAttribPointer(2, 2, GL_FLOAT, false, 0, 0);
 
         // --- Ambient Occlusion (Attribute 3) ---
         int aoVBO = glGenBuffers();
@@ -127,7 +127,7 @@ public class ChunkRenderer implements Renderer {
         glBufferData(GL_ARRAY_BUFFER, aoBuffer, GL_STATIC_DRAW);
 
         glEnableVertexAttribArray(3);
-        glVertexAttribIPointer(3, 1, GL_FLOAT, 0, 0);
+        glVertexAttribPointer(3, 1, GL_FLOAT, false, 0, 0);
 
         // --- Index Buffer ---
         int ibo = glGenBuffers();

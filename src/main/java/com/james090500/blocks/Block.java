@@ -25,13 +25,13 @@ public class Block {
     }
 
     public float[] textureOffset(int texture) {
-        int tileScale = 1 / 16;
+        float tileScale = 1.0f / 16.0f;
 
-        double x = texture % 16;
-        double y = (double) texture / 16;
+        int x = texture % 16;
+        int y = texture / 16; // Use integer division to floor
 
-        int u = (int) (x * tileScale);
-        int v = (int) (y * tileScale - tileScale);
+        float u = x * tileScale;
+        float v = 1.0f - (y + 1) * tileScale; // Flip vertically: top-left = [0, 0.9375]
 
         return new float[] { u, v };
     }
