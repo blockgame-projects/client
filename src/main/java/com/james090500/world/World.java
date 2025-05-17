@@ -21,15 +21,13 @@ public class World {
     }
 
     public Block getChunkBlock(int chunkX, int chunkZ, int x, int y, int z) {
-        // Adjust X coordinate and chunk
-        int offsetChunkX = (int) (double) (x / 16);
+        int offsetChunkX = Math.floorDiv(x, 16);
         chunkX += offsetChunkX;
-        x = ((x % 16) + 16) % 16;
+        x = Math.floorMod(x, 16);
 
-        // Adjust Z coordinate and chunk
-        int offsetChunkZ = (int) (double) (z / 16);
+        int offsetChunkZ = Math.floorDiv(z, 16);
         chunkZ += offsetChunkZ;
-        z = ((z % 16) + 16) % 16;
+        z = Math.floorMod(z, 16);
 
         Chunk target = this.chunks.get(new ChunkPos(chunkX, chunkZ));
         if (target == null) {

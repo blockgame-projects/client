@@ -78,8 +78,8 @@ public class Chunk {
     }
 
     private void generateTerrain() {
-        for(int x = 0; x < this.chunkSize - 1; x++) {
-            for(int z = 0; z < this.chunkSize - 1; z++) {
+        for(int x = 0; x < this.chunkSize; x++) {
+            for(int z = 0; z < this.chunkSize; z++) {
                 this.setBlock(x, 3, z, (byte) 1);
                 this.setBlock(x, 2, z, (byte) 2);
                 this.setBlock(x, 1, z, (byte) 3);
