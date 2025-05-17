@@ -7,21 +7,18 @@ public class ChunkShader extends Shader {
                 """
                 #version 330 core
                 layout(location = 0) in vec3 position;
-                layout(location = 1) in vec3 normal;
-                layout(location = 2) in vec2 textureOffset;
-                layout(location = 3) in float ao;
+                layout(location = 1) in vec2 textureOffset;
+                layout(location = 2) in float ao;
                
                 uniform mat4 model;
                 uniform mat4 view;
                 uniform mat4 projection;
                
-                out vec3 vNormal;
                 out vec3 vPosition;
                 out vec2 vTexOffset;
                 out float vAo;
         
                 void main() {
-                    vNormal = normal;
                     vPosition = position;
                     vTexOffset = textureOffset;
                     vAo = ao;
@@ -37,7 +34,6 @@ public class ChunkShader extends Shader {
                 uniform sampler2D baseTexture;
 
                 in vec2 vUv;
-                in vec3 vNormal;
                 in vec3 vPosition;
                 in vec2 vTexOffset;
                 in float vAo;
@@ -46,30 +42,14 @@ public class ChunkShader extends Shader {
 
                 void main() {
                     vec2 tileSize = vec2(0.0625);
-                    vec2 tileUV;
                     float faceLight = 1.0;
 
-                    // Determine correct UV projection based on face normal
-                    if (abs(vNormal.x) > 0.5) {  // Left/Right faces
-                        faceLight = 0.8;
-                        tileUV = vPosition.zy;
-                    } else if (vNormal.y > 0.5) {  // Top Face
-                        tileUV = vPosition.xz;
-                    } else if (vNormal.y < -0.5) {  // Bottom Face
-                        tileUV = vPosition.xz;
-                        faceLight = 0.5;
-                    } else {  // Front/Back faces
-                        faceLight = 0.8;
-                        tileUV = vPosition.xy;
-                    }
+                    vec4 texel = texture(baseTexture, vTexOffset);
+                    //float finalAO = mix(0.15, 1.0, vAo / 3.0);
+                    float finalAO = 1.0;
 
-                    vec2 texCoord = vTexOffset + tileSize * fract(tileUV);
-                    vec4 texel = texture(baseTexture, texCoord);
-                    float finalAO = mix(0.15, 1.0, vAo / 3.0);
-
-                    FragColor = vec4(texel.rgb, texel.a);
-                    //FragColor = vec4(texel.rgb * finalAO * faceLight, texel.a);
-                    //FragColor = vec4(vec2(vAo / 3.0), 1.0, 1.0);
+                    FragColor = vec4(texel.rgb * finalAO * faceLight, texel.a);
+                    //FragColor = vec4(1.0, 0.0, 0.0, 1.0);
                 }
                 """;
 
