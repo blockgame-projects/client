@@ -4,16 +4,24 @@ public class Blocks {
 
     public static Block[] ids;
 
+    public static final GrassBlock grassBlock = new GrassBlock(1);
+    public static final DirtBlock dirtBlock = new DirtBlock(2);
+    public static final StoneBlock stoneBlock = new StoneBlock(3);
+    public static final SandBlock sandBlock = new SandBlock(4);
+    public static final WaterBlock waterBlock = new WaterBlock(5);
+    public static final LogBlock logBlock = new LogBlock(6);
+    public static final LeafBlock leafBlock = new LeafBlock(7);
+
     static {
         ids = new Block[] {
                 null,
-                new GrassBlock(1),
-                new DirtBlock(2),
-                new StoneBlock(3),
-                new SandBlock(4),
-                new WaterBlock(5),
-                new LogBlock(6),
-                new LeafBlock(7)
+                grassBlock,
+                dirtBlock,
+                stoneBlock,
+                sandBlock,
+                waterBlock,
+                logBlock,
+                leafBlock
         };
     }
 

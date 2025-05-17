@@ -24,7 +24,7 @@ public class BlockGame {
         clientWindow = new ClientWindow();
         clientWindow.create();
 
-        camera = new Camera(0, 0, 0);
+        camera = new Camera(0, 100, 0);
         world = new World();
 
         // Create the world

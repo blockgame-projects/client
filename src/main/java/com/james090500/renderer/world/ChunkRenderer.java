@@ -24,21 +24,41 @@ public class ChunkRenderer implements Renderer {
 
     private Chunk chunk;
 
-    private int vao;
-    private int vertexCount;
+    private int solidVAO;
+    private int solidVertexCount;
+
+    private int transVAO;
+    private int transVertexCount;
 
     public void mesh(Chunk chunk) {
         this.chunk = chunk;
 
-        VoxelResult result = makeVoxels(new int[] { 0, 0, 0 }, new int[] { chunk.chunkSize, chunk.chunkHeight, chunk.chunkSize }, (x, y, z) -> {
+        VoxelResult result = makeVoxels(new int[]{0, 0, 0}, new int[]{chunk.chunkSize, chunk.chunkHeight, chunk.chunkSize}, (x, y, z) -> {
             Block block = chunk.getBlock(x, y, z);
-            if(block != null && !block.isTransparent()) {
+            if (block != null && !block.isTransparent()) {
                 return block.getId();
             } else {
                 return 0;
             }
         });
 
+        this.createMesh(result, false);
+    }
+
+    public void meshTransparent(Chunk chunk) {
+        VoxelResult result = makeVoxels(new int[]{0, 0, 0}, new int[]{chunk.chunkSize, chunk.chunkHeight, chunk.chunkSize}, (x, y, z) -> {
+            Block block = chunk.getBlock(x, y, z);
+            if (block != null && block.isTransparent()) {
+                return block.getId();
+            } else {
+                return 0;
+            }
+        });
+
+        this.createMesh(result, true);
+    }
+
+    private void createMesh(VoxelResult result, boolean transparent) {
         ChunkMesh chunkMesh = this.generateMesh(result.dims, result.voxels);
 
         int numVertices = chunkMesh.vertices.size();
@@ -49,9 +69,7 @@ public class ChunkRenderer implements Renderer {
         IntBuffer indexBuffer = ByteBuffer.allocateDirect(numFaces * 6 * Integer.BYTES).order(ByteOrder.nativeOrder()).asIntBuffer();
         FloatBuffer uvBuffer = ByteBuffer.allocateDirect(numVertices * 2 * Float.BYTES).order(ByteOrder.nativeOrder()).asFloatBuffer();
         FloatBuffer texOffsetBuffer = ByteBuffer.allocateDirect(numVertices * 2 * Float.BYTES).order(ByteOrder.nativeOrder()).asFloatBuffer();
-
-        System.out.println(numVertices);
-        System.out.println(numFaces);
+        FloatBuffer aoBuffer = ByteBuffer.allocateDirect(numVertices * 1 * Float.BYTES).order(ByteOrder.nativeOrder()).asFloatBuffer();
 
         for (int i = 0; i < chunkMesh.vertices.size(); i++) {
             float[] v = chunkMesh.vertices.get(i);
@@ -86,16 +104,35 @@ public class ChunkRenderer implements Renderer {
             }
         }
 
+        for (int i = 0; i < chunkMesh.aos.size(); i++) {
+            float[] a = chunkMesh.aos.get(i);
+//            System.out.println(Arrays.toString(a));
+            aoBuffer.put(a[0]);
+            aoBuffer.put(a[1]);
+            aoBuffer.put(a[2]);
+            aoBuffer.put(a[3]);
+        }
+
         // Flip for OpenGL
         vertexBuffer.flip();
         indexBuffer.flip();
         uvBuffer.flip();
         texOffsetBuffer.flip();
+        aoBuffer.flip();
 
-        vertexCount = indexBuffer.limit();
+        if(transparent) {
+            transVertexCount = indexBuffer.limit();
+        } else {
+            solidVertexCount = indexBuffer.limit();
+        }
 
-        vao = glGenVertexArrays();
-        glBindVertexArray(vao);
+        if(transparent) {
+            transVAO = glGenVertexArrays();
+            glBindVertexArray(transVAO);
+        } else {
+            solidVAO = glGenVertexArrays();
+            glBindVertexArray(solidVAO);
+        }
 
         // --- Vertex Positions (Attribute 0) ---
         int vertexVBO = glGenBuffers();
@@ -121,13 +158,13 @@ public class ChunkRenderer implements Renderer {
         glEnableVertexAttribArray(2);
         glVertexAttribPointer(2, 2, GL_FLOAT, false, 0, 0);
 
-//        // --- Ambient Occlusion (Attribute 3) ---
-//        int aoVBO = glGenBuffers();
-//        glBindBuffer(GL_ARRAY_BUFFER, aoVBO);
-//        glBufferData(GL_ARRAY_BUFFER, aoBuffer, GL_STATIC_DRAW);
-//
-//        glEnableVertexAttribArray(2);
-//        glVertexAttribPointer(2, 1, GL_FLOAT, false, 0, 0);
+        // --- Ambient Occlusion (Attribute 3) ---
+        int aoVBO = glGenBuffers();
+        glBindBuffer(GL_ARRAY_BUFFER, aoVBO);
+        glBufferData(GL_ARRAY_BUFFER, aoBuffer, GL_STATIC_DRAW);
+
+        glEnableVertexAttribArray(3);
+        glVertexAttribPointer(3, 1, GL_FLOAT, false, 0, 0);
 
         // --- Index Buffer ---
         int ibo = glGenBuffers();
@@ -140,15 +177,19 @@ public class ChunkRenderer implements Renderer {
 
     @Override
     public void render() {
-        Matrix4f model = new Matrix4f();
+        Matrix4f model = new Matrix4f().translate(chunk.chunkX * chunk.chunkSize, 0, chunk.chunkZ * chunk.chunkSize);
 
         ShaderManager.chunk.use();
         ShaderManager.chunk.setUniformMat4("model", model);
 
         glBindTexture(GL_TEXTURE_2D, TextureManager.terrainTexture);
 
-        glBindVertexArray(vao);
-        glDrawElements(GL_TRIANGLES, vertexCount, GL_UNSIGNED_INT, 0L);
+        glBindVertexArray(solidVAO);
+        glDrawElements(GL_TRIANGLES, solidVertexCount, GL_UNSIGNED_INT, 0L);
+
+        glBindVertexArray(transVAO);
+        glDrawElements(GL_TRIANGLES, transVertexCount, GL_UNSIGNED_INT, 0L);
+
         glBindVertexArray(0);
         ShaderManager.chunk.stop();
     }
@@ -158,12 +199,20 @@ public class ChunkRenderer implements Renderer {
         ArrayList<int[]> indices;
         ArrayList<float[]> uvs;
         ArrayList<float[]> texOffset;
+        ArrayList<float[]> aos;
 
-        public ChunkMesh(ArrayList<float[]> vertices, ArrayList<int[]> indices, ArrayList<float[]> uvs, ArrayList<float[]> texOffset) {
+        public ChunkMesh(
+                ArrayList<float[]> vertices,
+                ArrayList<int[]> indices,
+                ArrayList<float[]> uvs,
+                ArrayList<float[]> texOffset,
+                ArrayList<float[]> aos
+        ) {
             this.vertices = vertices;
             this.indices = indices;
             this.uvs = uvs;
             this.texOffset = texOffset;
+            this.aos = aos;
         }
     }
 
@@ -290,6 +339,7 @@ public class ChunkRenderer implements Renderer {
         ArrayList<int[]> indices = new ArrayList<>();
         ArrayList<float[]> uvs = new ArrayList<>();
         ArrayList<float[]> textures = new ArrayList<>();
+        ArrayList<float[]> aos = new ArrayList<>();
 
         // Sweep across 3 dimensions: X, Y, Z (0, 1, 2)
         for (int axis = 0; axis < 3; ++axis) {
@@ -418,13 +468,25 @@ public class ChunkRenderer implements Renderer {
                             };
 
                             // Rotate AO per axis and face direction
-                            float[] faceAO = isPositiveFace ? new float[]{ao[2], ao[3], ao[1], ao[0]} : new float[]{ao[2], ao[0], ao[1], ao[3]};
-                            if (axis == 1) {
-                                faceAO = isPositiveFace ? new float[]{ao[2], ao[0], ao[1], ao[3]} : new float[]{ao[2], ao[3], ao[1], ao[0]};
-                            }
+                            float[] faceAO = isPositiveFace ? new float[] { ao[2], ao[3], ao[1], ao[0] } : new float[] { ao[2], ao[0], ao[1], ao[3] };
 
                             // Choose diagonal based on AO
                             boolean flipDiagonal = ao[0] + ao[3] > ao[1] + ao[2];
+
+                            //UV
+                            float[] uv = new float[8];
+
+                            switch (axis) {
+                                case 0 -> uv = isPositiveFace
+                                    ? new float[]{0, 0, 0, width, height, width, height, 0}
+                                    : new float[]{height, 0, 0, 0, 0, width, height, width};
+                                case 1 -> uv = isPositiveFace
+                                    ? new float[]{width, 0, 0, 0, 0, height, width, height}
+                                    : new float[]{height, 0, 0, 0, 0, width, height, width};
+                                case 2 -> uv = isPositiveFace
+                                    ? new float[]{width, 0, 0, 0, 0, height, width, height}
+                                    : new float[]{0, 0, 0, height, width, height, width, 0};
+                            }
 
                             if (flipDiagonal) {
                                 // Add vertices
@@ -442,7 +504,10 @@ public class ChunkRenderer implements Renderer {
                                 });
 
                                 // Reverse AO
-                                faceAO = new float[]{faceAO[3], faceAO[2], faceAO[1], faceAO[0]};
+                                faceAO = new float[] { faceAO[3], faceAO[2], faceAO[1], faceAO[0] };
+
+                                // Reverse UV
+                                uv = new float[] { uv[6], uv[7], uv[4], uv[5], uv[2], uv[3], uv[0], uv[1] };
                             } else {
                                 // Add Vertices
                                 vertices.add(v0);
@@ -459,19 +524,14 @@ public class ChunkRenderer implements Renderer {
                                 });
                             }
 
-                            // UV
-                            int uvWidth = isPositiveFace ? width : height;
-                            int uvHeight = isPositiveFace ? height : width;
-                            float[] uv = new float[]{
-                                    0, 0,
-                                    uvWidth, 0,
-                                    uvWidth, uvHeight,
-                                    0, uvHeight
-                            };
-                            uvs.add(uv);
-
                             // Tex Offset
                             textures.add(texOffset);
+
+                            // AO Values
+                            aos.add(faceAO);
+
+                            // UV
+                            uvs.add(uv);
 
                             // Zero the mask
                             for (int dy = 0; dy < height; ++dy) {
@@ -491,6 +551,6 @@ public class ChunkRenderer implements Renderer {
                 }
             }
         }
-        return new ChunkMesh(vertices, indices, uvs, textures);
+        return new ChunkMesh(vertices, indices, uvs, textures, aos);
     }
 }

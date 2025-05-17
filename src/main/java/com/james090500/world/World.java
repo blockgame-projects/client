@@ -3,6 +3,7 @@ package com.james090500.world;
 import com.james090500.blocks.Block;
 import com.james090500.renderer.RenderManager;
 import com.james090500.renderer.world.ChunkRenderer;
+import lombok.Getter;
 
 import java.util.HashMap;
 import java.util.Objects;
@@ -11,13 +12,17 @@ public class World {
 
     private final HashMap<ChunkPos, Chunk> chunks = new HashMap<>();
 
-    public void createWorld() {
-        Chunk chunk = new Chunk(0, 0);
-        chunks.put(new ChunkPos(0, 0), chunk);
+    @Getter
+    private final int worldSeed = (int) Math.floor(Math.random() * 1000000);
+    private final int worldSize = 12;
 
-        ChunkRenderer chunkRenderer = new ChunkRenderer();
-        chunkRenderer.mesh(chunk);
-        RenderManager.add(chunkRenderer);
+    public void createWorld() {
+        for(int x = -this.worldSize; x < this.worldSize; x++) {
+            for(int z = -this.worldSize; z < this.worldSize; z++) {
+                Chunk chunk = new Chunk(x, z);
+                chunks.put(new ChunkPos(x, z), chunk);
+            }
+        }
     }
 
     public Block getChunkBlock(int chunkX, int chunkZ, int x, int y, int z) {
@@ -35,6 +40,20 @@ public class World {
         }
 
         return target.getBlock(x, y, z);
+    }
+
+    public void render() {
+        this.chunks.forEach((pos, chunk) -> {
+            if(chunk.generated && !chunk.rendered) {
+                ChunkRenderer chunkRenderer = new ChunkRenderer();
+                chunkRenderer.mesh(chunk);
+                chunkRenderer.meshTransparent(chunk);
+
+                chunk.rendered = true;
+
+                RenderManager.add(chunkRenderer);
+            }
+        });
     }
 
     /**

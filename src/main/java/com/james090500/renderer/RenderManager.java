@@ -1,5 +1,7 @@
 package com.james090500.renderer;
 
+import com.james090500.BlockGame;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,5 +20,7 @@ public class RenderManager {
         for (Renderer renderer : renderQueue) {
             renderer.render();
         }
+
+        BlockGame.getInstance().getWorld().render();
     }
 }

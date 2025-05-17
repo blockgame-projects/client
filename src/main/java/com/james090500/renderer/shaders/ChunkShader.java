@@ -15,13 +15,11 @@ public class ChunkShader extends Shader {
                 uniform mat4 view;
                 uniform mat4 projection;
                
-                out vec3 vPosition;
                 out vec2 vUv;
                 out vec2 vTexOffset;
                 out float vAo;
         
                 void main() {
-                    vPosition = position;
                     vUv = uv;
                     vTexOffset = texOffset;
                     vAo = ao;
@@ -36,7 +34,6 @@ public class ChunkShader extends Shader {
                 
                 uniform sampler2D baseTexture;
 
-                in vec3 vPosition;
                 in vec2 vUv;
                 in vec2 vTexOffset;
                 in float vAo;
@@ -49,9 +46,8 @@ public class ChunkShader extends Shader {
 
                     vec2 texCoord = fract(vUv) * tileSize + vTexOffset;
                     vec4 texel = texture(baseTexture, texCoord);
-                    
-                    //float finalAO = mix(0.15, 1.0, vAo / 3.0);
-                    float finalAO = 1.0;
+                
+                    float finalAO = mix(0.15, 1.0, vAo / 3.0);
 
                     FragColor = vec4(texel.rgb * finalAO * faceLight, texel.a);
                 }

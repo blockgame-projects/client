@@ -59,6 +59,10 @@ public class ClientWindow {
             glViewport(0, 0, framebufferWidth.get(0), framebufferHeight.get(0));
         }
 
+        // Blending
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
         // 3D Depth
         glEnable(GL_DEPTH_TEST);
 
@@ -66,12 +70,14 @@ public class ClientWindow {
         glEnable(GL_CULL_FACE); // Enable face culling
         glCullFace(GL_BACK); // Cull back faces (i.e. only render front faces)
 
-
         // Enable v-sync
         glfwSwapInterval(1);
 
         // Make the window visible
         glfwShowWindow(window);
+
+        // Bring to front
+        glfwFocusWindow(window);
 
         // Cursor
         glfwSetCursorPosCallback(window, (w, xpos, ypos) -> {
