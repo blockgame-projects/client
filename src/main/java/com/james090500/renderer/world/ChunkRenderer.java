@@ -3,9 +3,11 @@ package com.james090500.renderer.world;
 import com.james090500.BlockGame;
 import com.james090500.blocks.Block;
 import com.james090500.blocks.Blocks;
+import com.james090500.renderer.LayeredRenderer;
 import com.james090500.renderer.Renderer;
 import com.james090500.renderer.ShaderManager;
 import com.james090500.utils.TextureManager;
+import com.james090500.utils.ThreadUtil;
 import com.james090500.world.Chunk;
 import com.james090500.world.World;
 import org.joml.Matrix4f;
@@ -15,12 +17,11 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL30.*;
 
-public class ChunkRenderer implements Renderer {
+public class ChunkRenderer implements LayeredRenderer {
 
     private Chunk chunk;
 
@@ -30,37 +31,49 @@ public class ChunkRenderer implements Renderer {
     private int transVAO;
     private int transVertexCount;
 
-    public void mesh(Chunk chunk) {
+    public ChunkRenderer(Chunk chunk) {
         this.chunk = chunk;
-
-        VoxelResult result = makeVoxels(new int[]{0, 0, 0}, new int[]{chunk.chunkSize, chunk.chunkHeight, chunk.chunkSize}, (x, y, z) -> {
-            Block block = chunk.getBlock(x, y, z);
-            if (block != null && !block.isTransparent()) {
-                return block.getId();
-            } else {
-                return 0;
-            }
-        });
-
-        this.createMesh(result, false);
     }
 
-    public void meshTransparent(Chunk chunk) {
-        VoxelResult result = makeVoxels(new int[]{0, 0, 0}, new int[]{chunk.chunkSize, chunk.chunkHeight, chunk.chunkSize}, (x, y, z) -> {
-            Block block = chunk.getBlock(x, y, z);
-            if (block != null && block.isTransparent()) {
-                return block.getId();
-            } else {
-                return 0;
-            }
-        });
+    public void mesh() {
+        ThreadUtil.getQueue().submit(() -> {
+            VoxelResult result = makeVoxels(new int[]{0, 0, 0}, new int[]{chunk.chunkSize, chunk.chunkHeight, chunk.chunkSize}, (x, y, z) -> {
+                Block block = chunk.getBlock(x, y, z);
+                if (block != null && !block.isTransparent()) {
+                    return block.getId();
+                } else {
+                    return 0;
+                }
+            });
 
-        this.createMesh(result, true);
+            ChunkMesh chunkMesh = this.generateMesh(result.dims, result.voxels);
+
+            ThreadUtil.getMainQueue().add(() -> {
+                this.createMesh(chunkMesh, false);
+            });
+        });
     }
 
-    private void createMesh(VoxelResult result, boolean transparent) {
-        ChunkMesh chunkMesh = this.generateMesh(result.dims, result.voxels);
+    public void meshTransparent() {
+        ThreadUtil.getQueue().submit(() -> {
+            VoxelResult result = makeVoxels(new int[]{0, 0, 0}, new int[]{chunk.chunkSize, chunk.chunkHeight, chunk.chunkSize}, (x, y, z) -> {
+                Block block = chunk.getBlock(x, y, z);
+                if (block != null && block.isTransparent()) {
+                    return block.getId();
+                } else {
+                    return 0;
+                }
+            });
 
+            ChunkMesh chunkMesh = this.generateMesh(result.dims, result.voxels);
+
+            ThreadUtil.getMainQueue().add(() -> {
+                this.createMesh(chunkMesh, true);
+            });
+        });
+    }
+
+    private void createMesh(ChunkMesh chunkMesh, boolean transparent) {
         int numVertices = chunkMesh.vertices.size();
         int numFaces = chunkMesh.indices.size();
 
@@ -106,7 +119,6 @@ public class ChunkRenderer implements Renderer {
 
         for (int i = 0; i < chunkMesh.aos.size(); i++) {
             float[] a = chunkMesh.aos.get(i);
-//            System.out.println(Arrays.toString(a));
             aoBuffer.put(a[0]);
             aoBuffer.put(a[1]);
             aoBuffer.put(a[2]);
@@ -184,8 +196,24 @@ public class ChunkRenderer implements Renderer {
 
         glBindTexture(GL_TEXTURE_2D, TextureManager.terrainTexture);
 
+        glBindVertexArray(transVAO);
+        glDrawElements(GL_TRIANGLES, transVertexCount, GL_UNSIGNED_INT, 0L);
+
         glBindVertexArray(solidVAO);
         glDrawElements(GL_TRIANGLES, solidVertexCount, GL_UNSIGNED_INT, 0L);
+
+        glBindVertexArray(0);
+        ShaderManager.chunk.stop();
+    }
+
+    @Override
+    public void renderTransparent() {
+        Matrix4f model = new Matrix4f().translate(chunk.chunkX * chunk.chunkSize, 0, chunk.chunkZ * chunk.chunkSize);
+
+        ShaderManager.chunk.use();
+        ShaderManager.chunk.setUniformMat4("model", model);
+
+        glBindTexture(GL_TEXTURE_2D, TextureManager.terrainTexture);
 
         glBindVertexArray(transVAO);
         glDrawElements(GL_TRIANGLES, transVertexCount, GL_UNSIGNED_INT, 0L);
@@ -319,7 +347,7 @@ public class ChunkRenderer implements Renderer {
     }
 
     private int getMaskValue(int id, int[] pos, int[] step) {
-        Block blockA = Blocks.ids[id];
+        Block block = Blocks.ids[id];
         Block neighbor = BlockGame.getInstance().getWorld().getChunkBlock(
                 chunk.chunkX,
                 chunk.chunkZ,
@@ -328,7 +356,23 @@ public class ChunkRenderer implements Renderer {
                 pos[2] + step[2]
         );
 
-        return neighbor != null && (!neighbor.isTransparent() || blockA.isTransparent()) ? 0 : id;
+        // neighbor is missing, so render the face
+        if (neighbor == null) {
+            return id;
+        }
+
+        // Hide face if both blocks are transparent (internal face)
+        if (block.isTransparent() && neighbor.isTransparent()) {
+            return 0;
+        }
+
+        // Hide face if neighbor is opaque
+        if (!neighbor.isTransparent()) {
+            return 0;
+        }
+
+        // Otherwise, show the face
+        return id;
     }
 
     private ChunkMesh generateMesh(int[] dims, int[] voxels) {

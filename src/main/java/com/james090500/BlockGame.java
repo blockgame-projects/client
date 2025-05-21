@@ -3,6 +3,7 @@ package com.james090500;
 import com.james090500.client.Camera;
 import com.james090500.client.ClientWindow;
 import com.james090500.renderer.RenderManager;
+import com.james090500.utils.ThreadUtil;
 import com.james090500.world.World;
 import lombok.Getter;
 
@@ -34,6 +35,9 @@ public class BlockGame {
     }
 
     public void loop(ClientWindow clientWindow) {
+        int fps = 0;
+        long start = System.currentTimeMillis();
+
         // Set the clear color
         glClearColor(0.529f, 0.808f, 0.922f, 1.0f);
 
@@ -48,12 +52,25 @@ public class BlockGame {
             // Render all pending objects
             RenderManager.render();
 
+            //Run a single main thread queue
+            ThreadUtil.runMainQueue();
+
             // Swap the buffers
             glfwSwapBuffers(clientWindow.getWindow());
 
             // Poll for window events. The key callback above will only be
             // invoked during this call.
             glfwPollEvents();
+
+            long now = System.currentTimeMillis();
+            if (now - start >= 1000) {
+                System.out.println(fps + " FPS");
+
+                start = now;
+                fps = 0;
+            } else {
+                fps++;
+            }
         }
     }
 

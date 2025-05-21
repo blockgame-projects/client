@@ -54,6 +54,10 @@ public class Camera {
         );
     }
 
+    public Vector3f getPosition() {
+        return new Vector3f(x, y, z);
+    }
+
     public void setAspectRatio(float aspect) {
         this.aspect = aspect;
     }

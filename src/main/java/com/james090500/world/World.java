@@ -1,12 +1,14 @@
 package com.james090500.world;
 
+import com.james090500.BlockGame;
 import com.james090500.blocks.Block;
 import com.james090500.renderer.RenderManager;
 import com.james090500.renderer.world.ChunkRenderer;
 import lombok.Getter;
+import org.joml.Vector3f;
 
-import java.util.HashMap;
-import java.util.Objects;
+import java.lang.reflect.Array;
+import java.util.*;
 
 public class World {
 
@@ -14,13 +16,16 @@ public class World {
 
     @Getter
     private final int worldSeed = (int) Math.floor(Math.random() * 1000000);
-    private final int worldSize = 12;
+    private final int worldSize = 16;
+
+    private int lastPlayerX = -1;
+    private int lastPlayerZ = -1;
 
     public void createWorld() {
         for(int x = -this.worldSize; x < this.worldSize; x++) {
             for(int z = -this.worldSize; z < this.worldSize; z++) {
                 Chunk chunk = new Chunk(x, z);
-                chunks.put(new ChunkPos(x, z), chunk);
+                this.chunks.put(new ChunkPos(x, z), chunk);
             }
         }
     }
@@ -43,17 +48,79 @@ public class World {
     }
 
     public void render() {
-        this.chunks.forEach((pos, chunk) -> {
-            if(chunk.generated && !chunk.rendered) {
-                ChunkRenderer chunkRenderer = new ChunkRenderer();
-                chunkRenderer.mesh(chunk);
-                chunkRenderer.meshTransparent(chunk);
+        Vector3f playerPos = BlockGame.getInstance().getCamera().getPosition();
+        int playerPosX = (int) Math.floor(playerPos.x / 16);
+        int playerPosZ = (int) Math.floor(playerPos.z / 16);
 
-                chunk.rendered = true;
+        // Dont loop if we haven't moved
+        if(playerPosX == lastPlayerX && playerPosZ == lastPlayerZ) {
+            return;
+        }
 
-                RenderManager.add(chunkRenderer);
+        List<ChunkOffset> offsets = new ArrayList<>();
+        int worldSizeSq = worldSize * worldSize;
+
+        // Generate all offsets in a circle around the player
+        for (int dx = -worldSize; dx <= worldSize; dx++) {
+            for (int dz = -worldSize; dz <= worldSize; dz++) {
+                int distSq = dx * dx + dz * dz;
+                if (distSq <= worldSizeSq) {
+                    offsets.add(new ChunkOffset(dx, dz));
+                }
             }
-        });
+        }
+
+        // Sort offsets to radiate outward
+        offsets.sort(Comparator.comparingInt(o -> o.distSq));
+
+        // Create missing chunks in order of distance
+        for (ChunkOffset offset : offsets) {
+            int chunkX = playerPosX + offset.dx;
+            int chunkZ = playerPosZ + offset.dz;
+
+            ChunkPos chunkPos = new ChunkPos(chunkX, chunkZ);
+            if (!this.chunks.containsKey(chunkPos)) {
+                Chunk chunk = new Chunk(chunkX, chunkZ);
+                this.chunks.put(chunkPos, chunk);
+            }
+        }
+
+        // Mesh and render unrendered chunks in same distance order
+        for (ChunkOffset offset : offsets) {
+            int chunkX = playerPosX + offset.dx;
+            int chunkZ = playerPosZ + offset.dz;
+
+            ChunkPos chunkPos = new ChunkPos(chunkX, chunkZ);
+            Chunk chunk = this.chunks.get(chunkPos);
+
+            if (chunk != null && chunk.generated && !chunk.rendered) {
+                chunk.getChunkRenderer().mesh();              // opaque first
+                chunk.getChunkRenderer().meshTransparent();   // then transparent
+                chunk.rendered = true;
+                RenderManager.add(chunk.getChunkRenderer());
+            }
+        }
+
+        // Unload distant chunks
+        Iterator<Map.Entry<ChunkPos, Chunk>> iterator = chunks.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<ChunkPos, Chunk> entry = iterator.next();
+            ChunkPos chunkPos = entry.getKey();
+
+            if (
+                    chunkPos.x > playerPosX + worldSize ||
+                            chunkPos.x < playerPosX - worldSize ||
+                            chunkPos.y > playerPosZ + worldSize ||
+                            chunkPos.y < playerPosZ - worldSize
+            ) {
+                RenderManager.remove(entry.getValue().getChunkRenderer());
+                iterator.remove();
+            }
+        }
+
+        // Update last player chunk position after work is done
+        this.lastPlayerX = playerPosX;
+        this.lastPlayerZ = playerPosZ;
     }
 
     /**
@@ -78,6 +145,17 @@ public class World {
         @Override
         public int hashCode() {
             return Objects.hash(x, y);
+        }
+    }
+
+    static class ChunkOffset {
+        public int dx, dz;
+        public int distSq;
+
+        public ChunkOffset(int dx, int dz) {
+            this.dx = dx;
+            this.dz = dz;
+            this.distSq = dx * dx + dz * dz;
         }
     }
 }

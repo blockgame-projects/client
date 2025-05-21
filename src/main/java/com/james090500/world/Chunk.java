@@ -3,12 +3,16 @@ package com.james090500.world;
 import com.james090500.BlockGame;
 import com.james090500.blocks.Block;
 import com.james090500.blocks.Blocks;
+import com.james090500.renderer.world.ChunkRenderer;
 import com.james090500.utils.OpenSimplexNoise;
 import lombok.Getter;
 
 public class Chunk {
 
     private byte[] chunkData;
+
+    @Getter
+    private ChunkRenderer chunkRenderer = new ChunkRenderer(this);
 
     public final int chunkSize = 16;
     public final int chunkHeight = 300;
@@ -24,9 +28,11 @@ public class Chunk {
 
         this.chunkData = new byte[chunkSize * chunkSize * chunkHeight];
 
-        this.generateTerrain();
-
-        this.generated = true;
+        Thread worldGen = new Thread(() -> {
+            this.generateTerrain();
+            this.generated = true;
+        });
+        worldGen.start();
     }
 
     /**
