@@ -17,8 +17,20 @@ public class RenderManager {
     }
 
     public static void render() {
+        List<LayeredRenderer> transparentQueue = new ArrayList<>();
+
+        // Go through the render queue
         for (Renderer renderer : renderQueue) {
+            if (renderer instanceof LayeredRenderer) {
+                transparentQueue.add((LayeredRenderer) renderer);
+            }
+
             renderer.render();
+        }
+
+        // Render any transparent items
+        for(LayeredRenderer renderer : transparentQueue) {
+            renderer.renderTransparent();
         }
 
         BlockGame.getInstance().getWorld().render();

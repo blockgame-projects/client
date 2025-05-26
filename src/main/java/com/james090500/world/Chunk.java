@@ -3,7 +3,9 @@ package com.james090500.world;
 import com.james090500.BlockGame;
 import com.james090500.blocks.Block;
 import com.james090500.blocks.Blocks;
+import com.james090500.blocks.GrassBlock;
 import com.james090500.renderer.world.ChunkRenderer;
+import com.james090500.structure.Tree;
 import com.james090500.utils.OpenSimplexNoise;
 import lombok.Getter;
 
@@ -30,6 +32,7 @@ public class Chunk {
 
         Thread worldGen = new Thread(() -> {
             this.generateTerrain();
+            this.generateTrees();
             this.generated = true;
         });
         worldGen.start();
@@ -94,6 +97,9 @@ public class Chunk {
         this.chunkData[this.getIndex(x, y, z)] = block;
     }
 
+    /**
+     * Generates the actual terrain
+     */
     private void generateTerrain() {
         int waterLevel = 64;
 
@@ -120,36 +126,62 @@ public class Chunk {
                         density += heightFactor * 2;
                     }
 
-                    Byte nextBlock = null;
+                    byte nextBlock = 0;
                     if (density >= 0) {
                         if (topSoilDepth == -1) {
                             if (y < waterLevel + 2) {
-                                nextBlock = (byte) Blocks.sandBlock.getId();
+                                nextBlock = Blocks.sandBlock.getId();
                                 beach = true;
                             } else {
-                                nextBlock = (byte) Blocks.grassBlock.getId();
+                                nextBlock = Blocks.grassBlock.getId();
                                 beach = false;
                             }
                             topSoilDepth++;
                         } else if (topSoilDepth < 3) {
                             if (beach) {
-                                nextBlock = (byte) Blocks.sandBlock.getId();
+                                nextBlock = Blocks.sandBlock.getId();
                             } else {
-                                nextBlock = (byte) Blocks.dirtBlock.getId();
+                                nextBlock = Blocks.dirtBlock.getId();
                             }
                             topSoilDepth++;
                         } else {
-                            nextBlock = (byte) Blocks.stoneBlock.getId();
+                            nextBlock = Blocks.stoneBlock.getId();
                         }
                     } else {
                         if (y <= waterLevel) {
-                            nextBlock = (byte) Blocks.waterBlock.getId();
+                            nextBlock = Blocks.waterBlock.getId();
                         }
                         topSoilDepth = -1;
                     }
 
-                    if (nextBlock != null) {
+                    if (nextBlock != 0) {
                         this.setBlock(x, y, z, nextBlock);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Generate trees
+     */
+    private void generateTrees() {
+        int treeSeed = BlockGame.getInstance().getWorld().getWorldSeed() + 2390; // Don't follow terrain otherwise it looks odd
+
+        for (int x = 0; x < this.chunkSize; x++) {
+            for (int z = 0; z < this.chunkSize; z++) {
+            double nx = x + this.chunkX * this.chunkSize;
+            double nz = z + this.chunkZ * this.chunkSize;
+
+            double noise = OpenSimplexNoise.noise2(treeSeed, nx, nz);
+
+                if (noise > 0.75) {
+                    for (int y = this.chunkHeight - 1; y >= 0; y--) {
+                    Block block = this.getBlock(x, y, z);
+                        if (block instanceof GrassBlock) {
+                            Tree tree = new Tree(noise,this);
+                            tree.build(x, y, z);
+                        }
                     }
                 }
             }

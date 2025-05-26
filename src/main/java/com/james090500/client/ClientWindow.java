@@ -105,19 +105,29 @@ public class ClientWindow {
 
         Camera camera = BlockGame.getInstance().getCamera();
         float[] dir = camera.getDirection();
-        float[] right = new float[]{-dir[2], 0, dir[0]}; // cross product with Y up
+
+        // Flatten direction to XZ plane
+        float[] flatDir = new float[]{dir[0], 0, dir[2]};
+        float length = (float) Math.sqrt(flatDir[0] * flatDir[0] + flatDir[2] * flatDir[2]);
+        if (length != 0) {
+            flatDir[0] /= length;
+            flatDir[2] /= length;
+        }
+
+        // Left vector (90 degrees rotated from flatDir)
+        float[] left = new float[]{flatDir[2], 0, flatDir[0]};
 
         if (isKeyDown(GLFW_KEY_W))
-            camera.move(dir[0] * speed, dir[1] * speed, dir[2] * speed);
+            camera.move(flatDir[0] * speed, 0, flatDir[2] * speed);
 
         if (isKeyDown(GLFW_KEY_S))
-            camera.move(-dir[0] * speed, -dir[1] * speed, -dir[2] * speed);
+            camera.move(-flatDir[0] * speed, 0, -flatDir[2] * speed);
 
         if (isKeyDown(GLFW_KEY_A))
-            camera.move(right[0] * speed, 0, right[2] * speed);
+            camera.move(left[0] * speed, 0, left[2] * speed);
 
         if (isKeyDown(GLFW_KEY_D))
-            camera.move(-right[0] * speed, 0, -right[2] * speed);
+            camera.move(-left[0] * speed, 0, -left[2] * speed);
 
         if (isKeyDown(GLFW_KEY_SPACE))
             camera.move(0, speed, 0);

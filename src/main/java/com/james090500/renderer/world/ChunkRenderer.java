@@ -196,9 +196,6 @@ public class ChunkRenderer implements LayeredRenderer {
 
         glBindTexture(GL_TEXTURE_2D, TextureManager.terrainTexture);
 
-        glBindVertexArray(transVAO);
-        glDrawElements(GL_TRIANGLES, transVertexCount, GL_UNSIGNED_INT, 0L);
-
         glBindVertexArray(solidVAO);
         glDrawElements(GL_TRIANGLES, solidVertexCount, GL_UNSIGNED_INT, 0L);
 

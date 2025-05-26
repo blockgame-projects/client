@@ -7,6 +7,7 @@ import com.james090500.utils.ThreadUtil;
 import com.james090500.world.World;
 import lombok.Getter;
 
+import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
 
@@ -28,13 +29,18 @@ public class BlockGame {
         camera = new Camera(0, 100, 0);
         world = new World();
 
-        // Create the world
-        world.createWorld();
-
         this.loop(clientWindow);
+
+        // Free the window callbacks and destroy the window
+        glfwFreeCallbacks(clientWindow.getWindow());
+        glfwDestroyWindow(clientWindow.getWindow());
+
+        // Terminate GLFW and free the error callback
+        glfwTerminate();
+        glfwSetErrorCallback(null).free();
     }
 
-    public void loop(ClientWindow clientWindow) {
+    private void loop(ClientWindow clientWindow) {
         int fps = 0;
         long start = System.currentTimeMillis();
 

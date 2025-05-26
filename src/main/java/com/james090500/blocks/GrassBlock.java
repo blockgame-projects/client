@@ -1,7 +1,7 @@
 package com.james090500.blocks;
 
 public class GrassBlock extends Block {
-    public GrassBlock(int id) {
+    public GrassBlock(byte id) {
         super(id);
         this.texture = 3;
     }

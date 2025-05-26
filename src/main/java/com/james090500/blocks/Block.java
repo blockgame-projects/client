@@ -7,14 +7,14 @@ import java.util.Arrays;
 public class Block {
 
     @Getter
-    int id = 999;
+    byte id;
     int texture = 14;
     @Getter
     boolean transparent = false;
     @Getter
     boolean solid = true;
 
-    public Block(int id) {
+    public Block(byte id) {
         this.id = id;
     }
 

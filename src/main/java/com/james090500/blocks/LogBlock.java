@@ -1,7 +1,7 @@
 package com.james090500.blocks;
 
 public class LogBlock extends Block {
-    public LogBlock(int id) {
+    public LogBlock(byte id) {
         super(id);
         this.texture = 20;
     }

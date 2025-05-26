@@ -18,17 +18,8 @@ public class World {
     private final int worldSeed = (int) Math.floor(Math.random() * 1000000);
     private final int worldSize = 16;
 
-    private int lastPlayerX = -1;
-    private int lastPlayerZ = -1;
-
-    public void createWorld() {
-        for(int x = -this.worldSize; x < this.worldSize; x++) {
-            for(int z = -this.worldSize; z < this.worldSize; z++) {
-                Chunk chunk = new Chunk(x, z);
-                this.chunks.put(new ChunkPos(x, z), chunk);
-            }
-        }
-    }
+    private int lastPlayerX = -9999999;
+    private int lastPlayerZ = -9999999;
 
     public Block getChunkBlock(int chunkX, int chunkZ, int x, int y, int z) {
         int offsetChunkX = Math.floorDiv(x, 16);
@@ -82,6 +73,19 @@ public class World {
             if (!this.chunks.containsKey(chunkPos)) {
                 Chunk chunk = new Chunk(chunkX, chunkZ);
                 this.chunks.put(chunkPos, chunk);
+
+                // Invalidate neighboring chunks for re-rendering
+                for (int dx = -1; dx <= 1; dx++) {
+                    for (int dz = -1; dz <= 1; dz++) {
+                        if (dx == 0 && dz == 0) continue;
+
+                        ChunkPos neighborPos = new ChunkPos(chunkX + dx, chunkZ + dz);
+                        Chunk neighbor = this.chunks.get(neighborPos);
+                        if (neighbor != null) {
+                            neighbor.rendered = false; // Force it to re-mesh next frame
+                        }
+                    }
+                }
             }
         }
 
@@ -94,6 +98,7 @@ public class World {
             Chunk chunk = this.chunks.get(chunkPos);
 
             if (chunk != null && chunk.generated && !chunk.rendered) {
+                RenderManager.remove(chunk.getChunkRenderer());
                 chunk.getChunkRenderer().mesh();              // opaque first
                 chunk.getChunkRenderer().meshTransparent();   // then transparent
                 chunk.rendered = true;
@@ -107,12 +112,11 @@ public class World {
             Map.Entry<ChunkPos, Chunk> entry = iterator.next();
             ChunkPos chunkPos = entry.getKey();
 
-            if (
-                    chunkPos.x > playerPosX + worldSize ||
-                            chunkPos.x < playerPosX - worldSize ||
-                            chunkPos.y > playerPosZ + worldSize ||
-                            chunkPos.y < playerPosZ - worldSize
-            ) {
+            int dx = chunkPos.x - playerPosX;
+            int dz = chunkPos.y - playerPosZ;
+            int distSq = dx * dx + dz * dz;
+
+            if (distSq > worldSizeSq) {
                 RenderManager.remove(entry.getValue().getChunkRenderer());
                 iterator.remove();
             }
