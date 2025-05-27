@@ -1,5 +1,6 @@
 package com.james090500.utils;
 
+import com.james090500.BlockGame;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.stb.STBImage;
@@ -12,31 +13,50 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
+import static org.lwjgl.nanovg.NanoVG.*;
+
 public class TextureManager {
 
     public static int terrainTexture;
+    public static int button;
+    public static int button_active;
 
     static {
-        terrainTexture = loadTexture("terrain.png"); // adjust path as needed
+        terrainTexture = loadGLTexture("terrain.png"); // adjust path as needed
+        button = loadVGTexture("gui/button.png");
+        button_active = loadVGTexture("gui/button_active.png");
     }
 
-    public static int loadTexture(String resourceName) {
-        // Load from classpath
-        InputStream stream = TextureManager.class.getResourceAsStream("/" + resourceName);
-        if (stream == null) {
-            throw new RuntimeException("Resource not found: " + resourceName);
-        }
-
+    public static int loadGLTexture(String resourceName) {
         try {
-            // Copy to temp file so STBImage can load it from a path
-            Path tempFile = Files.createTempFile("texture", ".png");
-            Files.copy(stream, tempFile, StandardCopyOption.REPLACE_EXISTING);
+            Path tempFile = extractResourceToTempFile(resourceName);
             int textureId = loadTextureFromFile(tempFile.toString());
             Files.delete(tempFile);
             return textureId;
         } catch (IOException e) {
             throw new RuntimeException("Failed to load texture: " + resourceName, e);
         }
+    }
+
+    private static int loadVGTexture(String resourceName) {
+        try {
+            Path tempFile = extractResourceToTempFile(resourceName);
+            int textureId = nvgCreateImage(BlockGame.getInstance().getClientWindow().getVg(), tempFile.toString(), NVG_IMAGE_REPEATX | NVG_IMAGE_REPEATY);
+            Files.delete(tempFile);
+            return textureId;
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load texture: " + resourceName, e);
+        }
+    }
+
+    private static Path extractResourceToTempFile(String resourceName) throws IOException {
+        InputStream stream = TextureManager.class.getResourceAsStream("/" + resourceName);
+        if (stream == null) {
+            throw new RuntimeException("Resource not found: " + resourceName);
+        }
+        Path tempFile = Files.createTempFile("texture", ".png");
+        Files.copy(stream, tempFile, StandardCopyOption.REPLACE_EXISTING);
+        return tempFile;
     }
 
     public static int loadTextureFromFile(String filepath) {

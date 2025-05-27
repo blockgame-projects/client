@@ -9,6 +9,8 @@ import com.james090500.structure.Tree;
 import com.james090500.utils.OpenSimplexNoise;
 import lombok.Getter;
 
+import java.util.List;
+
 public class Chunk {
 
     private byte[] chunkData;
@@ -24,15 +26,26 @@ public class Chunk {
     public boolean rendered;
     public boolean generated;
 
-    public Chunk(int chunkX, int chunkZ) {
+    public Chunk(int chunkX, int chunkZ, List<World.BlockPlacement> blockPlacements) {
         this.chunkX = chunkX;
         this.chunkZ = chunkZ;
 
         this.chunkData = new byte[chunkSize * chunkSize * chunkHeight];
 
         Thread worldGen = new Thread(() -> {
+            //Generate Terrain
             this.generateTerrain();
+
+            //Add Deferred Blocks
+            if (blockPlacements != null && !blockPlacements.isEmpty()) {
+                for (World.BlockPlacement bp : blockPlacements) {
+                    this.setBlock(bp.x(), bp.y(), bp.z(), bp.blockId());
+                }
+            }
+
+            //Generate decoration
             this.generateTrees();
+
             this.generated = true;
         });
         worldGen.start();
@@ -91,10 +104,10 @@ public class Chunk {
                         y >= this.chunkHeight || y < 0 ||
                         z >= this.chunkSize || z < 0
         ) {
-            return;
+            BlockGame.getInstance().getWorld().setChunkBlock(chunkX, chunkZ, x, y, z, block);
+        } else {
+            this.chunkData[this.getIndex(x, y, z)] = block;
         }
-
-        this.chunkData[this.getIndex(x, y, z)] = block;
     }
 
     /**

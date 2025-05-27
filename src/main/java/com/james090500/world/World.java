@@ -13,6 +13,15 @@ import java.util.*;
 public class World {
 
     private final HashMap<ChunkPos, Chunk> chunks = new HashMap<>();
+    private final Map<ChunkPos, List<BlockPlacement>> deferredBlocks = new HashMap<>();
+
+    record ChunkPos(int x, int y) { }
+    record BlockPlacement(int x, int y, int z, byte blockId) {}
+    record ChunkOffset(int dx, int dz, int distSq) {
+        public ChunkOffset(int dx, int dz) {
+            this(dx, dz, dx * dx + dz * dz);
+        }
+    }
 
     @Getter
     private final int worldSeed = (int) Math.floor(Math.random() * 1000000);
@@ -21,6 +30,37 @@ public class World {
     private int lastPlayerX = -9999999;
     private int lastPlayerZ = -9999999;
 
+    /**
+     * Gets a block in the world
+     * @param x The world x coord
+     * @param y The world y coord
+     * @param z The world z coord
+     * @return The block or null if no block
+     */
+    public Block getBlock(int x, int y, int z) {
+        return this.getChunkBlock(0, 0, x, y, z);
+    }
+
+    /**
+     * Sets a block in the world
+     * @param x The world x coord
+     * @param y The world y coord
+     * @param z The world z coord
+     * @param block The block or null if no block
+     */
+    public void setBlock(int x, int y, int z, byte block) {
+        this.setChunkBlock(0, 0, x, y, z, block);
+    }
+
+    /**
+     * Get a block from a specific chunk
+     * @param chunkX The chunk X coordinate
+     * @param chunkZ The chunk Z coordinate
+     * @param x The localised x coordinate
+     * @param y The localised y coordinate
+     * @param z The localised z coordinate
+     * @return The block or null if no block
+     */
     public Block getChunkBlock(int chunkX, int chunkZ, int x, int y, int z) {
         int offsetChunkX = Math.floorDiv(x, 16);
         chunkX += offsetChunkX;
@@ -38,6 +78,36 @@ public class World {
         return target.getBlock(x, y, z);
     }
 
+    /**
+     * Sets a block at a specific chunk
+     * @param chunkX The chunk X coordinate
+     * @param chunkZ The chunk Z coordinate
+     * @param x The localised x coordinate
+     * @param y The localised y coordinate
+     * @param z The localised z coordinate
+     * @param block The block
+     */
+    public void setChunkBlock(int chunkX, int chunkZ, int x, int y, int z, byte block) {
+        int offsetChunkX = Math.floorDiv(x, 16);
+        chunkX += offsetChunkX;
+        x = Math.floorMod(x, 16);
+
+        int offsetChunkZ = Math.floorDiv(z, 16);
+        chunkZ += offsetChunkZ;
+        z = Math.floorMod(z, 16);
+
+        Chunk target = this.chunks.get(new ChunkPos(chunkX, chunkZ));
+        if (target == null) {
+            ChunkPos deferredPos = new ChunkPos(chunkX, chunkZ);
+            deferredBlocks.computeIfAbsent(deferredPos, k -> new ArrayList<>()).add(new BlockPlacement(x, y, z, block));
+        } else {
+            target.setBlock(x, y, z, block);
+        }
+    }
+
+    /**
+     * Render the world. This also loads and remove chunks as needed
+     */
     public void render() {
         Vector3f playerPos = BlockGame.getInstance().getCamera().getPosition();
         int playerPosX = (int) Math.floor(playerPos.x / 16);
@@ -71,7 +141,8 @@ public class World {
 
             ChunkPos chunkPos = new ChunkPos(chunkX, chunkZ);
             if (!this.chunks.containsKey(chunkPos)) {
-                Chunk chunk = new Chunk(chunkX, chunkZ);
+                List<BlockPlacement> blockPlacements = deferredBlocks.remove(chunkPos);
+                Chunk chunk = new Chunk(chunkX, chunkZ, blockPlacements);
                 this.chunks.put(chunkPos, chunk);
 
                 // Invalidate neighboring chunks for re-rendering
@@ -125,41 +196,5 @@ public class World {
         // Update last player chunk position after work is done
         this.lastPlayerX = playerPosX;
         this.lastPlayerZ = playerPosZ;
-    }
-
-    /**
-     * A special hash mapping class
-     */
-    static class ChunkPos {
-        int x, y;
-
-        ChunkPos(int x, int y) {
-            this.x = x;
-            this.y = y;
-        }
-
-        // Ensure proper hash-based lookup
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof ChunkPos other)) return false;
-            return x == other.x && y == other.y;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(x, y);
-        }
-    }
-
-    static class ChunkOffset {
-        public int dx, dz;
-        public int distSq;
-
-        public ChunkOffset(int dx, int dz) {
-            this.dx = dx;
-            this.dz = dz;
-            this.distSq = dx * dx + dz * dz;
-        }
     }
 }

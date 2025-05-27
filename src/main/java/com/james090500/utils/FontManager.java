@@ -1,0 +1,62 @@
+package com.james090500.utils;
+
+import com.james090500.BlockGame;
+import org.lwjgl.nanovg.NVGColor;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+
+import static org.lwjgl.nanovg.NanoVG.*;
+public class FontManager {
+
+    private static long vg = BlockGame.getInstance().getClientWindow().getVg();
+
+    static {
+        long font = loadFont("fonts/Minecraftia-Regular.ttf");
+        if (font == -1) {
+            throw new RuntimeException("Could not load font");
+        }
+    }
+
+    private static long loadFont(String resourceName) {
+        // Load from classpath
+        InputStream stream = FontManager.class.getResourceAsStream("/" + resourceName);
+        if (stream == null) {
+            throw new RuntimeException("Resource not found: " + resourceName);
+        }
+
+        try {
+            // Copy to temp file so nvg can load it from a path
+            Path tempFile = Files.createTempFile("font", ".ttf");
+            Files.copy(stream, tempFile, StandardCopyOption.REPLACE_EXISTING);
+            long fontId = nvgCreateFont(vg, "default", tempFile.toString());
+            Files.delete(tempFile);
+            return fontId;
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load font: " + resourceName, e);
+        }
+    }
+
+    public FontManager center() {
+        nvgTextAlign(vg, NVG_ALIGN_CENTER);
+        return this;
+    }
+
+    public FontManager color(float r, float g, float b, float a) {
+        try (NVGColor color = NVGColor.calloc()) {
+            color.r(r).g(g).b(b).a(a);
+            nvgFillColor(vg, color);
+        }
+        return this;
+    }
+
+    public FontManager text(String text, float size, float x, float y) {
+        nvgFontSize(vg, size);
+        nvgFontFace(vg, "default");
+        nvgText(vg, x, y, text);
+        return this;
+    }
+}

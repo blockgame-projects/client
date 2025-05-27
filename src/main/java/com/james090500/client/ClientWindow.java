@@ -1,6 +1,7 @@
 package com.james090500.client;
 
 import com.james090500.BlockGame;
+import com.james090500.Config;
 import lombok.Getter;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.opengl.GL;
@@ -9,6 +10,10 @@ import org.lwjgl.system.MemoryStack;
 import java.nio.IntBuffer;
 
 import static org.lwjgl.glfw.GLFW.*;
+import static org.lwjgl.glfw.GLFW.glfwSetCursorPosCallback;
+import static org.lwjgl.glfw.GLFW.glfwSetMouseButtonCallback;
+import static org.lwjgl.nanovg.NanoVG.*;
+import static org.lwjgl.nanovg.NanoVGGL3.*;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
@@ -16,27 +21,31 @@ public class ClientWindow {
 
     private final String title = "BlockGame";
     @Getter
-    private final int width = 962;
+    private final int width = 854;
     @Getter
-    private final int height = 768;
+    private final int height = 480;
+    @Getter
+    private float devicePixelRatio = 1f;
 
     @Getter
     private long window;
+    @Getter
+    private long vg;
+
+    private ClientInput clientInput = new ClientInput();
+    double[] mouseX = new double[1];
+    double[] mouseY = new double[1];
 
     private float speed = 0.05f;
-    private double lastMouseX, lastMouseY;
-    private boolean firstMouse = true;
 
     public void create() {
-        GLFWErrorCallback errorCallback;
-        glfwSetErrorCallback(errorCallback = GLFWErrorCallback.createPrint(System.err));
+        glfwSetErrorCallback(GLFWErrorCallback.createPrint(System.err));
         if (!glfwInit()) {
             throw new IllegalStateException("Unable to initialize GLFW");
         }
 
         glfwDefaultWindowHints(); // Loads GLFW's default window settings
         glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE); // Sets window to be visible
-        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE); // Sets windows to be non-resizable
 
         // Set OpenGL version
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -57,18 +66,8 @@ public class ClientWindow {
             IntBuffer framebufferHeight = stack.mallocInt(1);
             glfwGetFramebufferSize(window, framebufferWidth, framebufferHeight);
             glViewport(0, 0, framebufferWidth.get(0), framebufferHeight.get(0));
+            devicePixelRatio = framebufferWidth.get(0) / width;
         }
-
-        // Blending
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-        // 3D Depth
-        glEnable(GL_DEPTH_TEST);
-
-        // Disable back faces
-        glEnable(GL_CULL_FACE); // Enable face culling
-        glCullFace(GL_BACK); // Cull back faces (i.e. only render front faces)
 
         // Enable v-sync
         glfwSwapInterval(1);
@@ -79,29 +78,25 @@ public class ClientWindow {
         // Bring to front
         glfwFocusWindow(window);
 
-        // Cursor
-        glfwSetCursorPosCallback(window, (w, xpos, ypos) -> {
-            if (firstMouse) {
-                lastMouseX = xpos;
-                lastMouseY = ypos;
-                firstMouse = false;
-            }
-            float sensitivity = 0.1f;
-            double dx = xpos - lastMouseX;
-            double dy = lastMouseY - ypos;
+        // Cursor Movement and Clicks
+        glfwSetCursorPosCallback(window, clientInput::mouseMovement);
+        glfwSetMouseButtonCallback(window, clientInput::mouseClicked);
 
-            lastMouseX = xpos;
-            lastMouseY = ypos;
-
-            Camera camera = BlockGame.getInstance().getCamera();
-            camera.yaw += (float) (dx * sensitivity);
-            camera.pitch += (float) (dy * sensitivity);
-            camera.pitch = Math.max(-89f, Math.min(89f, camera.pitch));
-        });
+        // Generate NanoVG Instance
+        vg = nvgCreate(NVG_ANTIALIAS | NVG_STENCIL_STROKES);
+        if (vg == 0) {
+            throw new RuntimeException("Could not init NanoVG");
+        }
     }
 
     public void loop() {
         glfwPollEvents();
+
+        glfwGetCursorPos(window, mouseX, mouseY);
+
+        //Skip if paused
+        if(BlockGame.getInstance().getConfig().isPaused())
+            return;
 
         Camera camera = BlockGame.getInstance().getCamera();
         float[] dir = camera.getDirection();
@@ -136,7 +131,15 @@ public class ClientWindow {
             camera.move(0, -speed, 0);
 
         if (isKeyDown(GLFW_KEY_ESCAPE))
-            glfwSetWindowShouldClose(window, true);
+            BlockGame.getInstance().pause();
+    }
+
+    public double getMouseX() {
+        return mouseX[0];
+    }
+
+    public double getMouseY() {
+        return mouseY[0];
     }
 
     private boolean isKeyDown(int key) {
