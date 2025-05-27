@@ -2,8 +2,6 @@ package com.james090500.blocks;
 
 import lombok.Getter;
 
-import java.util.Arrays;
-
 public class Block {
 
     @Getter

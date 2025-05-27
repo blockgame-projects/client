@@ -4,7 +4,6 @@ import com.james090500.BlockGame;
 import com.james090500.blocks.Block;
 import com.james090500.blocks.Blocks;
 import com.james090500.renderer.LayeredRenderer;
-import com.james090500.renderer.Renderer;
 import com.james090500.renderer.ShaderManager;
 import com.james090500.utils.TextureManager;
 import com.james090500.utils.ThreadUtil;

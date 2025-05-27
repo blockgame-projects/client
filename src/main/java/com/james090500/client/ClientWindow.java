@@ -1,7 +1,6 @@
 package com.james090500.client;
 
 import com.james090500.BlockGame;
-import com.james090500.Config;
 import lombok.Getter;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.opengl.GL;
@@ -10,11 +9,8 @@ import org.lwjgl.system.MemoryStack;
 import java.nio.IntBuffer;
 
 import static org.lwjgl.glfw.GLFW.*;
-import static org.lwjgl.glfw.GLFW.glfwSetCursorPosCallback;
-import static org.lwjgl.glfw.GLFW.glfwSetMouseButtonCallback;
-import static org.lwjgl.nanovg.NanoVG.*;
 import static org.lwjgl.nanovg.NanoVGGL3.*;
-import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL11.glViewport;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
 public class ClientWindow {

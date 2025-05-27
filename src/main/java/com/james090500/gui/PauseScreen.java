@@ -1,7 +1,6 @@
 package com.james090500.gui;
 
 import com.james090500.BlockGame;
-import com.james090500.blocks.Block;
 
 import static org.lwjgl.glfw.GLFW.glfwSetWindowShouldClose;
 

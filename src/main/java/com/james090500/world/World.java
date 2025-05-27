@@ -3,11 +3,9 @@ package com.james090500.world;
 import com.james090500.BlockGame;
 import com.james090500.blocks.Block;
 import com.james090500.renderer.RenderManager;
-import com.james090500.renderer.world.ChunkRenderer;
 import lombok.Getter;
 import org.joml.Vector3f;
 
-import java.lang.reflect.Array;
 import java.util.*;
 
 public class World {
