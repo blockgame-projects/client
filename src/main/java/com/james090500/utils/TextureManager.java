@@ -17,14 +17,18 @@ import static org.lwjgl.nanovg.NanoVG.*;
 
 public class TextureManager {
 
-    public static int terrainTexture;
+    public static int logo;
+    public static int background;
     public static int button;
     public static int button_active;
+    public static int terrainTexture;
 
     static {
-        terrainTexture = loadGLTexture("terrain.png"); // adjust path as needed
+        logo = loadVGTexture("gui/logo.png");
+        background = loadVGTexture("gui/background.png");
         button = loadVGTexture("gui/button.png");
         button_active = loadVGTexture("gui/button_active.png");
+        terrainTexture = loadGLTexture("terrain.png"); // adjust path as needed
     }
 
     public static int loadGLTexture(String resourceName) {

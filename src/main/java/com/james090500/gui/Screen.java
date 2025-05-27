@@ -15,14 +15,13 @@ import static org.lwjgl.nanovg.NanoVG.*;
 @Setter
 public class Screen {
 
-    private final int width;
-    private final int height;
+    protected final int width;
+    protected final int height;
 
-    private long vg;
+    protected long vg;
     private FontManager fontManager;
 
-    private String title = "";
-    private boolean overlay = false;
+    private String title;
 
     @Setter(AccessLevel.NONE)
     private ArrayList<Button> buttons = new ArrayList<>();
@@ -81,30 +80,33 @@ public class Screen {
         }
     }
 
+    protected void renderBackground() {
+        NVGPaint paint = NVGPaint.calloc();
+        nvgImagePattern(vg, -32, -32, 64, 64, 0f, TextureManager.background, 1f, paint);
+
+        nvgBeginPath(vg);
+        nvgRect(vg, 0, 0, width, height);
+        nvgFillPaint(vg, paint);
+        nvgFill(vg);
+
+        paint.free();
+    }
+
     protected void renderOverlay() {
-        if(overlay) {
-            try (NVGColor color = NVGColor.calloc()) {
-                color.r(0f).g(0f).b(0f).a(0.5f); // black with 50% alpha
-                nvgBeginPath(vg);
-                nvgRect(vg, 0, 0, width, height);
-                nvgFillColor(vg, color);
-                nvgFill(vg);
-            }
+        try (NVGColor color = NVGColor.calloc()) {
+            color.r(0f).g(0f).b(0f).a(0.5f); // black with 50% alpha
+            nvgBeginPath(vg);
+            nvgRect(vg, 0, 0, width, height);
+            nvgFillColor(vg, color);
+            nvgFill(vg);
         }
     }
 
     public void render() {
-        // Start NanoVG
-        nvgBeginFrame(vg, width, height, BlockGame.getInstance().getClientWindow().getDevicePixelRatio());
-
-        renderOverlay();
         renderButtons();
         fontManager.color(1f, 1f, 1f, 1f)
                 .center()
                 .text(title, 20f, width / 2f, 60f);
-
-        // End NanoVG
-        nvgEndFrame(vg);
     }
 
     public void close() {

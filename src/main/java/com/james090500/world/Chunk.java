@@ -7,6 +7,7 @@ import com.james090500.blocks.GrassBlock;
 import com.james090500.renderer.world.ChunkRenderer;
 import com.james090500.structure.Tree;
 import com.james090500.utils.OpenSimplexNoise;
+import com.james090500.utils.ThreadUtil;
 import lombok.Getter;
 
 import java.util.List;
@@ -32,7 +33,7 @@ public class Chunk {
 
         this.chunkData = new byte[chunkSize * chunkSize * chunkHeight];
 
-        Thread worldGen = new Thread(() -> {
+        ThreadUtil.getQueue().submit(() -> {
             //Generate Terrain
             this.generateTerrain();
 
@@ -48,7 +49,6 @@ public class Chunk {
 
             this.generated = true;
         });
-        worldGen.start();
     }
 
     /**

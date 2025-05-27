@@ -32,7 +32,5 @@ public class RenderManager {
         for(LayeredRenderer renderer : transparentQueue) {
             renderer.renderTransparent();
         }
-
-        BlockGame.getInstance().getWorld().render();
     }
 }

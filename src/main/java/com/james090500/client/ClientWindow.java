@@ -2,7 +2,9 @@ package com.james090500.client;
 
 import com.james090500.BlockGame;
 import lombok.Getter;
+import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWErrorCallback;
+import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.system.MemoryStack;
 
@@ -42,6 +44,7 @@ public class ClientWindow {
 
         glfwDefaultWindowHints(); // Loads GLFW's default window settings
         glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE); // Sets window to be visible
+        GLFW.glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE); //Allows resizing the window
 
         // Set OpenGL version
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -53,7 +56,6 @@ public class ClientWindow {
         if ( this.window == NULL ) throw new RuntimeException("Failed to create window");
 
         glfwMakeContextCurrent(this.window); // glfwSwapInterval needs a context on the calling thread, otherwise will cause NO_CURRENT_CONTEXT error
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); // take the mouse
         GL.createCapabilities(); // Will let lwjgl know we want to use this context as the context to draw with
 
         // Viewport
@@ -70,6 +72,11 @@ public class ClientWindow {
 
         // Make the window visible
         glfwShowWindow(window);
+
+        //Center the window
+        GLFWVidMode vidMode = GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor());
+        System.out.println(vidMode.width());
+        GLFW.glfwSetWindowPos(window, (vidMode.width() - width) / 2, (vidMode.height() - height) / 2);
 
         // Bring to front
         glfwFocusWindow(window);
@@ -91,7 +98,7 @@ public class ClientWindow {
         glfwGetCursorPos(window, mouseX, mouseY);
 
         //Skip if paused
-        if(BlockGame.getInstance().getConfig().isPaused())
+        if(BlockGame.getInstance().getConfig().isPaused() || !BlockGame.getInstance().isInMenu())
             return;
 
         Camera camera = BlockGame.getInstance().getCamera();

@@ -54,9 +54,11 @@ public class FontManager {
     }
 
     public FontManager text(String text, float size, float x, float y) {
-        nvgFontSize(vg, size);
-        nvgFontFace(vg, "default");
-        nvgText(vg, x, y, text);
+        if(text != null) {
+            nvgFontSize(vg, size);
+            nvgFontFace(vg, "default");
+            nvgText(vg, x, y, text);
+        }
         return this;
     }
 }

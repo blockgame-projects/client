@@ -2,12 +2,15 @@ package com.james090500;
 
 import com.james090500.client.Camera;
 import com.james090500.client.ClientWindow;
+import com.james090500.gui.MainMenu;
 import com.james090500.gui.PauseScreen;
+import com.james090500.gui.Screen;
 import com.james090500.gui.ScreenManager;
 import com.james090500.renderer.RenderManager;
 import com.james090500.utils.ThreadUtil;
 import com.james090500.world.World;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.util.logging.Logger;
 
@@ -20,13 +23,15 @@ public class BlockGame {
 
     @Getter
     private static BlockGame instance;
-    @Getter
     private final Config config = new Config();
     @Getter
     private static final Logger logger = Logger.getLogger("BlockGame");
     private final ClientWindow clientWindow;
     private final Camera camera;
-    private final World world;
+    private World world;
+
+    @Setter
+    private boolean inMenu = false;
 
     public BlockGame() {
         instance = this;
@@ -35,7 +40,9 @@ public class BlockGame {
         clientWindow.create();
 
         camera = new Camera(0, 100, 0);
-        world = new World();
+
+        // Start the Menu
+        ScreenManager.add(new MainMenu());
 
         this.loop(clientWindow);
 
@@ -59,6 +66,11 @@ public class BlockGame {
         ScreenManager.add(new PauseScreen());
         BlockGame.getInstance().getConfig().setPaused(true);
         glfwSetInputMode(clientWindow.getWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    }
+
+    public void exit() {
+        ThreadUtil.shutdown();
+        glfwSetWindowShouldClose(BlockGame.getInstance().getClientWindow().getWindow(), true);
     }
 
     private void loop(ClientWindow clientWindow) {

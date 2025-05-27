@@ -1,7 +1,20 @@
 package com.james090500.gui;
 
+import com.james090500.BlockGame;
+import com.james090500.utils.TextureManager;
+import org.lwjgl.BufferUtils;
+import org.lwjgl.nanovg.NVGPaint;
+
+import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.lwjgl.nanovg.NanoVG.*;
+import static org.lwjgl.nanovg.NanoVG.nvgBeginPath;
+import static org.lwjgl.nanovg.NanoVG.nvgFill;
+import static org.lwjgl.nanovg.NanoVG.nvgFillPaint;
+import static org.lwjgl.nanovg.NanoVG.nvgImagePattern;
+import static org.lwjgl.nanovg.NanoVG.nvgRect;
 
 public class ScreenManager {
 
@@ -24,8 +37,19 @@ public class ScreenManager {
     }
 
     public static void render() {
+        int width = BlockGame.getInstance().getClientWindow().getWidth();
+        int height = BlockGame.getInstance().getClientWindow().getHeight();
+
+        long vg = BlockGame.getInstance().getClientWindow().getVg();
+
         for(Screen screen : activeScreens) {
+            // Start NanoVG
+            nvgBeginFrame(vg, width, height, BlockGame.getInstance().getClientWindow().getDevicePixelRatio());
+
             screen.render();
+
+            // End NanoVG
+            nvgEndFrame(vg);
         }
     }
 }

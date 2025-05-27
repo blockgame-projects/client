@@ -23,7 +23,7 @@ public class World {
 
     @Getter
     private final int worldSeed = (int) Math.floor(Math.random() * 1000000);
-    private final int worldSize = 16;
+    private final int worldSize = 1;
 
     private int lastPlayerX = -9999999;
     private int lastPlayerZ = -9999999;
@@ -97,7 +97,9 @@ public class World {
         Chunk target = this.chunks.get(new ChunkPos(chunkX, chunkZ));
         if (target == null) {
             ChunkPos deferredPos = new ChunkPos(chunkX, chunkZ);
-            deferredBlocks.computeIfAbsent(deferredPos, k -> new ArrayList<>()).add(new BlockPlacement(x, y, z, block));
+            synchronized (deferredBlocks) {
+                deferredBlocks.computeIfAbsent(deferredPos, k -> new ArrayList<>()).add(new BlockPlacement(x, y, z, block));
+            }
         } else {
             target.setBlock(x, y, z, block);
         }

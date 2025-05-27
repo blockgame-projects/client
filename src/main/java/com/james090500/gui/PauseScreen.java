@@ -7,7 +7,6 @@ import static org.lwjgl.glfw.GLFW.glfwSetWindowShouldClose;
 public class PauseScreen extends Screen {
 
     public PauseScreen() {
-        setOverlay(true);
         setTitle("Paused");
 
         addButton(new Button(
@@ -25,7 +24,7 @@ public class PauseScreen extends Screen {
                 400f,
                 300f,
                 40f,
-                () -> glfwSetWindowShouldClose(BlockGame.getInstance().getClientWindow().getWindow(), true))
+                () -> BlockGame.getInstance().exit())
         );
     }
 }
