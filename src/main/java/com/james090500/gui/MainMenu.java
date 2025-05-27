@@ -14,11 +14,23 @@ public class MainMenu extends Screen {
         addButton(new Button(
                 "Start Game",
                 (float) BlockGame.getInstance().getClientWindow().getWidth() / 2 - 150f,
-                100f,
+                150f,
                 300f,
                 40f,
                 () -> {
+                    BlockGame.getInstance().start();
+                    this.close();
+                })
+        );
 
+        addButton(new Button(
+                "Quit Game",
+                (float) BlockGame.getInstance().getClientWindow().getWidth() / 2 - 150f,
+                BlockGame.getInstance().getClientWindow().getHeight() - 60f,
+                300f,
+                40f,
+                () -> {
+                    BlockGame.getInstance().close();
                 })
         );
     }

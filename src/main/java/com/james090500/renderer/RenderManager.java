@@ -16,6 +16,10 @@ public class RenderManager {
         renderQueue.remove(renderer);
     }
 
+    public static void clear() {
+        renderQueue.clear();
+    }
+
     public static void render() {
         List<LayeredRenderer> transparentQueue = new ArrayList<>();
 
@@ -31,6 +35,11 @@ public class RenderManager {
         // Render any transparent items
         for(LayeredRenderer renderer : transparentQueue) {
             renderer.renderTransparent();
+        }
+
+        // If a world is loaded lets render
+        if(BlockGame.getInstance().getWorld() != null) {
+            BlockGame.getInstance().getWorld().render();
         }
     }
 }

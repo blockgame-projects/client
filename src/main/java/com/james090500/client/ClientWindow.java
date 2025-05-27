@@ -75,7 +75,6 @@ public class ClientWindow {
 
         //Center the window
         GLFWVidMode vidMode = GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor());
-        System.out.println(vidMode.width());
         GLFW.glfwSetWindowPos(window, (vidMode.width() - width) / 2, (vidMode.height() - height) / 2);
 
         // Bring to front
@@ -98,7 +97,7 @@ public class ClientWindow {
         glfwGetCursorPos(window, mouseX, mouseY);
 
         //Skip if paused
-        if(BlockGame.getInstance().getConfig().isPaused() || !BlockGame.getInstance().isInMenu())
+        if(BlockGame.getInstance().getConfig().isPaused())
             return;
 
         Camera camera = BlockGame.getInstance().getCamera();

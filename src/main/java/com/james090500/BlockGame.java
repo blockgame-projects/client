@@ -4,13 +4,11 @@ import com.james090500.client.Camera;
 import com.james090500.client.ClientWindow;
 import com.james090500.gui.MainMenu;
 import com.james090500.gui.PauseScreen;
-import com.james090500.gui.Screen;
 import com.james090500.gui.ScreenManager;
 import com.james090500.renderer.RenderManager;
 import com.james090500.utils.ThreadUtil;
 import com.james090500.world.World;
 import lombok.Getter;
-import lombok.Setter;
 
 import java.util.logging.Logger;
 
@@ -21,25 +19,19 @@ import static org.lwjgl.opengl.GL11.*;
 @Getter
 public class BlockGame {
 
-    @Getter
-    private static BlockGame instance;
+    @Getter private static BlockGame instance;
     private final Config config = new Config();
-    @Getter
-    private static final Logger logger = Logger.getLogger("BlockGame");
+    @Getter private static final Logger logger = Logger.getLogger("BlockGame");
     private final ClientWindow clientWindow;
-    private final Camera camera;
-    private World world;
 
-    @Setter
-    private boolean inMenu = false;
+    private Camera camera;
+    private World world;
 
     public BlockGame() {
         instance = this;
 
         clientWindow = new ClientWindow();
         clientWindow.create();
-
-        camera = new Camera(0, 100, 0);
 
         // Start the Menu
         ScreenManager.add(new MainMenu());
@@ -56,19 +48,39 @@ public class BlockGame {
     }
 
     public void unpause() {
-        ScreenManager.closeAll();
+        ScreenManager.clear();
         BlockGame.getInstance().getConfig().setPaused(false);
         glfwSetInputMode(clientWindow.getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     }
 
     public void pause() {
-        ScreenManager.closeAll();
+        ScreenManager.clear();
         ScreenManager.add(new PauseScreen());
         BlockGame.getInstance().getConfig().setPaused(true);
         glfwSetInputMode(clientWindow.getWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     }
 
+    public void start() {
+        this.unpause();
+        this.world = new World();
+        this.camera = new Camera(0, 100, 0);
+    }
+
     public void exit() {
+        ScreenManager.clear();
+        ScreenManager.add(new MainMenu());
+        BlockGame.getInstance().getConfig().setPaused(true);
+
+        ThreadUtil.shutdown();
+        RenderManager.clear();
+
+        this.world = null;
+        this.camera = null;
+
+        glfwSetInputMode(clientWindow.getWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    }
+
+    public void close() {
         ThreadUtil.shutdown();
         glfwSetWindowShouldClose(BlockGame.getInstance().getClientWindow().getWindow(), true);
     }

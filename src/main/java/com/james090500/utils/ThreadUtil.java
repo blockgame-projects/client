@@ -9,16 +9,18 @@ import java.util.concurrent.TimeUnit;
 
 public class ThreadUtil {
 
-    @Getter
-    private static final ExecutorService queue;
+    private static ExecutorService queue;
+
+    public static ExecutorService getQueue() {
+        if(queue == null || queue.isShutdown()) {
+            int cores = Runtime.getRuntime().availableProcessors();
+            queue = Executors.newFixedThreadPool(cores - 1);
+        }
+        return queue;
+    }
 
     @Getter
     private static final ConcurrentLinkedQueue<Runnable> mainQueue = new ConcurrentLinkedQueue<>();
-
-    static {
-        int cores = Runtime.getRuntime().availableProcessors();
-        queue = Executors.newFixedThreadPool(cores - 1);
-    }
 
     public static void runMainQueue() {
         if(!mainQueue.isEmpty()) {

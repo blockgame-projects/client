@@ -19,12 +19,18 @@ public class PauseScreen extends Screen {
         );
 
         addButton(new Button(
-                "Exit Game",
+                "Exit to Menu",
                 (float) BlockGame.getInstance().getClientWindow().getWidth() / 2 - 150f,
                 400f,
                 300f,
                 40f,
                 () -> BlockGame.getInstance().exit())
         );
+    }
+
+    @Override
+    public void render() {
+        this.renderOverlay();
+        super.render();
     }
 }

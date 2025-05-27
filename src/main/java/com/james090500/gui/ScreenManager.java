@@ -1,26 +1,17 @@
 package com.james090500.gui;
 
 import com.james090500.BlockGame;
-import com.james090500.utils.TextureManager;
-import org.lwjgl.BufferUtils;
-import org.lwjgl.nanovg.NVGPaint;
 
-import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.lwjgl.nanovg.NanoVG.*;
-import static org.lwjgl.nanovg.NanoVG.nvgBeginPath;
-import static org.lwjgl.nanovg.NanoVG.nvgFill;
-import static org.lwjgl.nanovg.NanoVG.nvgFillPaint;
-import static org.lwjgl.nanovg.NanoVG.nvgImagePattern;
-import static org.lwjgl.nanovg.NanoVG.nvgRect;
 
 public class ScreenManager {
 
     private static final List<Screen> activeScreens = new ArrayList<>();
 
-    public static void closeAll() {
+    public static void clear() {
         activeScreens.clear();
     }
 

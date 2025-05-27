@@ -23,10 +23,11 @@ public class World {
 
     @Getter
     private final int worldSeed = (int) Math.floor(Math.random() * 1000000);
-    private final int worldSize = 1;
+    private final int worldSize = 16;
+    private boolean allChunksGenerated = false;
 
-    private int lastPlayerX = -9999999;
-    private int lastPlayerZ = -9999999;
+    private int lastPlayerX = 0;
+    private int lastPlayerZ = 0;
 
     /**
      * Gets a block in the world
@@ -113,8 +114,8 @@ public class World {
         int playerPosX = (int) Math.floor(playerPos.x / 16);
         int playerPosZ = (int) Math.floor(playerPos.z / 16);
 
-        // Dont loop if we haven't moved
-        if(playerPosX == lastPlayerX && playerPosZ == lastPlayerZ) {
+        // Dont loop if we haven't moved and we have chunks loaded
+        if(playerPosX == lastPlayerX && playerPosZ == lastPlayerZ && allChunksGenerated) {
             return;
         }
 
@@ -161,6 +162,7 @@ public class World {
         }
 
         // Mesh and render unrendered chunks in same distance order
+        allChunksGenerated = true;
         for (ChunkOffset offset : offsets) {
             int chunkX = playerPosX + offset.dx;
             int chunkZ = playerPosZ + offset.dz;
@@ -174,6 +176,8 @@ public class World {
                 chunk.getChunkRenderer().meshTransparent();   // then transparent
                 chunk.rendered = true;
                 RenderManager.add(chunk.getChunkRenderer());
+            } else {
+                allChunksGenerated = false;
             }
         }
 
