@@ -2,6 +2,7 @@ package com.james090500;
 
 import com.james090500.client.Camera;
 import com.james090500.client.ClientWindow;
+import com.james090500.client.LocalPlayer;
 import com.james090500.gui.MainMenu;
 import com.james090500.gui.PauseScreen;
 import com.james090500.gui.ScreenManager;
@@ -24,6 +25,7 @@ public class BlockGame {
     @Getter private static final Logger logger = Logger.getLogger("BlockGame");
     private final ClientWindow clientWindow;
 
+    private LocalPlayer localPlayer;
     private Camera camera;
     private World world;
 
@@ -62,6 +64,7 @@ public class BlockGame {
 
     public void start() {
         this.unpause();
+        this.localPlayer = new LocalPlayer();
         this.world = new World();
         this.camera = new Camera(0, 100, 0);
     }
@@ -93,8 +96,14 @@ public class BlockGame {
         glClearColor(0.529f, 0.808f, 0.922f, 1.0f);
 
         // Run the rendering loop until the user has attempted to close
-        // the window or has pressed the ESCAPE key.
+        double currentFrame = glfwGetTime();
+        double lastFrame = currentFrame;
+        double deltaTime;
         while ( !glfwWindowShouldClose(clientWindow.getWindow()) ) {
+            currentFrame = glfwGetTime();
+            deltaTime = currentFrame - lastFrame;
+            lastFrame = currentFrame;
+
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear the framebuffer
 
             // Blending
@@ -109,10 +118,15 @@ public class BlockGame {
             glCullFace(GL_BACK); // Cull back faces (i.e. only render front faces)
 
             // Inputs etc
-            clientWindow.loop();
+            clientWindow.poll();
 
             // Render all pending objects
             RenderManager.render();
+
+            if(!BlockGame.getInstance().getConfig().isPaused()) {
+                this.world.render();
+                this.localPlayer.render(deltaTime);
+            }
 
             //Run a single main thread queue
             ThreadUtil.runMainQueue();

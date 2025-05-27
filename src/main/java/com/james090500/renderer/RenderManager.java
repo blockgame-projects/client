@@ -36,10 +36,5 @@ public class RenderManager {
         for(LayeredRenderer renderer : transparentQueue) {
             renderer.renderTransparent();
         }
-
-        // If a world is loaded lets render
-        if(BlockGame.getInstance().getWorld() != null) {
-            BlockGame.getInstance().getWorld().render();
-        }
     }
 }

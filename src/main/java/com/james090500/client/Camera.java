@@ -1,5 +1,7 @@
 package com.james090500.client;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
@@ -11,18 +13,38 @@ public class Camera {
     private float near = 0.1f;
     private float far = 1000f;
 
+    @Getter Matrix4f projectionMatrix;
+
     public Camera(float x, float y, float z) {
         this.x = x;
         this.y = y;
         this.z = z;
         this.pitch = 0;
         this.yaw = -90;
+
+        this.updateProjectionMatrix();
     }
 
-    public void move(float dx, float dy, float dz) {
-        x += dx;
-        y += dy;
-        z += dz;
+    public void updateProjectionMatrix() {
+        this.projectionMatrix = new Matrix4f().perspective(
+                (float) Math.toRadians(fov),
+                aspect,
+                near,
+                far);
+    }
+
+    public void setPosition(int axis, float value) {
+        switch(axis) {
+            case 0:
+                x = value;
+                break;
+            case 1:
+                y = value;
+                break;
+            case 2:
+                z = value;
+                break;
+        }
     }
 
         public float[] getDirection() {
@@ -43,15 +65,6 @@ public class Camera {
         Vector3f up = new Vector3f(0, 1, 0);
 
         return new Matrix4f().lookAt(position, target, up);
-    }
-
-    public Matrix4f getProjectionMatrix() {
-        return new Matrix4f().perspective(
-                (float) Math.toRadians(fov),
-                aspect,
-                near,
-                far
-        );
     }
 
     public Vector3f getPosition() {

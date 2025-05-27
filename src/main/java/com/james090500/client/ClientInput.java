@@ -3,18 +3,22 @@ package com.james090500.client;
 import com.james090500.BlockGame;
 import com.james090500.gui.Screen;
 import com.james090500.gui.ScreenManager;
+import lombok.Getter;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
-import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT;
-import static org.lwjgl.glfw.GLFW.GLFW_PRESS;
+import static org.lwjgl.glfw.GLFW.*;
 
 public class ClientInput {
 
     private boolean firstMouse = true;
     private double lastMouseX;
     private double lastMouseY;
+
+    @Getter
+    HashMap<Integer, Boolean> keys = new HashMap<>();
 
     public void mouseMovement(long w, double xpos, double ypos) {
         //Skip if paused
@@ -45,11 +49,15 @@ public class ClientInput {
         }
     }
 
-
     public void leftClick() {
         List<Screen> screens = new ArrayList<>(ScreenManager.active());
         for (Screen screen : screens) {
             screen.click();
         }
+    }
+
+    public void keyPressed(long window, int key, int scancode, int action, int mods) {
+        keys.put(key, action > GLFW_RELEASE);
+
     }
 }

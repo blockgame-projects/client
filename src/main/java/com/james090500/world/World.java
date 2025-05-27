@@ -13,6 +13,21 @@ public class World {
     private final HashMap<ChunkPos, Chunk> chunks = new HashMap<>();
     private final Map<ChunkPos, List<BlockPlacement>> deferredBlocks = new HashMap<>();
 
+    public boolean isChunkLoaded() {
+        Vector3f playerPos = BlockGame.getInstance().getCamera().getPosition();
+        int playerPosX = (int) Math.floor(playerPos.x / 16);
+        int playerPosZ = (int) Math.floor(playerPos.z / 16);
+
+        ChunkPos chunkPos = new ChunkPos(playerPosX, playerPosZ);
+
+        if(this.chunks.containsKey(chunkPos)) {
+            Chunk chunk = this.chunks.get(chunkPos);
+            return chunk.generated;
+        }
+
+        return false;
+    }
+
     record ChunkPos(int x, int y) { }
     record BlockPlacement(int x, int y, int z, byte blockId) {}
     record ChunkOffset(int dx, int dz, int distSq) {
