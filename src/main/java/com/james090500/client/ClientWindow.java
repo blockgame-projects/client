@@ -60,6 +60,7 @@ public class ClientWindow {
         glfwSetFramebufferSizeCallback(window, (win, width, height) -> {
             glViewport(0, 0, width, height);
             this.devicePixelRatio = (float) width / this.width;
+            BlockGame.getInstance().getCamera().setAspectRatio((float) width / height);
             BlockGame.getInstance().getCamera().updateProjectionMatrix();
         });
 

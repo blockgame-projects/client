@@ -41,6 +41,8 @@ public class ClientInput {
         camera.yaw += (float) (dx * sensitivity);
         camera.pitch += (float) (dy * sensitivity);
         camera.pitch = Math.max(-89f, Math.min(89f, camera.pitch));
+
+        camera.updateFrustum();
     }
 
     public void mouseClicked(long win, int button, int action, int mods) {

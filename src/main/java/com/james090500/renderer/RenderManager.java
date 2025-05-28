@@ -29,12 +29,16 @@ public class RenderManager {
                 transparentQueue.add((LayeredRenderer) renderer);
             }
 
-            renderer.render();
+            if (BlockGame.getInstance().getCamera().insideFrustum(renderer.getPosition(), renderer.getBoundingBox())) {
+                renderer.render();
+            }
         }
 
         // Render any transparent items
         for(LayeredRenderer renderer : transparentQueue) {
-            renderer.renderTransparent();
+            if (BlockGame.getInstance().getCamera().insideFrustum(renderer.getPosition(), renderer.getBoundingBox())) {
+                renderer.renderTransparent();
+            }
         }
     }
 }

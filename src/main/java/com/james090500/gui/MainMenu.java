@@ -50,10 +50,10 @@ public class MainMenu extends Screen {
         int imgHeight = h.get(0);
 
         NVGPaint paint = NVGPaint.calloc();
-        nvgImagePattern(this.vg, (this.width - imgWidth) / 2, 0f, imgWidth, imgHeight, 0f, TextureManager.logo, 1f, paint); // alpha = 1.0
+        nvgImagePattern(this.vg, (float) (this.width - imgWidth) / 2, 0f, imgWidth, imgHeight, 0f, TextureManager.logo, 1f, paint); // alpha = 1.0
 
         nvgBeginPath(this.vg);
-        nvgRect(this.vg, (this.width - imgWidth) / 2, 0f, imgWidth, imgHeight); // or custom width/height
+        nvgRect(this.vg, (float) (this.width - imgWidth) / 2, 0f, imgWidth, imgHeight); // or custom width/height
         nvgFillPaint(this.vg, paint);
         nvgFill(this.vg);
 

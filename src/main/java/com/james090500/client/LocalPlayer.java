@@ -197,7 +197,7 @@ public class LocalPlayer {
         return false;
     }
 
-    public void render(double delta) {
+    public void update(double delta) {
         this.updateMovement(delta);
     }
 

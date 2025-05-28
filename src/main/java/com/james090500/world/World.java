@@ -13,6 +13,22 @@ public class World {
     private final HashMap<ChunkPos, Chunk> chunks = new HashMap<>();
     private final Map<ChunkPos, List<BlockPlacement>> deferredBlocks = new HashMap<>();
 
+    record ChunkPos(int x, int y) { }
+    record BlockPlacement(int x, int y, int z, byte blockId) {}
+    record ChunkOffset(int dx, int dz, int distSq) {
+        public ChunkOffset(int dx, int dz) {
+            this(dx, dz, dx * dx + dz * dz);
+        }
+    }
+
+    @Getter
+    private final int worldSeed = (int) Math.floor(Math.random() * 1000000);
+    private final int worldSize = 12;
+    private boolean allChunksGenerated = false;
+
+    private int lastPlayerX = 0;
+    private int lastPlayerZ = 0;
+
     public boolean isChunkLoaded() {
         Vector3f playerPos = BlockGame.getInstance().getCamera().getPosition();
         int playerPosX = (int) Math.floor(playerPos.x / 16);
@@ -27,22 +43,6 @@ public class World {
 
         return false;
     }
-
-    record ChunkPos(int x, int y) { }
-    record BlockPlacement(int x, int y, int z, byte blockId) {}
-    record ChunkOffset(int dx, int dz, int distSq) {
-        public ChunkOffset(int dx, int dz) {
-            this(dx, dz, dx * dx + dz * dz);
-        }
-    }
-
-    @Getter
-    private final int worldSeed = (int) Math.floor(Math.random() * 1000000);
-    private final int worldSize = 16;
-    private boolean allChunksGenerated = false;
-
-    private int lastPlayerX = 0;
-    private int lastPlayerZ = 0;
 
     /**
      * Gets a block in the world
@@ -122,9 +122,9 @@ public class World {
     }
 
     /**
-     * Render the world. This also loads and remove chunks as needed
+     * update the world. This also loads and remove chunks as needed
      */
-    public void render() {
+    public void update() {
         Vector3f playerPos = BlockGame.getInstance().getCamera().getPosition();
         int playerPosX = (int) Math.floor(playerPos.x / 16);
         int playerPosZ = (int) Math.floor(playerPos.z / 16);

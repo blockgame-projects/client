@@ -1,7 +1,9 @@
 package com.james090500.client;
 
+import com.james090500.BlockGame;
 import lombok.Getter;
 import lombok.Setter;
+import org.joml.FrustumIntersection;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
@@ -9,11 +11,14 @@ public class Camera {
     public float x, y, z;
     public float pitch, yaw;
     private float fov = 70f;
-    private float aspect = 800f / 600f;
+    private float aspect = 1f;
     private float near = 0.1f;
     private float far = 1000f;
 
     @Getter Matrix4f projectionMatrix;
+
+    private final Matrix4f projViewMatrix = new Matrix4f();
+    private final FrustumIntersection frustumIntersection = new FrustumIntersection();
 
     public Camera(float x, float y, float z) {
         this.x = x;
@@ -22,6 +27,7 @@ public class Camera {
         this.pitch = 0;
         this.yaw = -90;
 
+        this.setAspectRatio((float) BlockGame.getInstance().getClientWindow().getWidth() / BlockGame.getInstance().getClientWindow().getHeight());
         this.updateProjectionMatrix();
     }
 
@@ -69,6 +75,25 @@ public class Camera {
 
     public Vector3f getPosition() {
         return new Vector3f(x, y, z);
+    }
+
+    /**
+     * Update the current Frustum view
+     */
+    public void updateFrustum() {
+        projViewMatrix.set(getProjectionMatrix());
+        projViewMatrix.mul(getViewMatrix());
+        frustumIntersection.set(projViewMatrix);
+    }
+
+    /**
+     * Check if inside the Fustrum
+     * @param min
+     * @param max
+     * @return
+     */
+    public boolean insideFrustum(Vector3f min, Vector3f max) {
+        return frustumIntersection.testAab(min, max);
     }
 
     public void setAspectRatio(float aspect) {

@@ -10,6 +10,7 @@ import com.james090500.utils.ThreadUtil;
 import com.james090500.world.Chunk;
 import com.james090500.world.World;
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -184,6 +185,16 @@ public class ChunkRenderer implements LayeredRenderer {
 
         // Unbind VAO (good practice)
         glBindVertexArray(0);
+    }
+
+    @Override
+    public Vector3f getPosition() {
+        return new Vector3f(this.chunk.chunkX * this.chunk.chunkSize, 0, this.chunk.chunkZ * this.chunk.chunkSize);
+    }
+
+    @Override
+    public Vector3f getBoundingBox() {
+        return new Vector3f((this.chunk.chunkX * this.chunk.chunkSize) + this.chunk.chunkSize, this.chunk.chunkHeight, (this.chunk.chunkZ * this.chunk.chunkSize) + this.chunk.chunkSize);
     }
 
     @Override

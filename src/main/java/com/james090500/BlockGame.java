@@ -124,8 +124,8 @@ public class BlockGame {
             RenderManager.render();
 
             if(!BlockGame.getInstance().getConfig().isPaused()) {
-                this.world.render();
-                this.localPlayer.render(deltaTime);
+                this.world.update();
+                this.localPlayer.update(deltaTime);
             }
 
             //Run a single main thread queue
