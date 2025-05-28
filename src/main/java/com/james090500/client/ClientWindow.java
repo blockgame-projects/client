@@ -1,6 +1,8 @@
 package com.james090500.client;
 
 import com.james090500.BlockGame;
+import com.james090500.gui.Screen;
+import com.james090500.gui.ScreenManager;
 import lombok.Getter;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWErrorCallback;
@@ -19,9 +21,13 @@ public class ClientWindow {
 
     private final String title = "BlockGame";
     @Getter
-    private final int width = 854;
+    private int windowWidth = 854;
     @Getter
-    private final int height = 480;
+    private int windowHeight = 480;
+    @Getter
+    private int framebufferWidth = 854;
+    @Getter
+    private int framebufferHeight = 480;
     @Getter
     private float devicePixelRatio = 1f;
 
@@ -51,26 +57,41 @@ public class ClientWindow {
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
 
-        this.window = glfwCreateWindow(width, height, title, NULL, NULL); // Does the actual window creation
+        this.window = glfwCreateWindow(windowWidth, windowHeight, title, NULL, NULL); // Does the actual window creation
         if ( this.window == NULL ) throw new RuntimeException("Failed to create window");
 
         glfwMakeContextCurrent(this.window); // glfwSwapInterval needs a context on the calling thread, otherwise will cause NO_CURRENT_CONTEXT error
         GL.createCapabilities(); // Will let lwjgl know we want to use this context as the context to draw with
 
-        glfwSetFramebufferSizeCallback(window, (win, width, height) -> {
-            glViewport(0, 0, width, height);
-            this.devicePixelRatio = (float) width / this.width;
-            BlockGame.getInstance().getCamera().setAspectRatio((float) width / height);
-            BlockGame.getInstance().getCamera().updateProjectionMatrix();
+        glfwSetWindowSizeCallback(window, (win, w, h) -> {
+            this.windowWidth = w;
+            this.windowHeight = h;
+        });
+
+        glfwSetFramebufferSizeCallback(window, (win, fbw, fbh) -> {
+            this.framebufferWidth = fbw;
+            this.framebufferHeight = fbh;
+
+            glViewport(0, 0, fbw, fbh);
+
+            // Update aspect ratio with framebuffer for accurate rendering
+            if (BlockGame.getInstance().getCamera() != null) {
+                BlockGame.getInstance().getCamera().setAspectRatio((float) fbw / fbh);
+                BlockGame.getInstance().getCamera().updateProjectionMatrix();
+            }
+
+            ScreenManager.active().forEach(Screen::resize);
         });
 
         // Viewport
         try (MemoryStack stack = MemoryStack.stackPush()) {
-            IntBuffer framebufferWidth = stack.mallocInt(1);
-            IntBuffer framebufferHeight = stack.mallocInt(1);
-            glfwGetFramebufferSize(window, framebufferWidth, framebufferHeight);
-            glViewport(0, 0, framebufferWidth.get(0), framebufferHeight.get(0));
-            devicePixelRatio = framebufferWidth.get(0) / width;
+            IntBuffer winWidth = stack.mallocInt(1);
+            IntBuffer winHeight = stack.mallocInt(1);
+            glfwGetFramebufferSize(window, winWidth, winHeight);
+            glViewport(0, 0, winWidth.get(0), winHeight.get(0));
+
+            this.windowWidth = winWidth.get(0);
+            this.windowHeight = winHeight.get(0);
         }
 
         // Enable v-sync
@@ -81,7 +102,7 @@ public class ClientWindow {
 
         //Center the window
         GLFWVidMode vidMode = GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor());
-        GLFW.glfwSetWindowPos(window, (vidMode.width() - width) / 2, (vidMode.height() - height) / 2);
+        GLFW.glfwSetWindowPos(window, (vidMode.width() - windowWidth) / 2, (vidMode.height() - windowHeight) / 2);
 
         // Bring to front
         glfwFocusWindow(window);

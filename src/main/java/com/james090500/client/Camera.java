@@ -27,7 +27,7 @@ public class Camera {
         this.pitch = 0;
         this.yaw = -90;
 
-        this.setAspectRatio((float) BlockGame.getInstance().getClientWindow().getWidth() / BlockGame.getInstance().getClientWindow().getHeight());
+        this.setAspectRatio((float) BlockGame.getInstance().getClientWindow().getFramebufferWidth() / BlockGame.getInstance().getClientWindow().getFramebufferHeight());
         this.updateProjectionMatrix();
     }
 

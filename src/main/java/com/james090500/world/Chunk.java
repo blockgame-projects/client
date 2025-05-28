@@ -47,6 +47,13 @@ public class Chunk {
             //Generate decoration
             this.generateTrees();
 
+            //Spawn Tower
+            if(chunkX == 0 && chunkZ == 0) {
+                for(int i = 0; i < 100; i++) {
+                    this.setBlock(0, i, 0, Blocks.stoneBlock.getId());
+                }
+            }
+
             this.generated = true;
         });
     }

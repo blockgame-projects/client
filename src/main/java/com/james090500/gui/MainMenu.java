@@ -13,7 +13,7 @@ public class MainMenu extends Screen {
     public MainMenu() {
         addButton(new Button(
                 "Start Game",
-                (float) BlockGame.getInstance().getClientWindow().getWidth() / 2 - 150f,
+                (float) BlockGame.getInstance().getClientWindow().getFramebufferWidth() / 2 - 150f,
                 150f,
                 300f,
                 40f,
@@ -25,8 +25,8 @@ public class MainMenu extends Screen {
 
         addButton(new Button(
                 "Quit Game",
-                (float) BlockGame.getInstance().getClientWindow().getWidth() / 2 - 150f,
-                BlockGame.getInstance().getClientWindow().getHeight() - 60f,
+                (float) BlockGame.getInstance().getClientWindow().getFramebufferWidth() / 2 - 150f,
+                BlockGame.getInstance().getClientWindow().getFramebufferHeight() - 60f,
                 300f,
                 40f,
                 () -> {

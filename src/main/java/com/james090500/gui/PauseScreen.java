@@ -11,7 +11,7 @@ public class PauseScreen extends Screen {
 
         addButton(new Button(
                 "Resume Game",
-                (float) BlockGame.getInstance().getClientWindow().getWidth() / 2 - 150f,
+                (float) BlockGame.getInstance().getClientWindow().getFramebufferWidth() / 2 - 150f,
                 100f,
                 300f,
                 40f,
@@ -20,7 +20,7 @@ public class PauseScreen extends Screen {
 
         addButton(new Button(
                 "Exit to Menu",
-                (float) BlockGame.getInstance().getClientWindow().getWidth() / 2 - 150f,
+                (float) BlockGame.getInstance().getClientWindow().getFramebufferHeight() / 2 - 150f,
                 400f,
                 300f,
                 40f,

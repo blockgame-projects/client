@@ -15,8 +15,8 @@ import static org.lwjgl.nanovg.NanoVG.*;
 @Setter
 public class Screen {
 
-    protected final int width;
-    protected final int height;
+    protected int width;
+    protected int height;
 
     protected long vg;
     private FontManager fontManager;
@@ -28,8 +28,8 @@ public class Screen {
     protected record Button(String text, float x, float y, float width, float height, Runnable onclick) {}
 
     public Screen() {
-        this.width = BlockGame.getInstance().getClientWindow().getWidth();
-        this.height = BlockGame.getInstance().getClientWindow().getHeight();
+        this.width = BlockGame.getInstance().getClientWindow().getFramebufferWidth();
+        this.height = BlockGame.getInstance().getClientWindow().getFramebufferHeight();
 
         this.vg = BlockGame.getInstance().getClientWindow().getVg();
 
@@ -41,14 +41,10 @@ public class Screen {
     }
 
     public void click() {
-        double mouseX = BlockGame.getInstance().getClientWindow().getMouseX();
-        double mouseY = BlockGame.getInstance().getClientWindow().getMouseY();
-
         for(Button button : buttons) {
-            boolean isHovered = mouseX >= button.x && mouseX <= button.x + button.width &&
-                    mouseY >= button.y && mouseY <= button.y + button.height;
+            boolean hovered = isHovered(button.x, button.y, button.width, button.height);
 
-            if(isHovered) {
+            if(hovered) {
                 button.onclick.run();
                 break;
             }
@@ -56,15 +52,11 @@ public class Screen {
     }
 
     protected void renderButtons() {
-        double mouseX = BlockGame.getInstance().getClientWindow().getMouseX();
-        double mouseY = BlockGame.getInstance().getClientWindow().getMouseY();
-
         for(Button button : buttons) {
-            boolean isHovered = mouseX >= button.x && mouseX <= button.x + button.width &&
-                    mouseY >= button.y && mouseY <= button.y + button.height;
+            boolean hovered = isHovered(button.x, button.y, button.width, button.height);
 
             NVGPaint paint = NVGPaint.calloc();
-            nvgImagePattern(vg, button.x, button.y, button.width, button.height, 0f, isHovered ? TextureManager.button_active : TextureManager.button, 1f, paint);
+            nvgImagePattern(vg, button.x, button.y, button.width, button.height, 0f, hovered ? TextureManager.button_active : TextureManager.button, 1f, paint);
 
             nvgBeginPath(vg);
             nvgRect(vg, button.x, button.y, button.width, button.height);
@@ -102,11 +94,61 @@ public class Screen {
         }
     }
 
+    private boolean isHovered(float x, float y, float width, float height) {
+        // Get logical mouse position (e.g., scaled down from framebuffer size)
+        double mouseX = BlockGame.getInstance().getClientWindow().getMouseX();
+        double mouseY = BlockGame.getInstance().getClientWindow().getMouseY();
+
+        // Get window and framebuffer sizes
+        int windowWidth = BlockGame.getInstance().getClientWindow().getWindowWidth();
+        int windowHeight = BlockGame.getInstance().getClientWindow().getWindowHeight();
+        int framebufferWidth = BlockGame.getInstance().getClientWindow().getFramebufferWidth();
+        int framebufferHeight = BlockGame.getInstance().getClientWindow().getFramebufferHeight();
+
+        // Calculate scale factor (for high-DPI)
+        float scaleX = (float) framebufferWidth / windowWidth;
+        float scaleY = (float) framebufferHeight / windowHeight;
+
+        // Scale mouse coordinates back to logical coordinates
+        float scaledMouseX = (float) mouseX / scaleX;
+        float scaledMouseY = (float) mouseY / scaleY;
+
+        // Flip Y because OpenGL's origin is bottom-left
+        float flippedMouseY = windowHeight - scaledMouseY;
+
+        return scaledMouseX >= x && scaledMouseX <= x + width &&
+                flippedMouseY >= y && flippedMouseY <= y + height;
+    }
+
     public void render() {
         renderButtons();
         fontManager.color(1f, 1f, 1f, 1f)
                 .center()
                 .text(title, 20f, width / 2f, 60f);
+    }
+
+    public void resize() {
+        float oldWidth = this.width;
+        float oldHeight = this.height;
+        this.width = BlockGame.getInstance().getClientWindow().getFramebufferWidth();
+        this.height = BlockGame.getInstance().getClientWindow().getFramebufferHeight();
+
+        float scaleX = (this.width / oldWidth);
+        float scaleY = (this.height / oldHeight);
+
+        ArrayList<Button> newButtons = new ArrayList<>();
+        for(Button button : this.buttons) {
+            System.out.println(scaleX);
+            newButtons.add(new Button(
+                    button.text,
+                    button.x * scaleX,
+                    button.y * scaleY,
+                    button.width * scaleX,
+                    button.height * scaleY,
+                    button.onclick
+            ));
+        }
+        this.buttons = newButtons;
     }
 
     public void close() {

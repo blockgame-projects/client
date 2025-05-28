@@ -28,8 +28,8 @@ public class ScreenManager {
     }
 
     public static void render() {
-        int width = BlockGame.getInstance().getClientWindow().getWidth();
-        int height = BlockGame.getInstance().getClientWindow().getHeight();
+        int width = BlockGame.getInstance().getClientWindow().getFramebufferWidth();
+        int height = BlockGame.getInstance().getClientWindow().getFramebufferHeight();
 
         long vg = BlockGame.getInstance().getClientWindow().getVg();
 
