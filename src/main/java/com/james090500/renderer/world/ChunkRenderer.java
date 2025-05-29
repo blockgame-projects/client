@@ -196,7 +196,7 @@ public class ChunkRenderer implements LayeredRenderer {
         Matrix4f model = new Matrix4f().translate(chunk.chunkX * chunk.chunkSize, 0, chunk.chunkZ * chunk.chunkSize);
 
         ShaderManager.chunk.use();
-        ShaderManager.chunk.setUniformMat4("model", model);
+        ShaderManager.chunk.setMat4("model", model);
 
         glBindTexture(GL_TEXTURE_2D, TextureManager.terrainTexture);
 
@@ -209,10 +209,10 @@ public class ChunkRenderer implements LayeredRenderer {
 
     @Override
     public void renderTransparent() {
-        Matrix4f model = new Matrix4f().translate(chunk.chunkX * chunk.chunkSize, 0, chunk.chunkZ * chunk.chunkSize);
+        Matrix4f model = new Matrix4f().translate(this.getPosition());
 
         ShaderManager.chunk.use();
-        ShaderManager.chunk.setUniformMat4("model", model);
+        ShaderManager.chunk.setMat4("model", model);
 
         glBindTexture(GL_TEXTURE_2D, TextureManager.terrainTexture);
 

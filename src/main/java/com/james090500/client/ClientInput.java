@@ -18,6 +18,8 @@ public class ClientInput {
     private double lastMouseY;
 
     @Getter
+    HashMap<Integer, Boolean> mouse = new HashMap<>();
+    @Getter
     HashMap<Integer, Boolean> keys = new HashMap<>();
 
     public void mouseMovement(long w, double xpos, double ypos) {
@@ -46,7 +48,9 @@ public class ClientInput {
     }
 
     public void mouseClicked(long win, int button, int action, int mods) {
-        if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+        mouse.put(button, action > GLFW_RELEASE);
+
+        if (mouse.getOrDefault(GLFW_MOUSE_BUTTON_LEFT, false)) {
             this.leftClick();
         }
     }

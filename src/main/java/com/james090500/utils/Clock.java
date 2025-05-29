@@ -1,5 +1,7 @@
 package com.james090500.utils;
 
+import static org.lwjgl.glfw.GLFW.glfwGetTime;
+
 public class Clock {
     private double startTime;
 
@@ -8,11 +10,11 @@ public class Clock {
     }
 
     public void reset() {
-        startTime = org.lwjgl.glfw.GLFW.glfwGetTime();
+        startTime = glfwGetTime();
     }
 
     public double getElapsedTime() {
-        return org.lwjgl.glfw.GLFW.glfwGetTime() - startTime;
+        return glfwGetTime() - startTime;
     }
 
     public boolean hasElapsed(double seconds) {

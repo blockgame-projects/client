@@ -2,6 +2,7 @@ package com.james090500.renderer.shaders;
 
 import com.james090500.BlockGame;
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 import org.lwjgl.system.MemoryStack;
 
 import java.nio.FloatBuffer;
@@ -43,23 +44,36 @@ public class Shader {
         glDeleteShader(fragmentShader);
     }
 
-    public void setUniformMat4(String name, Matrix4f matrix) {
+    private int getUniformLocation(String name) {
         int location = glGetUniformLocation(programId, name);
+        if (location == -1) {
+            System.err.println("Uniform '" + name + "' not found in shader!");
+        }
+        return location;
+    }
+
+    public void setVec3(String name, Vector3f vec) {
+        int location = getUniformLocation(name);
+        if (location != -1) {
+            glUniform3f(location, vec.x, vec.y, vec.z);
+        }
+    }
+
+    public void setMat4(String name, Matrix4f matrix) {
+        int location = getUniformLocation(name);
         if (location != -1) {
             try (MemoryStack stack = MemoryStack.stackPush()) {
                 FloatBuffer buffer = stack.mallocFloat(16);
                 matrix.get(buffer);
                 glUniformMatrix4fv(location, false, buffer);
             }
-        } else {
-            System.err.println("Uniform '" + name + "' not found in shader!");
         }
     }
 
     public void use() {
         glUseProgram(programId);
-        setUniformMat4("view", BlockGame.getInstance().getCamera().getViewMatrix());
-        setUniformMat4("projection", BlockGame.getInstance().getCamera().getProjectionMatrix());
+        setMat4("view", BlockGame.getInstance().getCamera().getViewMatrix());
+        setMat4("projection", BlockGame.getInstance().getCamera().getProjectionMatrix());
     }
 
     public void stop() {

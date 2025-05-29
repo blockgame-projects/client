@@ -14,10 +14,10 @@ import java.util.List;
 
 public class Chunk {
 
-    private byte[] chunkData;
+    private final byte[] chunkData;
 
     @Getter
-    private ChunkRenderer chunkRenderer = new ChunkRenderer(this);
+    private final ChunkRenderer chunkRenderer = new ChunkRenderer(this);
 
     public final int chunkSize = 16;
     public final int chunkHeight = 300;

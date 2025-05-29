@@ -3,8 +3,13 @@ package com.james090500.client;
 import com.james090500.BlockGame;
 import com.james090500.blocks.Block;
 import com.james090500.gui.ScreenManager;
+import com.james090500.renderer.BlockOverlay;
 import com.james090500.utils.Clock;
+import com.james090500.world.World;
+import org.joml.Intersectionf;
+import org.joml.Vector2f;
 import org.joml.Vector3f;
+import org.joml.Vector3i;
 
 import java.util.HashMap;
 
@@ -24,6 +29,8 @@ public class LocalPlayer {
     private Vector3f velocity = new Vector3f();
     private Vector3f fallVelocity = new Vector3f();
     private double jumpStartTime = 0;
+
+    BlockOverlay blockOverlay = new BlockOverlay();
 
     private void updateControls() {
         HashMap<Integer, Boolean> keys = BlockGame.getInstance().getClientWindow().getClientInput().getKeys();
@@ -136,6 +143,32 @@ public class LocalPlayer {
     }
 
     /**
+     * Update interaction via mouse picking
+     * @param delta
+     */
+    private void updateInteraction(double delta) {
+        Camera camera = BlockGame.getInstance().getCamera();
+        Vector3f origin = new Vector3f(camera.getPosition());
+        Vector3f dir = new Vector3f(camera.getDirection()).normalize();
+
+        Vector3i raycast = raycastBlock(origin, dir, 5f, false);
+        if(raycast != null) {
+            Block hitBlock = BlockGame.getInstance().getWorld().getBlock(raycast.x, raycast.y, raycast.z);
+            if (hitBlock != null && hitBlock.isSolid()) {
+                blockOverlay.setPosition(new Vector3f(raycast));
+                blockOverlay.render();
+            }
+
+            HashMap<Integer, Boolean> mouse = BlockGame.getInstance().getClientWindow().getClientInput().getMouse();
+            if(mouse.getOrDefault(GLFW_MOUSE_BUTTON_LEFT, false)) {
+                BlockGame.getInstance().getWorld().setBlock(raycast.x, raycast.y, raycast.z, (byte) 0);
+                BlockGame.getInstance().getWorld().regenChunk(raycast.x, raycast.z);
+                mouse.put(GLFW_MOUSE_BUTTON_LEFT, false);
+            }
+        }
+    }
+
+    /**
      * Checks if the player's AABB collides with any solid blocks in the world.
      * @param {Vector3} min - Minimum bounds of the AABB.
      * @param {Vector3} max - Maximum bounds of the AABB.
@@ -199,8 +232,94 @@ public class LocalPlayer {
         return false;
     }
 
+    /**
+     * Raycast to a block or placing location
+     * @param origin The start of the ray
+     * @param direction The direction of the ray
+     * @param maxDistance The distance of the ray
+     * @param placement If we are trying to place or destroy
+     * @return
+     */
+    public Vector3i raycastBlock(Vector3f origin, Vector3f direction, float maxDistance, boolean placement) {
+        Vector3i current = new Vector3i(
+                (int) Math.floor(origin.x),
+                (int) Math.floor(origin.y),
+                (int) Math.floor(origin.z)
+        );
+
+        Vector3f rayDir = new Vector3f(direction).normalize();
+
+        int stepX = (int) Math.signum(rayDir.x);
+        int stepY = (int) Math.signum(rayDir.y);
+        int stepZ = (int) Math.signum(rayDir.z);
+
+        float tMaxX = intBound(origin.x, rayDir.x);
+        float tMaxY = intBound(origin.y, rayDir.y);
+        float tMaxZ = intBound(origin.z, rayDir.z);
+
+        float tDeltaX = (rayDir.x == 0) ? Float.POSITIVE_INFINITY : Math.abs(1.0f / rayDir.x);
+        float tDeltaY = (rayDir.y == 0) ? Float.POSITIVE_INFINITY : Math.abs(1.0f / rayDir.y);
+        float tDeltaZ = (rayDir.z == 0) ? Float.POSITIVE_INFINITY : Math.abs(1.0f / rayDir.z);
+
+        float distance = 0.0f;
+
+        Vector3i previousBlock = new Vector3i(current);
+        while (distance <= maxDistance) {
+            // Check the block
+            Block block = BlockGame.getInstance().getWorld().getBlock(current.x, current.y, current.z);
+            if (block != null) {
+                return placement ? previousBlock : current;
+            }
+
+            // Step to next voxel
+            previousBlock.set(current);
+            if (tMaxX < tMaxY) {
+                if (tMaxX < tMaxZ) {
+                    current.x += stepX;
+                    distance = tMaxX;
+                    tMaxX += tDeltaX;
+                } else {
+                    current.z += stepZ;
+                    distance = tMaxZ;
+                    tMaxZ += tDeltaZ;
+                }
+            } else {
+                if (tMaxY < tMaxZ) {
+                    current.y += stepY;
+                    distance = tMaxY;
+                    tMaxY += tDeltaY;
+                } else {
+                    current.z += stepZ;
+                    distance = tMaxZ;
+                    tMaxZ += tDeltaZ;
+                }
+            }
+        }
+
+        return null; // No block hit
+    }
+
+    /**
+     * A helper function for raycasting
+     * @param s
+     * @param ds
+     * @return
+     */
+    private float intBound(float s, float ds) {
+        if (ds == 0) return Float.POSITIVE_INFINITY;
+        float sIsInt = (float) Math.floor(s);
+        if (ds > 0) {
+            return (sIsInt + 1.0f - s) / ds;
+        } else {
+            return (s - sIsInt) / -ds;
+        }
+    }
+
+
+
     public void update(double delta) {
         this.updateControls();
+        this.updateInteraction(delta);
         this.updateMovement(delta);
     }
 

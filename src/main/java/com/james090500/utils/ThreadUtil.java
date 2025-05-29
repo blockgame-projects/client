@@ -9,8 +9,15 @@ import java.util.concurrent.TimeUnit;
 
 public class ThreadUtil {
 
+    @Getter
+    private static final ConcurrentLinkedQueue<Runnable> mainQueue = new ConcurrentLinkedQueue<>();
+
     private static ExecutorService queue;
 
+    /**
+     * Get the Thread queue
+     * @return
+     */
     public static ExecutorService getQueue() {
         if(queue == null || queue.isShutdown()) {
             int cores = Runtime.getRuntime().availableProcessors();
@@ -19,15 +26,18 @@ public class ThreadUtil {
         return queue;
     }
 
-    @Getter
-    private static final ConcurrentLinkedQueue<Runnable> mainQueue = new ConcurrentLinkedQueue<>();
-
+    /**
+     * Run an item in the main queue
+     */
     public static void runMainQueue() {
         if(!mainQueue.isEmpty()) {
             mainQueue.poll().run();
         }
     }
 
+    /**
+     * Shutdown the thread queue
+     */
     public static void shutdown() {
         ThreadUtil.getQueue().shutdown();
         try {

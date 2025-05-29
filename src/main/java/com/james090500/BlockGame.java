@@ -38,6 +38,7 @@ public class BlockGame {
         // Start the Menu
         ScreenManager.add(new MainMenu());
 
+        // Loop the game
         this.loop(clientWindow);
 
         // Free the window callbacks and destroy the window
@@ -49,11 +50,19 @@ public class BlockGame {
         glfwSetErrorCallback(null).free();
     }
 
+    /**
+     * Unpause the game
+     * Doesn't remove any screens but locks the mouse
+     */
     public void unpause() {
         BlockGame.getInstance().getConfig().setPaused(false);
         glfwSetInputMode(clientWindow.getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     }
 
+    /**
+     * Pauses the game and adds the pause screen
+     * Also unlocks the mouse
+     */
     public void pause() {
         ScreenManager.clear();
         ScreenManager.add(new PauseScreen());
@@ -61,6 +70,9 @@ public class BlockGame {
         glfwSetInputMode(clientWindow.getWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     }
 
+    /**
+     * Starting a game so generates the player, world, camera etc
+     */
     public void start() {
         this.unpause();
         this.localPlayer = new LocalPlayer();
@@ -68,6 +80,9 @@ public class BlockGame {
         this.camera = new Camera(0, 150, 0);
     }
 
+    /**
+     * Exists a world so stops all pending tasks and opens the main menu
+     */
     public void exit() {
         ScreenManager.clear();
         ScreenManager.add(new MainMenu());
@@ -82,11 +97,18 @@ public class BlockGame {
         glfwSetInputMode(clientWindow.getWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     }
 
+    /**
+     * Closes the game so ends all pending tasks
+     */
     public void close() {
         ThreadUtil.shutdown();
         glfwSetWindowShouldClose(BlockGame.getInstance().getClientWindow().getWindow(), true);
     }
 
+    /**
+     * Starts the game loop
+     * @param clientWindow
+     */
     private void loop(ClientWindow clientWindow) {
         int fps = 0;
         long start = System.currentTimeMillis();
@@ -136,6 +158,7 @@ public class BlockGame {
             // Swap the buffers
             glfwSwapBuffers(clientWindow.getWindow());
 
+            // FPS Calculator
             long now = System.currentTimeMillis();
             if (now - start >= 1000) {
                 System.out.println(fps + " FPS");

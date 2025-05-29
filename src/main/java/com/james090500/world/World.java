@@ -29,6 +29,10 @@ public class World {
     private int lastPlayerX = 0;
     private int lastPlayerZ = 0;
 
+    /**
+     * Checks whether the player chunk is loaded
+     * @return
+     */
     public boolean isChunkLoaded() {
         Vector3f playerPos = BlockGame.getInstance().getCamera().getPosition();
         int playerPosX = (int) Math.floor(playerPos.x / 16);
@@ -38,7 +42,7 @@ public class World {
 
         if(this.chunks.containsKey(chunkPos)) {
             Chunk chunk = this.chunks.get(chunkPos);
-            return chunk.generated;
+            return chunk.generated && chunk.rendered;
         }
 
         return false;
@@ -121,6 +125,23 @@ public class World {
         }
     }
 
+    public void regenChunk(int x, int z) {
+        int chunkX = 0, chunkZ = 0;
+
+        int offsetChunkX = Math.floorDiv(x, 16);
+        chunkX += offsetChunkX;
+        x = Math.floorMod(x, 16);
+
+        int offsetChunkZ = Math.floorDiv(z, 16);
+        chunkZ += offsetChunkZ;
+        z = Math.floorMod(z, 16);
+
+        Chunk chunk = this.chunks.get(new ChunkPos(chunkX, chunkZ));
+        if(chunk != null) {
+            chunk.getChunkRenderer().mesh();
+        }
+    }
+
     /**
      * update the world. This also loads and remove chunks as needed
      */
@@ -156,6 +177,7 @@ public class World {
             int chunkX = playerPosX + offset.dx;
             int chunkZ = playerPosZ + offset.dz;
 
+            // Lets generate the actual chunks
             ChunkPos chunkPos = new ChunkPos(chunkX, chunkZ);
             if (!this.chunks.containsKey(chunkPos)) {
                 List<BlockPlacement> blockPlacements = deferredBlocks.remove(chunkPos);

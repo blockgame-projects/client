@@ -52,7 +52,7 @@ public class Camera {
         }
     }
 
-        public float[] getDirection() {
+    public Vector3f getDirection() {
         float radYaw = (float) Math.toRadians(yaw);
         float radPitch = (float) Math.toRadians(pitch);
 
@@ -60,13 +60,13 @@ public class Camera {
         float dy = (float) Math.sin(radPitch);
         float dz = (float) (Math.cos(radPitch) * Math.sin(radYaw));
 
-        return new float[]{dx, dy, dz};
+        return new Vector3f(dx, dy, dz);
     }
 
     public Matrix4f getViewMatrix() {
-        float[] dir = getDirection();
+        Vector3f dir = getDirection();
         Vector3f position = new Vector3f(x, y, z);
-        Vector3f target = new Vector3f(x + dir[0], y + dir[1], z + dir[2]);
+        Vector3f target = new Vector3f(x + dir.x, y + dir.y, z + dir.z);
         Vector3f up = new Vector3f(0, 1, 0);
 
         return new Matrix4f().lookAt(position, target, up);

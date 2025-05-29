@@ -28,9 +28,14 @@ public class TextureManager {
         background = loadVGTexture("gui/background.png");
         button = loadVGTexture("gui/button.png");
         button_active = loadVGTexture("gui/button_active.png");
-        terrainTexture = loadGLTexture("terrain.png"); // adjust path as needed
+        terrainTexture = loadGLTexture("terrain.png");
     }
 
+    /**
+     * Load a GL texture to memory
+     * @param resourceName The name of the file
+     * @return
+     */
     public static int loadGLTexture(String resourceName) {
         try {
             Path tempFile = extractResourceToTempFile(resourceName);
@@ -42,6 +47,11 @@ public class TextureManager {
         }
     }
 
+    /**
+     * Load a VG texture to memory
+     * @param resourceName The name of the file
+     * @return
+     */
     private static int loadVGTexture(String resourceName) {
         try {
             Path tempFile = extractResourceToTempFile(resourceName);
@@ -53,6 +63,12 @@ public class TextureManager {
         }
     }
 
+    /**
+     * Extract a resource from the JAR to a temp file
+     * @param resourceName The resource name
+     * @return
+     * @throws IOException
+     */
     private static Path extractResourceToTempFile(String resourceName) throws IOException {
         InputStream stream = TextureManager.class.getResourceAsStream("/" + resourceName);
         if (stream == null) {
@@ -63,7 +79,12 @@ public class TextureManager {
         return tempFile;
     }
 
-    public static int loadTextureFromFile(String filepath) {
+    /**
+     * Loads a texture from file into GL memory
+     * @param filepath
+     * @return
+     */
+    private static int loadTextureFromFile(String filepath) {
         // Prepare buffers for image data
         IntBuffer width  = BufferUtils.createIntBuffer(1);
         IntBuffer height = BufferUtils.createIntBuffer(1);
