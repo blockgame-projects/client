@@ -40,6 +40,10 @@ public class FontManager {
         }
     }
 
+    public static FontManager create() {
+        return new FontManager();
+    }
+
     public FontManager center() {
         nvgTextAlign(vg, NVG_ALIGN_CENTER);
         return this;

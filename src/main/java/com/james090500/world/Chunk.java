@@ -24,6 +24,7 @@ public class Chunk {
     public final int chunkX;
     public final int chunkZ;
 
+    public boolean queued;
     public boolean rendered;
     public boolean generated;
 
@@ -32,6 +33,8 @@ public class Chunk {
         this.chunkZ = chunkZ;
 
         this.chunkData = new byte[chunkSize * chunkSize * chunkHeight];
+
+        this.queued = true;
 
         ThreadUtil.getQueue().submit(() -> {
             //Generate Terrain
@@ -54,7 +57,9 @@ public class Chunk {
                 }
             }
 
+            //System.out.println("[" + chunkX + ", " + chunkZ + "] Chunk Generated");
             this.generated = true;
+            this.queued = false;
         });
     }
 

@@ -1,8 +1,6 @@
 package com.james090500.client;
 
 import com.james090500.BlockGame;
-import com.james090500.gui.Screen;
-import com.james090500.gui.ScreenManager;
 import lombok.Getter;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWErrorCallback;
@@ -20,16 +18,19 @@ import static org.lwjgl.system.MemoryUtil.NULL;
 public class ClientWindow {
 
     private final String title = "BlockGame";
+
     @Getter
-    private int windowWidth = 854;
+    private int baseWidth = 854;
     @Getter
-    private int windowHeight = 480;
+    private int baseHeight = 480;
     @Getter
-    private int framebufferWidth = 854;
+    private int windowWidth = baseWidth;
     @Getter
-    private int framebufferHeight = 480;
+    private int windowHeight = baseHeight;
     @Getter
-    private float devicePixelRatio = 1f;
+    private int framebufferWidth = baseWidth;
+    @Getter
+    private int framebufferHeight = baseHeight;
 
     @Getter
     private long window;
@@ -74,28 +75,31 @@ public class ClientWindow {
 
             glViewport(0, 0, fbw, fbh);
 
-            // Update aspect ratio with framebuffer for accurate rendering
             if (BlockGame.getInstance().getCamera() != null) {
                 BlockGame.getInstance().getCamera().setAspectRatio((float) fbw / fbh);
                 BlockGame.getInstance().getCamera().updateProjectionMatrix();
             }
-
-            ScreenManager.active().forEach(Screen::resize);
         });
 
-        // Viewport
+        // Initial size setup
         try (MemoryStack stack = MemoryStack.stackPush()) {
             IntBuffer winWidth = stack.mallocInt(1);
             IntBuffer winHeight = stack.mallocInt(1);
-            glfwGetFramebufferSize(window, winWidth, winHeight);
-            glViewport(0, 0, winWidth.get(0), winHeight.get(0));
-
+            glfwGetWindowSize(window, winWidth, winHeight);
             this.windowWidth = winWidth.get(0);
             this.windowHeight = winHeight.get(0);
+
+            IntBuffer fbWidth = stack.mallocInt(1);
+            IntBuffer fbHeight = stack.mallocInt(1);
+            glfwGetFramebufferSize(window, fbWidth, fbHeight);
+            this.framebufferWidth = fbWidth.get(0);
+            this.framebufferHeight = fbHeight.get(0);
+
+            glViewport(0, 0, fbWidth.get(0), fbHeight.get(0));
         }
 
         // Enable v-sync
-        glfwSwapInterval(1);
+        glfwSwapInterval(0);
 
         // Make the window visible
         glfwShowWindow(window);

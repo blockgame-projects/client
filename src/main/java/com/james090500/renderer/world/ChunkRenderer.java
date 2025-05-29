@@ -36,8 +36,9 @@ public class ChunkRenderer implements LayeredRenderer {
     }
 
     public void mesh() {
+        this.chunk.queued = true;
         ThreadUtil.getQueue().submit(() -> {
-            VoxelResult result = makeVoxels(new int[]{0, 0, 0}, new int[]{chunk.chunkSize, chunk.chunkHeight, chunk.chunkSize}, (x, y, z) -> {
+            VoxelResult solidResult = makeVoxels(new int[]{0, 0, 0}, new int[]{chunk.chunkSize, chunk.chunkHeight, chunk.chunkSize}, (x, y, z) -> {
                 Block block = chunk.getBlock(x, y, z);
                 if (block != null && !block.isTransparent()) {
                     return block.getId();
@@ -46,17 +47,7 @@ public class ChunkRenderer implements LayeredRenderer {
                 }
             });
 
-            ChunkMesh chunkMesh = this.generateMesh(result.dims, result.voxels);
-
-            ThreadUtil.getMainQueue().add(() -> {
-                this.createMesh(chunkMesh, false);
-            });
-        });
-    }
-
-    public void meshTransparent() {
-        ThreadUtil.getQueue().submit(() -> {
-            VoxelResult result = makeVoxels(new int[]{0, 0, 0}, new int[]{chunk.chunkSize, chunk.chunkHeight, chunk.chunkSize}, (x, y, z) -> {
+            VoxelResult transparentResult = makeVoxels(new int[]{0, 0, 0}, new int[]{chunk.chunkSize, chunk.chunkHeight, chunk.chunkSize}, (x, y, z) -> {
                 Block block = chunk.getBlock(x, y, z);
                 if (block != null && block.isTransparent()) {
                     return block.getId();
@@ -65,10 +56,13 @@ public class ChunkRenderer implements LayeredRenderer {
                 }
             });
 
-            ChunkMesh chunkMesh = this.generateMesh(result.dims, result.voxels);
+            ChunkMesh solidChunkMesh = this.generateMesh(solidResult.dims, solidResult.voxels);
+            ChunkMesh transparentChunkMesh = this.generateMesh(transparentResult.dims, transparentResult.voxels);
 
             ThreadUtil.getMainQueue().add(() -> {
-                this.createMesh(chunkMesh, true);
+                this.createMesh(solidChunkMesh, false);
+                this.createMesh(transparentChunkMesh, true);
+                this.chunk.queued = false;
             });
         });
     }

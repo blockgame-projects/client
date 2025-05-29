@@ -13,6 +13,7 @@ public class ScreenManager {
 
     public static void clear() {
         activeScreens.clear();
+        BlockGame.getInstance().unpause();
     }
 
     public static List<Screen> active() {
@@ -28,19 +29,44 @@ public class ScreenManager {
     }
 
     public static void render() {
-        int width = BlockGame.getInstance().getClientWindow().getFramebufferWidth();
-        int height = BlockGame.getInstance().getClientWindow().getFramebufferHeight();
-
         long vg = BlockGame.getInstance().getClientWindow().getVg();
 
-        for(Screen screen : activeScreens) {
-            // Start NanoVG
-            nvgBeginFrame(vg, width, height, BlockGame.getInstance().getClientWindow().getDevicePixelRatio());
+        float baseWidth = BlockGame.getInstance().getClientWindow().getBaseWidth();
+        float baseHeight = BlockGame.getInstance().getClientWindow().getBaseHeight();
 
-            screen.render();
+        int fbWidth = BlockGame.getInstance().getClientWindow().getFramebufferWidth();
+        int fbHeight = BlockGame.getInstance().getClientWindow().getFramebufferHeight();
 
-            // End NanoVG
-            nvgEndFrame(vg);
+        float scaleX = (float) fbWidth / baseWidth;
+        float scaleY = (float) fbHeight / baseHeight;
+        float scale = Math.min(scaleX, scaleY);
+
+        float offsetX = (fbWidth - baseWidth * scale) / 2f;
+        float offsetY = (fbHeight - baseHeight * scale) / 2f;
+
+        nvgBeginFrame(vg, fbWidth, fbHeight, 1f);
+
+        nvgSave(vg);
+        {
+            for (Screen screen : activeScreens) {
+                if(screen.isOverlay()) {
+                    screen.renderOverlay();
+                } else {
+                    screen.renderBackground();
+                }
+            }
         }
+        nvgRestore(vg);
+
+        nvgSave(vg);
+        nvgTranslate(vg, offsetX, offsetY);
+        nvgScale(vg, scale, scale);
+
+        for (Screen screen : activeScreens) {
+            screen.render(); // This uses logical coords like 854x480
+        }
+
+        nvgRestore(vg);
+        nvgEndFrame(vg);
     }
 }

@@ -50,7 +50,6 @@ public class BlockGame {
     }
 
     public void unpause() {
-        ScreenManager.clear();
         BlockGame.getInstance().getConfig().setPaused(false);
         glfwSetInputMode(clientWindow.getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     }
@@ -66,7 +65,7 @@ public class BlockGame {
         this.unpause();
         this.localPlayer = new LocalPlayer();
         this.world = new World();
-        this.camera = new Camera(0, 100, 0);
+        this.camera = new Camera(0, 150, 0);
     }
 
     public void exit() {

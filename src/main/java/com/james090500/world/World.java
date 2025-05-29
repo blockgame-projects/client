@@ -3,6 +3,7 @@ package com.james090500.world;
 import com.james090500.BlockGame;
 import com.james090500.blocks.Block;
 import com.james090500.renderer.RenderManager;
+import com.james090500.utils.ThreadUtil;
 import lombok.Getter;
 import org.joml.Vector3f;
 
@@ -23,8 +24,7 @@ public class World {
 
     @Getter
     private final int worldSeed = (int) Math.floor(Math.random() * 1000000);
-    private final int worldSize = 12;
-    private boolean allChunksGenerated = false;
+    private final int worldSize = 20;
 
     private int lastPlayerX = 0;
     private int lastPlayerZ = 0;
@@ -130,7 +130,8 @@ public class World {
         int playerPosZ = (int) Math.floor(playerPos.z / 16);
 
         // Dont loop if we haven't moved and we have chunks loaded
-        if(playerPosX == lastPlayerX && playerPosZ == lastPlayerZ && allChunksGenerated) {
+        boolean hasChunksToRender = chunks.entrySet().stream().anyMatch(entry -> entry.getValue().generated && !entry.getValue().rendered);
+        if(playerPosX == lastPlayerX && playerPosZ == lastPlayerZ && !hasChunksToRender && !chunks.isEmpty()) {
             return;
         }
 
@@ -177,7 +178,7 @@ public class World {
         }
 
         // Mesh and render unrendered chunks in same distance order
-        allChunksGenerated = true;
+        int renderedChunks = 0;
         for (ChunkOffset offset : offsets) {
             int chunkX = playerPosX + offset.dx;
             int chunkZ = playerPosZ + offset.dz;
@@ -185,14 +186,16 @@ public class World {
             ChunkPos chunkPos = new ChunkPos(chunkX, chunkZ);
             Chunk chunk = this.chunks.get(chunkPos);
 
-            if (chunk != null && chunk.generated && !chunk.rendered) {
+            if (chunk != null && chunk.generated && !chunk.rendered && !chunk.queued) {
                 RenderManager.remove(chunk.getChunkRenderer());
-                chunk.getChunkRenderer().mesh();              // opaque first
-                chunk.getChunkRenderer().meshTransparent();   // then transparent
+                chunk.getChunkRenderer().mesh();
                 chunk.rendered = true;
                 RenderManager.add(chunk.getChunkRenderer());
-            } else {
-                allChunksGenerated = false;
+
+                renderedChunks++;
+                if(renderedChunks >= 5) {
+                    break;
+                }
             }
         }
 

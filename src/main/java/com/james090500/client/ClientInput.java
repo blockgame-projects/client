@@ -61,5 +61,12 @@ public class ClientInput {
     public void keyPressed(long window, int key, int scancode, int action, int mods) {
         keys.put(key, action > GLFW_RELEASE);
 
+        if (keys.getOrDefault(GLFW_KEY_ESCAPE, false)) {
+            if (ScreenManager.active().isEmpty()) {
+                BlockGame.getInstance().pause();
+            } else {
+                ScreenManager.clear();
+            }
+        }
     }
 }

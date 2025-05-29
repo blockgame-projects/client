@@ -2,6 +2,7 @@ package com.james090500.client;
 
 import com.james090500.BlockGame;
 import com.james090500.blocks.Block;
+import com.james090500.gui.ScreenManager;
 import com.james090500.utils.Clock;
 import org.joml.Vector3f;
 
@@ -23,6 +24,16 @@ public class LocalPlayer {
     private Vector3f velocity = new Vector3f();
     private Vector3f fallVelocity = new Vector3f();
     private double jumpStartTime = 0;
+
+    private void updateControls() {
+        HashMap<Integer, Boolean> keys = BlockGame.getInstance().getClientWindow().getClientInput().getKeys();
+
+        // Handle noclip toggle
+        if (keys.getOrDefault(GLFW_KEY_V, false)) {
+            keys.put(GLFW_KEY_V, false);
+            this.noclip = !this.noclip;
+        }
+    }
 
     /**
      * Updates player movement based on input and applies gravity and collision.
@@ -50,20 +61,11 @@ public class LocalPlayer {
             camera.getPosition().y = 100;
         }
 
-        // Handle noclip toggle
-        if (keys.getOrDefault(GLFW_KEY_V, false)) {
-            keys.put(GLFW_KEY_V, false);
-            this.noclip = !this.noclip;
-        }
-
         // Dampen movement
         this.velocity.mul(0.75f);
 
         // Apply input movement and apply friction
         Vector3f acceleration = new Vector3f();
-
-        if (keys.getOrDefault(GLFW_KEY_ESCAPE, false))
-            BlockGame.getInstance().pause();
 
         // Lets not try any movement until the chunk is loaded
         if(!BlockGame.getInstance().getWorld().isChunkLoaded()) {
@@ -198,6 +200,7 @@ public class LocalPlayer {
     }
 
     public void update(double delta) {
+        this.updateControls();
         this.updateMovement(delta);
     }
 

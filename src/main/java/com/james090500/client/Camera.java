@@ -2,7 +2,6 @@ package com.james090500.client;
 
 import com.james090500.BlockGame;
 import lombok.Getter;
-import lombok.Setter;
 import org.joml.FrustumIntersection;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;

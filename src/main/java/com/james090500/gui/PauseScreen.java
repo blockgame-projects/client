@@ -1,36 +1,33 @@
 package com.james090500.gui;
 
 import com.james090500.BlockGame;
-
-import static org.lwjgl.glfw.GLFW.glfwSetWindowShouldClose;
+import com.james090500.gui.button.Button;
 
 public class PauseScreen extends Screen {
 
     public PauseScreen() {
         setTitle("Paused");
+        setOverlay(true);
 
         addButton(new Button(
                 "Resume Game",
-                (float) BlockGame.getInstance().getClientWindow().getFramebufferWidth() / 2 - 150f,
+                this.width / 2 - 150f,
                 100f,
                 300f,
                 40f,
-                () -> BlockGame.getInstance().unpause())
+                () -> {
+                    BlockGame.getInstance().unpause();
+                    this.close();
+                })
         );
 
         addButton(new Button(
                 "Exit to Menu",
-                (float) BlockGame.getInstance().getClientWindow().getFramebufferHeight() / 2 - 150f,
+                this.width / 2 - 150f,
                 400f,
                 300f,
                 40f,
                 () -> BlockGame.getInstance().exit())
         );
-    }
-
-    @Override
-    public void render() {
-        this.renderOverlay();
-        super.render();
     }
 }
