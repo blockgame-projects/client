@@ -49,7 +49,8 @@ public class ChunkShader extends Shader {
                 
                     float finalAO = mix(0.15, 1.0, vAo / 3.0);
 
-                    FragColor = vec4(texel.rgb * finalAO * faceLight, texel.a);
+                    //FragColor = vec4(texel.rgb * finalAO * faceLight, texel.a);
+                    FragColor = vec4(vec3(finalAO), 1.0);
                 }
                 """;
 

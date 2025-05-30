@@ -2,6 +2,7 @@ package com.james090500.utils;
 
 import lombok.Getter;
 
+import java.util.HashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -12,16 +13,20 @@ public class ThreadUtil {
     @Getter
     private static final ConcurrentLinkedQueue<Runnable> mainQueue = new ConcurrentLinkedQueue<>();
 
-    private static ExecutorService queue;
+    private static HashMap<String, ExecutorService> queues = new HashMap<>();
 
     /**
-     * Get the Thread queue
+     * Create a new queue
+     * @param name
      * @return
      */
-    public static ExecutorService getQueue() {
+    public static ExecutorService getQueue(String name) {
+        ExecutorService queue = queues.get(name);
         if(queue == null || queue.isShutdown()) {
             int cores = Runtime.getRuntime().availableProcessors();
-            queue = Executors.newFixedThreadPool(cores - 1);
+            ExecutorService newQueue = Executors.newFixedThreadPool(cores - 1);
+            queues.put(name, newQueue);
+            return newQueue;
         }
         return queue;
     }
@@ -39,14 +44,16 @@ public class ThreadUtil {
      * Shutdown the thread queue
      */
     public static void shutdown() {
-        ThreadUtil.getQueue().shutdown();
-        try {
-            if (!ThreadUtil.getQueue().awaitTermination(3, TimeUnit.SECONDS)) {
-                ThreadUtil.getQueue().shutdownNow(); // Force shutdown
+        for(ExecutorService queue : queues.values()) {
+            queue.shutdown();
+            try {
+                if (!queue.awaitTermination(3, TimeUnit.SECONDS)) {
+                    queue.shutdownNow(); // Force shutdown
+                }
+            } catch (InterruptedException e) {
+                queue.shutdownNow();
+                Thread.currentThread().interrupt();
             }
-        } catch (InterruptedException e) {
-            ThreadUtil.getQueue().shutdownNow();
-            Thread.currentThread().interrupt();
         }
     }
 }

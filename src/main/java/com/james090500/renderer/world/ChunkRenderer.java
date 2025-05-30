@@ -37,33 +37,31 @@ public class ChunkRenderer implements LayeredRenderer {
 
     public void mesh() {
         this.chunk.queued = true;
-        ThreadUtil.getQueue().submit(() -> {
-            VoxelResult solidResult = makeVoxels(new int[]{0, 0, 0}, new int[]{chunk.chunkSize, chunk.chunkHeight, chunk.chunkSize}, (x, y, z) -> {
-                Block block = chunk.getBlock(x, y, z);
-                if (block != null && !block.isTransparent()) {
-                    return block.getId();
-                } else {
-                    return 0;
-                }
-            });
+        VoxelResult solidResult = makeVoxels(new int[]{0, 0, 0}, new int[]{chunk.chunkSize, chunk.chunkHeight, chunk.chunkSize}, (x, y, z) -> {
+            Block block = chunk.getBlock(x, y, z);
+            if (block != null && !block.isTransparent()) {
+                return block.getId();
+            } else {
+                return 0;
+            }
+        });
 
-            VoxelResult transparentResult = makeVoxels(new int[]{0, 0, 0}, new int[]{chunk.chunkSize, chunk.chunkHeight, chunk.chunkSize}, (x, y, z) -> {
-                Block block = chunk.getBlock(x, y, z);
-                if (block != null && block.isTransparent()) {
-                    return block.getId();
-                } else {
-                    return 0;
-                }
-            });
+        VoxelResult transparentResult = makeVoxels(new int[]{0, 0, 0}, new int[]{chunk.chunkSize, chunk.chunkHeight, chunk.chunkSize}, (x, y, z) -> {
+            Block block = chunk.getBlock(x, y, z);
+            if (block != null && block.isTransparent()) {
+                return block.getId();
+            } else {
+                return 0;
+            }
+        });
 
-            ChunkMesh solidChunkMesh = this.generateMesh(solidResult.dims, solidResult.voxels);
-            ChunkMesh transparentChunkMesh = this.generateMesh(transparentResult.dims, transparentResult.voxels);
+        ChunkMesh solidChunkMesh = this.generateMesh(solidResult.dims, solidResult.voxels);
+        ChunkMesh transparentChunkMesh = this.generateMesh(transparentResult.dims, transparentResult.voxels);
 
-            ThreadUtil.getMainQueue().add(() -> {
-                this.createMesh(solidChunkMesh, false);
-                this.createMesh(transparentChunkMesh, true);
-                this.chunk.queued = false;
-            });
+        ThreadUtil.getMainQueue().add(() -> {
+            this.createMesh(solidChunkMesh, false);
+            this.createMesh(transparentChunkMesh, true);
+            this.chunk.queued = false;
         });
     }
 
@@ -513,7 +511,8 @@ public class ChunkRenderer implements LayeredRenderer {
                             };
 
                             // Rotate AO per axis and face direction
-                            float[] faceAO = isPositiveFace ? new float[] { ao[2], ao[3], ao[1], ao[0] } : new float[] { ao[2], ao[0], ao[1], ao[3] };
+                            //float[] faceAO = isPositiveFace ? new float[] { ao[2], ao[3], ao[1], ao[0] } : new float[] { ao[2], ao[0], ao[1], ao[3] };
+                            float[] faceAO = isPositiveFace ? new float[] { 1, 0, 0, 0 } : new float[] { ao[2], ao[0], ao[1], ao[3] };
 
                             // Choose diagonal based on AO
                             boolean flipDiagonal = ao[0] + ao[3] > ao[1] + ao[2];
@@ -522,13 +521,13 @@ public class ChunkRenderer implements LayeredRenderer {
                             float[] uv = new float[8];
 
                             switch (axis) {
-                                case 0 -> uv = isPositiveFace
+                                case 0 -> uv = isPositiveFace //X
                                     ? new float[]{0, 0, 0, width, height, width, height, 0}
                                     : new float[]{height, 0, 0, 0, 0, width, height, width};
-                                case 1 -> uv = isPositiveFace
+                                case 1 -> uv = isPositiveFace //Y
                                     ? new float[]{width, 0, 0, 0, 0, height, width, height}
                                     : new float[]{height, 0, 0, 0, 0, width, height, width};
-                                case 2 -> uv = isPositiveFace
+                                case 2 -> uv = isPositiveFace //Z
                                     ? new float[]{width, 0, 0, 0, 0, height, width, height}
                                     : new float[]{0, 0, 0, height, width, height, width, 0};
                             }

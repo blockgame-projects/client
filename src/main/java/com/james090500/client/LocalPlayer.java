@@ -162,7 +162,6 @@ public class LocalPlayer {
             HashMap<Integer, Boolean> mouse = BlockGame.getInstance().getClientWindow().getClientInput().getMouse();
             if(mouse.getOrDefault(GLFW_MOUSE_BUTTON_LEFT, false)) {
                 BlockGame.getInstance().getWorld().setBlock(raycast.x, raycast.y, raycast.z, (byte) 0);
-                BlockGame.getInstance().getWorld().regenChunk(raycast.x, raycast.z);
                 mouse.put(GLFW_MOUSE_BUTTON_LEFT, false);
             }
         }

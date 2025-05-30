@@ -4,6 +4,7 @@ import com.james090500.BlockGame;
 import com.james090500.blocks.Block;
 import com.james090500.blocks.Blocks;
 import com.james090500.blocks.GrassBlock;
+import com.james090500.renderer.RenderManager;
 import com.james090500.renderer.world.ChunkRenderer;
 import com.james090500.structure.Tree;
 import com.james090500.utils.OpenSimplexNoise;
@@ -11,6 +12,7 @@ import com.james090500.utils.ThreadUtil;
 import lombok.Getter;
 
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 
 public class Chunk {
 
@@ -24,9 +26,9 @@ public class Chunk {
     public final int chunkX;
     public final int chunkZ;
 
-    public boolean queued;
-    public boolean rendered;
-    public boolean generated;
+    public boolean queued = true;
+    public boolean needsUpdate = false;
+    public boolean generated = false;
 
     public Chunk(int chunkX, int chunkZ, List<World.BlockPlacement> blockPlacements) {
         this.chunkX = chunkX;
@@ -34,9 +36,7 @@ public class Chunk {
 
         this.chunkData = new byte[chunkSize * chunkSize * chunkHeight];
 
-        this.queued = true;
-
-        ThreadUtil.getQueue().submit(() -> {
+        ThreadUtil.getQueue("worldGen").submit(() -> {
             //Generate Terrain
             this.generateTerrain();
 
@@ -57,9 +57,13 @@ public class Chunk {
                 }
             }
 
-            //System.out.println("[" + chunkX + ", " + chunkZ + "] Chunk Generated");
             this.generated = true;
-            this.queued = false;
+            this.getChunkRenderer().mesh();
+
+            ThreadUtil.getMainQueue().add(() -> {
+                RenderManager.remove(this.getChunkRenderer());
+                RenderManager.add(this.getChunkRenderer());
+            });
         });
     }
 

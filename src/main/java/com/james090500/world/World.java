@@ -8,6 +8,7 @@ import lombok.Getter;
 import org.joml.Vector3f;
 
 import java.util.*;
+import java.util.concurrent.ExecutorService;
 
 public class World {
 
@@ -16,15 +17,11 @@ public class World {
 
     record ChunkPos(int x, int y) { }
     record BlockPlacement(int x, int y, int z, byte blockId) {}
-    record ChunkOffset(int dx, int dz, int distSq) {
-        public ChunkOffset(int dx, int dz) {
-            this(dx, dz, dx * dx + dz * dz);
-        }
-    }
+    record ChunkOffset(int dx, int dz, int distSq) {}
 
     @Getter
     private final int worldSeed = (int) Math.floor(Math.random() * 1000000);
-    private final int worldSize = 20;
+    private final int worldSize = 4;
 
     private int lastPlayerX = 0;
     private int lastPlayerZ = 0;
@@ -42,7 +39,7 @@ public class World {
 
         if(this.chunks.containsKey(chunkPos)) {
             Chunk chunk = this.chunks.get(chunkPos);
-            return chunk.generated && chunk.rendered;
+            return chunk.generated && !chunk.needsUpdate;
         }
 
         return false;
@@ -121,24 +118,8 @@ public class World {
                 deferredBlocks.computeIfAbsent(deferredPos, k -> new ArrayList<>()).add(new BlockPlacement(x, y, z, block));
             }
         } else {
+            target.needsUpdate = true;
             target.setBlock(x, y, z, block);
-        }
-    }
-
-    public void regenChunk(int x, int z) {
-        int chunkX = 0, chunkZ = 0;
-
-        int offsetChunkX = Math.floorDiv(x, 16);
-        chunkX += offsetChunkX;
-        x = Math.floorMod(x, 16);
-
-        int offsetChunkZ = Math.floorDiv(z, 16);
-        chunkZ += offsetChunkZ;
-        z = Math.floorMod(z, 16);
-
-        Chunk chunk = this.chunks.get(new ChunkPos(chunkX, chunkZ));
-        if(chunk != null) {
-            chunk.getChunkRenderer().mesh();
         }
     }
 
@@ -147,98 +128,78 @@ public class World {
      */
     public void update() {
         Vector3f playerPos = BlockGame.getInstance().getCamera().getPosition();
-        int playerPosX = (int) Math.floor(playerPos.x / 16);
-        int playerPosZ = (int) Math.floor(playerPos.z / 16);
+        int playerChunkX = (int) Math.floor(playerPos.x / 16);
+        int playerChunkZ = (int) Math.floor(playerPos.z / 16);
 
-        // Dont loop if we haven't moved and we have chunks loaded
-        boolean hasChunksToRender = chunks.entrySet().stream().anyMatch(entry -> entry.getValue().generated && !entry.getValue().rendered);
-        if(playerPosX == lastPlayerX && playerPosZ == lastPlayerZ && !hasChunksToRender && !chunks.isEmpty()) {
+        if (playerChunkX == lastPlayerX && playerChunkZ == lastPlayerZ && !chunks.isEmpty()) {
+            // Only update mesh if chunk data has changed
+            for (Map.Entry<ChunkPos, Chunk> entry : chunks.entrySet()) {
+                Chunk chunk = entry.getValue();
+                if (chunk.needsUpdate && !chunk.queued) {
+                    queueChunkUpdate(chunk);
+                }
+            }
             return;
         }
 
-        List<ChunkOffset> offsets = new ArrayList<>();
-        int worldSizeSq = worldSize * worldSize;
+        lastPlayerX = playerChunkX;
+        lastPlayerZ = playerChunkZ;
 
-        // Generate all offsets in a circle around the player
+        // Load/generate nearby chunks in render distance
+        List<ChunkOffset> offsets = new ArrayList<>();
         for (int dx = -worldSize; dx <= worldSize; dx++) {
             for (int dz = -worldSize; dz <= worldSize; dz++) {
                 int distSq = dx * dx + dz * dz;
-                if (distSq <= worldSizeSq) {
-                    offsets.add(new ChunkOffset(dx, dz));
-                }
+                if (distSq > worldSize * worldSize) continue;
+                offsets.add(new ChunkOffset(dx, dz, distSq));
             }
         }
 
-        // Sort offsets to radiate outward
-        offsets.sort(Comparator.comparingInt(o -> o.distSq));
+        offsets.sort(Comparator.comparingInt(ChunkOffset::distSq)); // Closest first
 
-        // Create missing chunks in order of distance
+        // Render chunks from players pos.
+        Set<ChunkPos> requiredChunks = new HashSet<>();
         for (ChunkOffset offset : offsets) {
-            int chunkX = playerPosX + offset.dx;
-            int chunkZ = playerPosZ + offset.dz;
+            ChunkPos pos = new ChunkPos(playerChunkX + offset.dx(), playerChunkZ + offset.dz());
+            requiredChunks.add(pos);
 
-            // Lets generate the actual chunks
-            ChunkPos chunkPos = new ChunkPos(chunkX, chunkZ);
-            if (!this.chunks.containsKey(chunkPos)) {
-                List<BlockPlacement> blockPlacements = deferredBlocks.remove(chunkPos);
-                Chunk chunk = new Chunk(chunkX, chunkZ, blockPlacements);
-                this.chunks.put(chunkPos, chunk);
-
-                // Invalidate neighboring chunks for re-rendering
-                for (int dx = -1; dx <= 1; dx++) {
-                    for (int dz = -1; dz <= 1; dz++) {
-                        if (dx == 0 && dz == 0) continue;
-
-                        ChunkPos neighborPos = new ChunkPos(chunkX + dx, chunkZ + dz);
-                        Chunk neighbor = this.chunks.get(neighborPos);
-                        if (neighbor != null) {
-                            neighbor.rendered = false; // Force it to re-mesh next frame
-                        }
-                    }
-                }
+            if (!chunks.containsKey(pos)) {
+                List<BlockPlacement> blockPlacements = deferredBlocks.remove(pos);
+                Chunk newChunk = new Chunk(pos.x(), pos.y(), blockPlacements);
+                chunks.put(pos, newChunk);
+                queueChunkUpdate(newChunk);
             }
         }
 
-        // Mesh and render unrendered chunks in same distance order
-        int renderedChunks = 0;
-        for (ChunkOffset offset : offsets) {
-            int chunkX = playerPosX + offset.dx;
-            int chunkZ = playerPosZ + offset.dz;
+        // Remove chunks no longer needed
+        chunks.keySet().removeIf(pos -> {
+            if (!requiredChunks.contains(pos)) {
+                Chunk toRemove = chunks.get(pos);
+                ThreadUtil.getMainQueue().add(() -> RenderManager.remove(toRemove.getChunkRenderer()));
+                return true;
+            }
+            return false;
+        });
 
-            ChunkPos chunkPos = new ChunkPos(chunkX, chunkZ);
-            Chunk chunk = this.chunks.get(chunkPos);
+        // Queue any modified chunks
+        for (Chunk chunk : chunks.values()) {
+            if (chunk.needsUpdate && !chunk.queued) {
+                queueChunkUpdate(chunk);
+            }
+        }
+    }
 
-            if (chunk != null && chunk.generated && !chunk.rendered && !chunk.queued) {
+    private void queueChunkUpdate(Chunk chunk) {
+        chunk.queued = true;
+        ThreadUtil.getQueue("worldGen").submit(() -> {
+            chunk.getChunkRenderer().mesh();
+            chunk.needsUpdate = false;
+            chunk.queued = false;
+
+            ThreadUtil.getMainQueue().add(() -> {
                 RenderManager.remove(chunk.getChunkRenderer());
-                chunk.getChunkRenderer().mesh();
-                chunk.rendered = true;
                 RenderManager.add(chunk.getChunkRenderer());
-
-                renderedChunks++;
-                if(renderedChunks >= 5) {
-                    break;
-                }
-            }
-        }
-
-        // Unload distant chunks
-        Iterator<Map.Entry<ChunkPos, Chunk>> iterator = chunks.entrySet().iterator();
-        while (iterator.hasNext()) {
-            Map.Entry<ChunkPos, Chunk> entry = iterator.next();
-            ChunkPos chunkPos = entry.getKey();
-
-            int dx = chunkPos.x - playerPosX;
-            int dz = chunkPos.y - playerPosZ;
-            int distSq = dx * dx + dz * dz;
-
-            if (distSq > worldSizeSq) {
-                RenderManager.remove(entry.getValue().getChunkRenderer());
-                iterator.remove();
-            }
-        }
-
-        // Update last player chunk position after work is done
-        this.lastPlayerX = playerPosX;
-        this.lastPlayerZ = playerPosZ;
+            });
+        });
     }
 }
