@@ -12,7 +12,7 @@ public class ScreenManager {
     private static final List<Screen> activeScreens = new ArrayList<>();
 
     public static void clear() {
-        activeScreens.clear();
+        activeScreens.removeIf(Screen::isCloseable);
         BlockGame.getInstance().unpause();
     }
 
@@ -51,8 +51,12 @@ public class ScreenManager {
             for (Screen screen : activeScreens) {
                 if(screen.isOverlay()) {
                     screen.renderOverlay();
-                } else {
+                } else if(screen.isBackground()){
                     screen.renderBackground();
+                }
+
+                if(screen.isInGame()) {
+                    screen.render();
                 }
             }
         }
@@ -63,7 +67,9 @@ public class ScreenManager {
         nvgScale(vg, scale, scale);
 
         for (Screen screen : activeScreens) {
-            screen.render(); // This uses logical coords like 854x480
+            if(!screen.isInGame()) {
+                screen.render(); // This uses logical coords like 854x480
+            }
         }
 
         nvgRestore(vg);

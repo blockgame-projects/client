@@ -12,7 +12,6 @@ import com.james090500.utils.ThreadUtil;
 import lombok.Getter;
 
 import java.util.List;
-import java.util.concurrent.ExecutorService;
 
 public class Chunk {
 
@@ -52,18 +51,20 @@ public class Chunk {
 
             //Spawn Tower
             if(chunkX == 0 && chunkZ == 0) {
-                for(int i = 0; i < 100; i++) {
+                for(int i = 0; i < 110; i++) {
                     this.setBlock(0, i, 0, Blocks.stoneBlock.getId());
+                }
+
+                for(int x1 = -5; x1 < 5; x1++) {
+                    for(int z1 = -5; z1 < 5; z1++) {
+                        this.setBlock(x1, 95, z1, Blocks.stoneBlock.getId());
+                        this.setBlock(x1, 100, z1, Blocks.stoneBlock.getId());
+                    }
                 }
             }
 
             this.generated = true;
             this.getChunkRenderer().mesh();
-
-            ThreadUtil.getMainQueue().add(() -> {
-                RenderManager.remove(this.getChunkRenderer());
-                RenderManager.add(this.getChunkRenderer());
-            });
         });
     }
 

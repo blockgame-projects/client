@@ -22,9 +22,16 @@ public class Screen {
 
     protected long vg;
 
+    @Getter
+    private boolean closeable = true;
+    @Getter
+    private boolean inGame = false;
+
     private String title;
     @Getter
     private boolean overlay;
+    @Getter
+    private boolean background;
 
     @Setter(AccessLevel.NONE)
     private ArrayList<Button> buttons = new ArrayList<>();

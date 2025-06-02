@@ -12,6 +12,9 @@ import static org.lwjgl.nanovg.NanoVG.*;
 
 public class MainMenu extends Screen {
     public MainMenu() {
+        setCloseable(false);
+        setBackground(true);
+
         addButton(
                 StandardButton.create(
                     "Start Game",
@@ -33,9 +36,7 @@ public class MainMenu extends Screen {
                     this.height - 60F,
                     300f,
                     40f,
-                    () -> {
-                        BlockGame.getInstance().close();
-                    }
+                    () -> BlockGame.getInstance().close()
                 )
         );
     }

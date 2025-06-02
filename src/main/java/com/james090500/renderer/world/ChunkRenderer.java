@@ -4,6 +4,7 @@ import com.james090500.BlockGame;
 import com.james090500.blocks.Block;
 import com.james090500.blocks.Blocks;
 import com.james090500.renderer.LayeredRenderer;
+import com.james090500.renderer.RenderManager;
 import com.james090500.renderer.ShaderManager;
 import com.james090500.utils.TextureManager;
 import com.james090500.utils.ThreadUtil;
@@ -55,14 +56,33 @@ public class ChunkRenderer implements LayeredRenderer {
             }
         });
 
-        ChunkMesh solidChunkMesh = this.generateMesh(solidResult.dims, solidResult.voxels);
-        ChunkMesh transparentChunkMesh = this.generateMesh(transparentResult.dims, transparentResult.voxels);
+        //Really we shouldn't mesh until we know the neighbours are generated (not meshed)
+        boolean neighborsLoaded =
+                BlockGame.getInstance().getWorld().isChunkLoaded(chunk.chunkX + 1, chunk.chunkZ) &&
+                        BlockGame.getInstance().getWorld().isChunkLoaded(chunk.chunkX - 1, chunk.chunkZ) &&
+                        BlockGame.getInstance().getWorld().isChunkLoaded(chunk.chunkX, chunk.chunkZ + 1) &&
+                        BlockGame.getInstance().getWorld().isChunkLoaded(chunk.chunkX, chunk.chunkZ - 1);
 
-        ThreadUtil.getMainQueue().add(() -> {
-            this.createMesh(solidChunkMesh, false);
-            this.createMesh(transparentChunkMesh, true);
-            this.chunk.queued = false;
-        });
+        Runnable meshTask = () -> {
+            ChunkMesh solidChunkMesh = this.generateMesh(solidResult.dims, solidResult.voxels);
+            ChunkMesh transparentChunkMesh = this.generateMesh(transparentResult.dims, transparentResult.voxels);
+
+            ThreadUtil.getMainQueue().add(() -> {
+                RenderManager.remove(this);
+                this.createMesh(solidChunkMesh, false);
+                this.createMesh(transparentChunkMesh, true);
+                RenderManager.add(this);
+                this.chunk.queued = false;
+            });
+        };
+
+        if (neighborsLoaded) {
+            // Run immediately (same thread)
+            meshTask.run();
+        } else {
+            // Defer to worker thread
+            ThreadUtil.getQueue("worldGen").submit(meshTask);
+        }
     }
 
     private void createMesh(ChunkMesh chunkMesh, boolean transparent) {
@@ -511,26 +531,22 @@ public class ChunkRenderer implements LayeredRenderer {
                             };
 
                             // Rotate AO per axis and face direction
-                            //float[] faceAO = isPositiveFace ? new float[] { ao[2], ao[3], ao[1], ao[0] } : new float[] { ao[2], ao[0], ao[1], ao[3] };
-                            float[] faceAO = isPositiveFace ? new float[] { 1, 0, 0, 0 } : new float[] { ao[2], ao[0], ao[1], ao[3] };
-
-                            // Choose diagonal based on AO
                             boolean flipDiagonal = ao[0] + ao[3] > ao[1] + ao[2];
-
-                            //UV
+                            float[] faceAO = isPositiveFace ? new float[]{ao[2], ao[3], ao[1], ao[0]} : new float[]{ao[2], ao[0], ao[1], ao[3]};
                             float[] uv = new float[8];
 
-                            switch (axis) {
-                                case 0 -> uv = isPositiveFace //X
-                                    ? new float[]{0, 0, 0, width, height, width, height, 0}
-                                    : new float[]{height, 0, 0, 0, 0, width, height, width};
-                                case 1 -> uv = isPositiveFace //Y
-                                    ? new float[]{width, 0, 0, 0, 0, height, width, height}
-                                    : new float[]{height, 0, 0, 0, 0, width, height, width};
-                                case 2 -> uv = isPositiveFace //Z
-                                    ? new float[]{width, 0, 0, 0, 0, height, width, height}
-                                    : new float[]{0, 0, 0, height, width, height, width, 0};
-                            }
+                            uv = switch (axis) {
+                                case 0 -> isPositiveFace //X
+                                        ? new float[]{0, 0, 0, width, height, width, height, 0}
+                                        : new float[]{height, 0, 0, 0, 0, width, height, width};
+                                case 1 -> isPositiveFace //Y
+                                        ? new float[]{width, 0, 0, 0, 0, height, width, height}
+                                        : new float[]{height, 0, 0, 0, 0, width, height, width};
+                                case 2 -> isPositiveFace //Z
+                                        ? new float[]{width, 0, 0, 0, 0, height, width, height}
+                                        : new float[]{0, 0, 0, height, width, height, width, 0};
+                                default -> uv;
+                            };
 
                             if (flipDiagonal) {
                                 // Add vertices

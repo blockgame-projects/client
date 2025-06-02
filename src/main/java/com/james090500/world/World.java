@@ -8,7 +8,6 @@ import lombok.Getter;
 import org.joml.Vector3f;
 
 import java.util.*;
-import java.util.concurrent.ExecutorService;
 
 public class World {
 
@@ -21,7 +20,7 @@ public class World {
 
     @Getter
     private final int worldSeed = (int) Math.floor(Math.random() * 1000000);
-    private final int worldSize = 4;
+    private final int worldSize = 12;
 
     private int lastPlayerX = 0;
     private int lastPlayerZ = 0;
@@ -30,16 +29,12 @@ public class World {
      * Checks whether the player chunk is loaded
      * @return
      */
-    public boolean isChunkLoaded() {
-        Vector3f playerPos = BlockGame.getInstance().getCamera().getPosition();
-        int playerPosX = (int) Math.floor(playerPos.x / 16);
-        int playerPosZ = (int) Math.floor(playerPos.z / 16);
-
-        ChunkPos chunkPos = new ChunkPos(playerPosX, playerPosZ);
+    public boolean isChunkLoaded(int x, int z) {
+        ChunkPos chunkPos = new ChunkPos(x, z);
 
         if(this.chunks.containsKey(chunkPos)) {
             Chunk chunk = this.chunks.get(chunkPos);
-            return chunk.generated && !chunk.needsUpdate;
+            return chunk.generated;
         }
 
         return false;
@@ -103,6 +98,7 @@ public class World {
      * @param block The block
      */
     public void setChunkBlock(int chunkX, int chunkZ, int x, int y, int z, byte block) {
+        // Adjust for cross-chunk placement
         int offsetChunkX = Math.floorDiv(x, 16);
         chunkX += offsetChunkX;
         x = Math.floorMod(x, 16);
@@ -111,15 +107,37 @@ public class World {
         chunkZ += offsetChunkZ;
         z = Math.floorMod(z, 16);
 
-        Chunk target = this.chunks.get(new ChunkPos(chunkX, chunkZ));
+        ChunkPos chunkPos = new ChunkPos(chunkX, chunkZ);
+        Chunk target = this.chunks.get(chunkPos);
+
         if (target == null) {
-            ChunkPos deferredPos = new ChunkPos(chunkX, chunkZ);
             synchronized (deferredBlocks) {
-                deferredBlocks.computeIfAbsent(deferredPos, k -> new ArrayList<>()).add(new BlockPlacement(x, y, z, block));
+                deferredBlocks.computeIfAbsent(chunkPos, k -> new ArrayList<>())
+                        .add(new BlockPlacement(x, y, z, block));
             }
-        } else {
-            target.needsUpdate = true;
-            target.setBlock(x, y, z, block);
+            return;
+        }
+
+        // Update block and flag for meshing
+        target.setBlock(x, y, z, block);
+        target.needsUpdate = true;
+
+        // Check if the block is on the chunk border, and update neighbors
+        if (x == 0) {
+            Chunk left = this.chunks.get(new ChunkPos(chunkX - 1, chunkZ));
+            if (left != null) left.needsUpdate = true;
+        }
+        if (x == 15) {
+            Chunk right = this.chunks.get(new ChunkPos(chunkX + 1, chunkZ));
+            if (right != null) right.needsUpdate = true;
+        }
+        if (z == 0) {
+            Chunk back = this.chunks.get(new ChunkPos(chunkX, chunkZ - 1));
+            if (back != null) back.needsUpdate = true;
+        }
+        if (z == 15) {
+            Chunk front = this.chunks.get(new ChunkPos(chunkX, chunkZ + 1));
+            if (front != null) front.needsUpdate = true;
         }
     }
 
@@ -189,6 +207,10 @@ public class World {
         }
     }
 
+    /**
+     * Queue a chunk update
+     * @param chunk
+     */
     private void queueChunkUpdate(Chunk chunk) {
         chunk.queued = true;
         ThreadUtil.getQueue("worldGen").submit(() -> {
@@ -201,5 +223,12 @@ public class World {
                 RenderManager.add(chunk.getChunkRenderer());
             });
         });
+    }
+
+    /**
+     *
+     */
+    public int getChunkCount() {
+       return chunks.size();
     }
 }

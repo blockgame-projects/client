@@ -10,4 +10,5 @@ public class Config {
     private String version = "0.0.1";
 
     private boolean paused = true;
+    private long FPS;
 }

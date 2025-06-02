@@ -2,15 +2,12 @@ package com.james090500.client;
 
 import com.james090500.BlockGame;
 import com.james090500.blocks.Block;
-import com.james090500.gui.ScreenManager;
 import com.james090500.renderer.BlockOverlay;
 import com.james090500.utils.Clock;
-import com.james090500.world.World;
-import org.joml.Intersectionf;
-import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import static org.lwjgl.glfw.GLFW.*;
@@ -75,7 +72,10 @@ public class LocalPlayer {
         Vector3f acceleration = new Vector3f();
 
         // Lets not try any movement until the chunk is loaded
-        if(!BlockGame.getInstance().getWorld().isChunkLoaded()) {
+        Vector3f playerPos = BlockGame.getInstance().getCamera().getPosition();
+        int playerPosX = (int) Math.floor(playerPos.x / 16);
+        int playerPosZ = (int) Math.floor(playerPos.z / 16);
+        if(!BlockGame.getInstance().getWorld().isChunkLoaded(playerPosX, playerPosZ)) {
             return;
         }
 
@@ -151,18 +151,23 @@ public class LocalPlayer {
         Vector3f origin = new Vector3f(camera.getPosition());
         Vector3f dir = new Vector3f(camera.getDirection()).normalize();
 
-        Vector3i raycast = raycastBlock(origin, dir, 5f, false);
-        if(raycast != null) {
-            Block hitBlock = BlockGame.getInstance().getWorld().getBlock(raycast.x, raycast.y, raycast.z);
+        Vector3i[] raycast = raycastBlock(origin, dir, 5f);
+        if(raycast != null && raycast.length == 2) {
+            Block hitBlock = BlockGame.getInstance().getWorld().getBlock(raycast[1].x, raycast[1].y, raycast[1].z);
             if (hitBlock != null && hitBlock.isSolid()) {
-                blockOverlay.setPosition(new Vector3f(raycast));
+                blockOverlay.setPosition(new Vector3f(raycast[1]));
                 blockOverlay.render();
             }
 
             HashMap<Integer, Boolean> mouse = BlockGame.getInstance().getClientWindow().getClientInput().getMouse();
             if(mouse.getOrDefault(GLFW_MOUSE_BUTTON_LEFT, false)) {
-                BlockGame.getInstance().getWorld().setBlock(raycast.x, raycast.y, raycast.z, (byte) 0);
+                BlockGame.getInstance().getWorld().setBlock(raycast[1].x, raycast[1].y, raycast[1].z, (byte) 0);
                 mouse.put(GLFW_MOUSE_BUTTON_LEFT, false);
+            }
+
+            if(mouse.getOrDefault(GLFW_MOUSE_BUTTON_RIGHT, false)) {
+                BlockGame.getInstance().getWorld().setBlock(raycast[0].x, raycast[0].y, raycast[0].z, (byte) 1);
+                mouse.put(GLFW_MOUSE_BUTTON_RIGHT, false);
             }
         }
     }
@@ -236,10 +241,9 @@ public class LocalPlayer {
      * @param origin The start of the ray
      * @param direction The direction of the ray
      * @param maxDistance The distance of the ray
-     * @param placement If we are trying to place or destroy
      * @return
      */
-    public Vector3i raycastBlock(Vector3f origin, Vector3f direction, float maxDistance, boolean placement) {
+    public Vector3i[] raycastBlock(Vector3f origin, Vector3f direction, float maxDistance) {
         Vector3i current = new Vector3i(
                 (int) Math.floor(origin.x),
                 (int) Math.floor(origin.y),
@@ -267,7 +271,7 @@ public class LocalPlayer {
             // Check the block
             Block block = BlockGame.getInstance().getWorld().getBlock(current.x, current.y, current.z);
             if (block != null) {
-                return placement ? previousBlock : current;
+                return new Vector3i[] { previousBlock, current };
             }
 
             // Step to next voxel
@@ -313,8 +317,6 @@ public class LocalPlayer {
             return (s - sIsInt) / -ds;
         }
     }
-
-
 
     public void update(double delta) {
         this.updateControls();

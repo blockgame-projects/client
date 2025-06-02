@@ -3,6 +3,7 @@ package com.james090500;
 import com.james090500.client.Camera;
 import com.james090500.client.ClientWindow;
 import com.james090500.client.LocalPlayer;
+import com.james090500.gui.DebugScreen;
 import com.james090500.gui.MainMenu;
 import com.james090500.gui.PauseScreen;
 import com.james090500.gui.ScreenManager;
@@ -78,13 +79,14 @@ public class BlockGame {
         this.localPlayer = new LocalPlayer();
         this.world = new World();
         this.camera = new Camera(0, 150, 0);
+        ScreenManager.add(new DebugScreen());
     }
 
     /**
      * Exists a world so stops all pending tasks and opens the main menu
      */
     public void exit() {
-        ScreenManager.clear();
+        ScreenManager.active().clear();
         ScreenManager.add(new MainMenu());
         BlockGame.getInstance().getConfig().setPaused(true);
 
@@ -161,8 +163,7 @@ public class BlockGame {
             // FPS Calculator
             long now = System.currentTimeMillis();
             if (now - start >= 1000) {
-                System.out.println(fps + " FPS");
-
+                BlockGame.getInstance().getConfig().setFPS(fps);
                 start = now;
                 fps = 0;
             } else {

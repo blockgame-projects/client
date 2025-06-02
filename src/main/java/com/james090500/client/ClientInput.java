@@ -66,10 +66,10 @@ public class ClientInput {
         keys.put(key, action > GLFW_RELEASE);
 
         if (keys.getOrDefault(GLFW_KEY_ESCAPE, false)) {
-            if (ScreenManager.active().isEmpty()) {
-                BlockGame.getInstance().pause();
-            } else {
+            if (ScreenManager.active().stream().anyMatch(Screen::isCloseable)) {
                 ScreenManager.clear();
+            } else {
+                BlockGame.getInstance().pause();
             }
         }
     }
