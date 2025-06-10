@@ -41,6 +41,16 @@ public class World {
     }
 
     /**
+     * Get a chunk
+     * @param x chunkX
+     * @param z chunkZ
+     * @return The chunk
+     */
+    public Chunk getChunk(int x, int z) {
+        return this.chunks.get(new ChunkPos(x, z));
+    }
+
+    /**
      * Gets a block in the world
      * @param x The world x coord
      * @param y The world y coord
@@ -153,9 +163,7 @@ public class World {
             // Only update mesh if chunk data has changed
             for (Map.Entry<ChunkPos, Chunk> entry : chunks.entrySet()) {
                 Chunk chunk = entry.getValue();
-                if (chunk.needsUpdate && !chunk.queued) {
-                    queueChunkUpdate(chunk);
-                }
+                queueChunkUpdate(chunk);
             }
             return;
         }
@@ -185,26 +193,27 @@ public class World {
                 List<BlockPlacement> blockPlacements = deferredBlocks.remove(pos);
                 Chunk newChunk = new Chunk(pos.x(), pos.y(), blockPlacements);
                 chunks.put(pos, newChunk);
-                queueChunkUpdate(newChunk);
             }
         }
 
-        // Remove chunks no longer needed
-        chunks.keySet().removeIf(pos -> {
-            if (!requiredChunks.contains(pos)) {
-                Chunk toRemove = chunks.get(pos);
-                ThreadUtil.getMainQueue().add(() -> RenderManager.remove(toRemove.getChunkRenderer()));
-                return true;
-            }
-            return false;
-        });
-
-        // Queue any modified chunks
-        for (Chunk chunk : chunks.values()) {
-            if (chunk.needsUpdate && !chunk.queued) {
+        // Update required chunks
+        chunks.forEach((chunkPos, chunk) -> {
+            // Remove chunks no longer needed
+            if (!requiredChunks.contains(chunkPos)) {
+                if (chunk != null) {
+                    RenderManager.remove(chunk.getChunkRenderer());
+                    chunk.loaded = false;
+                }
+            } else {
                 queueChunkUpdate(chunk);
             }
-        }
+        });
+
+        // Remove broken chunks from array
+        chunks.keySet().removeIf(pos -> {
+            Chunk chunk = chunks.get(pos);
+            return chunk != null && !chunk.loaded;
+        });
     }
 
     /**
@@ -212,17 +221,10 @@ public class World {
      * @param chunk
      */
     private void queueChunkUpdate(Chunk chunk) {
-        chunk.queued = true;
-        ThreadUtil.getQueue("worldGen").submit(() -> {
-            chunk.getChunkRenderer().mesh();
-            chunk.needsUpdate = false;
-            chunk.queued = false;
-
-            ThreadUtil.getMainQueue().add(() -> {
-                RenderManager.remove(chunk.getChunkRenderer());
-                RenderManager.add(chunk.getChunkRenderer());
-            });
-        });
+        if(chunk.needsUpdate && !chunk.queued && chunk.loaded && chunk.generated) {
+            chunk.queued = true;
+            ThreadUtil.getQueue("worldGen").submit(() -> chunk.getChunkRenderer().mesh());
+        }
     }
 
     /**

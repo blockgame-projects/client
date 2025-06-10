@@ -49,7 +49,7 @@ public class Screen {
         for(Button button : buttons) {
             boolean hovered = isHovered(button.getX(), button.getY(), button.getWidth(), button.getHeight());
 
-            if(hovered) {
+            if(hovered && button.isEnabled()) {
                 button.getOnclick().run();
                 break;
             }
@@ -121,7 +121,7 @@ public class Screen {
         renderButtons();
         FontManager.create().color(1f, 1f, 1f, 1f)
                 .center()
-                .text(title, 20f, width / 2f, 60f);
+                .uiText(title, 20f, width / 2f, 60f);
     }
 
     public void close() {

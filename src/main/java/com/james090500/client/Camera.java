@@ -80,8 +80,7 @@ public class Camera {
      * Update the current Frustum view
      */
     public void updateFrustum() {
-        projViewMatrix.set(getProjectionMatrix());
-        projViewMatrix.mul(getViewMatrix());
+        projViewMatrix.set(getProjectionMatrix()).mul(getViewMatrix());
         frustumIntersection.set(projViewMatrix);
     }
 

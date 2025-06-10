@@ -24,20 +24,41 @@ import static org.lwjgl.opengl.GL30.*;
 
 public class ChunkRenderer implements LayeredRenderer {
 
-    private Chunk chunk;
+    private final Chunk chunk;
 
     private int solidVAO;
-    private int solidVertexCount;
+    public int solidVertexCount;
 
     private int transVAO;
-    private int transVertexCount;
+    public int transVertexCount;
 
     public ChunkRenderer(Chunk chunk) {
         this.chunk = chunk;
     }
 
     public void mesh() {
-        this.chunk.queued = true;
+        // Escape if not loaded
+        if(!chunk.loaded) return;
+
+        //Really we shouldn't mesh until we know the neighbours are generated (not meshed)
+        boolean neighborsLoaded =
+                BlockGame.getInstance().getWorld().isChunkLoaded(chunk.chunkX + 1, chunk.chunkZ) &&
+                        BlockGame.getInstance().getWorld().isChunkLoaded(chunk.chunkX - 1, chunk.chunkZ) &&
+                        BlockGame.getInstance().getWorld().isChunkLoaded(chunk.chunkX, chunk.chunkZ + 1) &&
+                        BlockGame.getInstance().getWorld().isChunkLoaded(chunk.chunkX, chunk.chunkZ - 1);
+
+        if(chunk.chunkX == -1 && chunk.chunkZ == 0) {
+            System.out.println("Trying to mesH?" + neighborsLoaded);
+        }
+
+
+        if(!neighborsLoaded) {
+            this.chunk.queued = false;
+            return;
+        }
+
+        this.chunk.needsUpdate = false;
+
         VoxelResult solidResult = makeVoxels(new int[]{0, 0, 0}, new int[]{chunk.chunkSize, chunk.chunkHeight, chunk.chunkSize}, (x, y, z) -> {
             Block block = chunk.getBlock(x, y, z);
             if (block != null && !block.isTransparent()) {
@@ -56,33 +77,19 @@ public class ChunkRenderer implements LayeredRenderer {
             }
         });
 
-        //Really we shouldn't mesh until we know the neighbours are generated (not meshed)
-        boolean neighborsLoaded =
-                BlockGame.getInstance().getWorld().isChunkLoaded(chunk.chunkX + 1, chunk.chunkZ) &&
-                        BlockGame.getInstance().getWorld().isChunkLoaded(chunk.chunkX - 1, chunk.chunkZ) &&
-                        BlockGame.getInstance().getWorld().isChunkLoaded(chunk.chunkX, chunk.chunkZ + 1) &&
-                        BlockGame.getInstance().getWorld().isChunkLoaded(chunk.chunkX, chunk.chunkZ - 1);
+        ChunkMesh solidChunkMesh = this.generateMesh(solidResult.dims, solidResult.voxels);
+        ChunkMesh transparentChunkMesh = this.generateMesh(transparentResult.dims, transparentResult.voxels);
 
-        Runnable meshTask = () -> {
-            ChunkMesh solidChunkMesh = this.generateMesh(solidResult.dims, solidResult.voxels);
-            ChunkMesh transparentChunkMesh = this.generateMesh(transparentResult.dims, transparentResult.voxels);
+        ThreadUtil.getMainQueue().add(() -> {
+            // Escape if not loaded
+            if(!chunk.loaded) return;
 
-            ThreadUtil.getMainQueue().add(() -> {
-                RenderManager.remove(this);
-                this.createMesh(solidChunkMesh, false);
-                this.createMesh(transparentChunkMesh, true);
-                RenderManager.add(this);
-                this.chunk.queued = false;
-            });
-        };
-
-        if (neighborsLoaded) {
-            // Run immediately (same thread)
-            meshTask.run();
-        } else {
-            // Defer to worker thread
-            ThreadUtil.getQueue("worldGen").submit(meshTask);
-        }
+            RenderManager.remove(this);
+            this.createMesh(solidChunkMesh, false);
+            this.createMesh(transparentChunkMesh, true);
+            RenderManager.add(this);
+            this.chunk.queued = false;
+        });
     }
 
     private void createMesh(ChunkMesh chunkMesh, boolean transparent) {

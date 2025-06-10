@@ -140,6 +140,7 @@ public class LocalPlayer {
         // Try horizontal movement along X and Z axes
         this.tryMove(this.velocity, 0, halfWidth, this.playerHeight);
         this.tryMove(this.velocity, 2, halfWidth, this.playerHeight);
+        camera.updateFrustum();
     }
 
     /**

@@ -21,6 +21,7 @@ public class TextureManager {
     public static int background;
     public static int button;
     public static int button_active;
+    public static int button_disabled;
     public static int terrainTexture;
 
     static {
@@ -28,6 +29,7 @@ public class TextureManager {
         background = loadVGTexture("gui/background.png");
         button = loadVGTexture("gui/button.png");
         button_active = loadVGTexture("gui/button_active.png");
+        button_disabled = loadVGTexture("gui/button_disabled.png");
         terrainTexture = loadGLTexture("terrain.png");
     }
 

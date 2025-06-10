@@ -1,6 +1,7 @@
 package com.james090500.gui;
 
 import com.james090500.BlockGame;
+import com.james090500.gui.button.Button;
 import com.james090500.gui.button.StandardButton;
 import com.james090500.utils.TextureManager;
 import org.lwjgl.BufferUtils;
@@ -17,10 +18,10 @@ public class MainMenu extends Screen {
 
         addButton(
                 StandardButton.create(
-                    "Start Game",
-                    this.width / 2 - 150F,
+                    "Singleplayer",
+                    this.width / 2 - 200F,
                     150f,
-                    300f,
+                    400f,
                     40f,
                     () -> {
                         BlockGame.getInstance().start();
@@ -28,6 +29,20 @@ public class MainMenu extends Screen {
                     }
                 )
         );
+
+        Button multiplayerBtn = StandardButton.create(
+                "Multiplayer",
+                this.width / 2 - 200F,
+                200f,
+                400f,
+                40f,
+                () -> {
+                    BlockGame.getInstance().start();
+                    this.close();
+                }
+        );
+        multiplayerBtn.setEnabled(false);
+        addButton(multiplayerBtn);
 
         addButton(
                 StandardButton.create(

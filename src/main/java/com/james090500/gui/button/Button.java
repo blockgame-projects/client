@@ -3,6 +3,7 @@ package com.james090500.gui.button;
 import com.james090500.utils.FontManager;
 import com.james090500.utils.TextureManager;
 import lombok.Getter;
+import lombok.Setter;
 import org.lwjgl.nanovg.NVGPaint;
 
 import static org.lwjgl.nanovg.NanoVG.*;
@@ -16,6 +17,9 @@ public class Button {
     private final float width;
     private final float height;
     private final Runnable onclick;
+
+    @Setter
+    private boolean enabled = true;
 
     public Button(String text, float x, float y, float width, float height, Runnable onclick) {
         this.text = text;
@@ -32,7 +36,16 @@ public class Button {
 
     public void render(long vg, boolean hovered) {
         NVGPaint paint = NVGPaint.calloc();
-        nvgImagePattern(vg, x, y, width, height,0f, hovered ? TextureManager.button_active : TextureManager.button,1f, paint);
+
+        int btnTexture;
+        if(!enabled) {
+            btnTexture = TextureManager.button_disabled;
+        } else if(hovered) {
+            btnTexture = TextureManager.button_active;
+        } else {
+            btnTexture = TextureManager.button;
+        }
+        nvgImagePattern(vg, x, y, width, height,0f, btnTexture,1f, paint);
 
         nvgBeginPath(vg);
         nvgRect(vg, x, y, width, height);
@@ -41,9 +54,14 @@ public class Button {
 
         paint.free();
 
-        FontManager.create().color(1f, 1f, 1f, 1f)
-                .center()
-                .text(text, 20f, x + (width / 2), y + height);
-
+        if(enabled) {
+            FontManager.create().color(1f, 1f, 1f, 1f)
+                    .center()
+                    .uiText(text, 20f, x + (width / 2), y + height);
+        } else {
+            FontManager.create().color(0.5f, 0.5f, 0.5f, 1f)
+                    .center()
+                    .uiText(text, 20f, x + (width / 2), y + height);
+        }
     }
 }

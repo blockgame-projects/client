@@ -57,12 +57,17 @@ public class FontManager {
         return this;
     }
 
-    public FontManager text(String text, float size, float x, float y) {
+    public FontManager uiText(String text, float size, float x, float y) {
         if(text != null) {
             nvgFontSize(vg, size);
             nvgFontFace(vg, "default");
             nvgText(vg, x, y, text);
         }
         return this;
+    }
+
+    public FontManager text(String text, float size, float x, float y) {
+        int scale = BlockGame.getInstance().getClientWindow().getFramebufferWidth() / BlockGame.getInstance().getClientWindow().getWindowWidth();
+        return uiText(text, size * scale, x * scale, y * scale);
     }
 }

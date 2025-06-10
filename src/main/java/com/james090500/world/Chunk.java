@@ -25,6 +25,7 @@ public class Chunk {
     public final int chunkX;
     public final int chunkZ;
 
+    public boolean loaded = true;
     public boolean queued = true;
     public boolean needsUpdate = false;
     public boolean generated = false;
@@ -36,6 +37,9 @@ public class Chunk {
         this.chunkData = new byte[chunkSize * chunkSize * chunkHeight];
 
         ThreadUtil.getQueue("worldGen").submit(() -> {
+            //Leave if not loaded
+            if(!loaded) return;
+
             //Generate Terrain
             this.generateTerrain();
 
@@ -64,6 +68,7 @@ public class Chunk {
             }
 
             this.generated = true;
+            this.needsUpdate = true;
             this.getChunkRenderer().mesh();
         });
     }
