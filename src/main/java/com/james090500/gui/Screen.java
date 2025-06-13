@@ -1,7 +1,7 @@
 package com.james090500.gui;
 
 import com.james090500.BlockGame;
-import com.james090500.gui.button.Button;
+import com.james090500.gui.component.Component;
 import com.james090500.utils.FontManager;
 import com.james090500.utils.TextureManager;
 import lombok.AccessLevel;
@@ -34,32 +34,44 @@ public class Screen {
     private boolean background;
 
     @Setter(AccessLevel.NONE)
-    private ArrayList<Button> buttons = new ArrayList<>();
+    private ArrayList<Component> components = new ArrayList<>();
 
     public Screen() {
 
         this.vg = BlockGame.getInstance().getClientWindow().getVg();
     }
 
-    protected void addButton(Button button) {
-        buttons.add(button);
+    protected void addComponent(Component component) {
+        components.add(component);
     }
 
     public void click() {
-        for(Button button : buttons) {
-            boolean hovered = isHovered(button.getX(), button.getY(), button.getWidth(), button.getHeight());
+        for(Component component : components) {
+            boolean hovered = isHovered(component.getX(), component.getY(), component.getWidth(), component.getHeight());
 
-            if(hovered && button.isEnabled()) {
-                button.getOnclick().run();
-                break;
+            if(hovered && component.isEnabled()) {
+                if(component.getOnclick() != null) {
+                    component.getOnclick().run();
+                }
+                component.setSelected(true);
+            } else {
+                component.setSelected(false);
+            }
+        }
+    }
+
+    public void type(int key) {
+        for(Component component : components) {
+            if(component.isSelected()) {
+                component.onType(key);
             }
         }
     }
 
     protected void renderButtons() {
-        for(Button button : buttons) {
-            boolean hovered = isHovered(button.getX(), button.getY(), button.getWidth(), button.getHeight());
-            button.render(vg, hovered);
+        for(Component component : components) {
+            boolean hovered = isHovered(component.getX(), component.getY(), component.getWidth(), component.getHeight());
+            component.render(vg, hovered);
         }
     }
 

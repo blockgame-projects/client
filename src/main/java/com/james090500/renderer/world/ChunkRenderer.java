@@ -47,11 +47,6 @@ public class ChunkRenderer implements LayeredRenderer {
                         BlockGame.getInstance().getWorld().isChunkLoaded(chunk.chunkX, chunk.chunkZ + 1) &&
                         BlockGame.getInstance().getWorld().isChunkLoaded(chunk.chunkX, chunk.chunkZ - 1);
 
-        if(chunk.chunkX == -1 && chunk.chunkZ == 0) {
-            System.out.println("Trying to mesH?" + neighborsLoaded);
-        }
-
-
         if(!neighborsLoaded) {
             this.chunk.queued = false;
             return;

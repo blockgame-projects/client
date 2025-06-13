@@ -21,6 +21,12 @@ public class RenderManager {
     }
 
     public static void render() {
+        // Lets not render if not in game!
+        if(BlockGame.getInstance().getWorld() == null) {
+            renderQueue.clear();
+            return;
+        }
+
         List<LayeredRenderer> transparentQueue = new ArrayList<>();
 
         // Go through the render queue

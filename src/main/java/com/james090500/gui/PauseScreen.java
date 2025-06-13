@@ -1,7 +1,7 @@
 package com.james090500.gui;
 
 import com.james090500.BlockGame;
-import com.james090500.gui.button.Button;
+import com.james090500.gui.component.Component;
 
 public class PauseScreen extends Screen {
 
@@ -9,7 +9,7 @@ public class PauseScreen extends Screen {
         setTitle("Paused");
         setOverlay(true);
 
-        addButton(new Button(
+        addComponent(new Component(
                 "Resume Game",
                 this.width / 2 - 150f,
                 100f,
@@ -21,7 +21,7 @@ public class PauseScreen extends Screen {
                 })
         );
 
-        addButton(new Button(
+        addComponent(new Component(
                 "Exit to Menu",
                 this.width / 2 - 150f,
                 400f,

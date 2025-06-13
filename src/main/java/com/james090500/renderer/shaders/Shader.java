@@ -2,6 +2,7 @@ package com.james090500.renderer.shaders;
 
 import com.james090500.BlockGame;
 import org.joml.Matrix4f;
+import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.lwjgl.system.MemoryStack;
 
@@ -50,6 +51,13 @@ public class Shader {
             System.err.println("Uniform '" + name + "' not found in shader!");
         }
         return location;
+    }
+
+    public void setVec2(String name, Vector2f vec) {
+        int location = getUniformLocation(name);
+        if (location != -1) {
+            glUniform2f(location, vec.x, vec.y);
+        }
     }
 
     public void setVec3(String name, Vector3f vec) {

@@ -2,12 +2,13 @@ package com.james090500.client;
 
 import com.james090500.BlockGame;
 import com.james090500.blocks.Block;
-import com.james090500.renderer.BlockOverlay;
+import com.james090500.renderer.gui.ArmOverlay;
+import com.james090500.renderer.gui.BlockOverlay;
 import com.james090500.utils.Clock;
+import lombok.Getter;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 
 import static org.lwjgl.glfw.GLFW.*;
@@ -15,19 +16,20 @@ import static org.lwjgl.glfw.GLFW.*;
 public class LocalPlayer {
 
     // Player state
-    //currentBlock = 1
+    @Getter private int currentBlock = 1;
     private boolean noclip = false;
     private boolean jumping = false;
     private boolean falling = false;
 
     Clock clock = new Clock();
-    private float playerWidth = 0.4f;
-    private float playerHeight = 1.5f;
-    private Vector3f velocity = new Vector3f();
-    private Vector3f fallVelocity = new Vector3f();
+    private final float playerWidth = 0.4f;
+    private final float playerHeight = 1.5f;
+    private final Vector3f velocity = new Vector3f();
+    private final Vector3f fallVelocity = new Vector3f();
     private double jumpStartTime = 0;
 
     BlockOverlay blockOverlay = new BlockOverlay();
+    ArmOverlay armOverlay = new ArmOverlay();
 
     private void updateControls() {
         HashMap<Integer, Boolean> keys = BlockGame.getInstance().getClientWindow().getClientInput().getKeys();
@@ -170,7 +172,13 @@ public class LocalPlayer {
                 BlockGame.getInstance().getWorld().setBlock(raycast[0].x, raycast[0].y, raycast[0].z, (byte) 1);
                 mouse.put(GLFW_MOUSE_BUTTON_RIGHT, false);
             }
+
+//            if(mouse.getOrDefault(GLFW_MOUSE_))
         }
+    }
+
+    public void render() {
+        armOverlay.render();
     }
 
     /**

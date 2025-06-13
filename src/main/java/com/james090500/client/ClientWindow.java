@@ -76,7 +76,7 @@ public class ClientWindow {
             glViewport(0, 0, fbw, fbh);
 
             if (BlockGame.getInstance().getCamera() != null) {
-                BlockGame.getInstance().getCamera().setAspectRatio((float) fbw / fbh);
+                BlockGame.getInstance().getCamera().setAspect((float) fbw / fbh);
                 BlockGame.getInstance().getCamera().updateProjectionMatrix();
             }
         });
@@ -114,7 +114,9 @@ public class ClientWindow {
         // Cursor Movement and Clicks
         glfwSetCursorPosCallback(window, clientInput::mouseMovement);
         glfwSetMouseButtonCallback(window, clientInput::mouseClicked);
+        glfwSetScrollCallback(window, clientInput::mouseScroll);
         glfwSetKeyCallback(window, clientInput::keyPressed);
+        glfwSetCharCallback(window, clientInput::keyTyped);
 
         // Generate NanoVG Instance
         vg = nvgCreate(NVG_ANTIALIAS | NVG_STENCIL_STROKES);

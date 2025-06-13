@@ -74,11 +74,11 @@ public class BlockGame {
     /**
      * Starting a game so generates the player, world, camera etc
      */
-    public void start() {
+    public void start(String seed) {
         this.unpause();
-        this.localPlayer = new LocalPlayer();
-        this.world = new World();
         this.camera = new Camera(0, 150, 0);
+        this.localPlayer = new LocalPlayer();
+        this.world = new World(seed);
         ScreenManager.add(new DebugScreen());
     }
 
@@ -93,6 +93,7 @@ public class BlockGame {
         ThreadUtil.shutdown();
         RenderManager.clear();
 
+        this.localPlayer = null;
         this.world = null;
         this.camera = null;
 
@@ -145,6 +146,11 @@ public class BlockGame {
 
             // Render all pending objects
             RenderManager.render();
+
+            //TODO Temp I think
+            if(this.localPlayer != null) {
+                this.localPlayer.render();
+            }
 
             if(!BlockGame.getInstance().getConfig().isPaused()) {
                 this.world.update();

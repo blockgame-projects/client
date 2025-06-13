@@ -19,11 +19,25 @@ public class World {
     record ChunkOffset(int dx, int dz, int distSq) {}
 
     @Getter
-    private final int worldSeed = (int) Math.floor(Math.random() * 1000000);
+    private final int worldSeed;
     private final int worldSize = 12;
 
     private int lastPlayerX = 0;
     private int lastPlayerZ = 0;
+
+    public World(String seed) {
+        int finalWorldSeed;
+        if(!seed.isEmpty()) {
+            try {
+                finalWorldSeed = Integer.parseInt(seed);
+            } catch (NumberFormatException e) {
+                finalWorldSeed = seed.hashCode();
+            }
+        } else {
+            finalWorldSeed = (int) Math.floor(Math.random() * 1000000);
+        }
+        this.worldSeed = finalWorldSeed;
+    }
 
     /**
      * Checks whether the player chunk is loaded

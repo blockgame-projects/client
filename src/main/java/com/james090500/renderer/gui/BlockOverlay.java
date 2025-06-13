@@ -1,5 +1,7 @@
-package com.james090500.renderer;
+package com.james090500.renderer.gui;
 
+import com.james090500.renderer.Renderer;
+import com.james090500.renderer.ShaderManager;
 import lombok.Getter;
 import lombok.Setter;
 import org.joml.Matrix4f;
@@ -12,7 +14,7 @@ import static org.lwjgl.opengl.GL30.glBindVertexArray;
 import static org.lwjgl.opengl.GL30.glGenVertexArrays;
 
 public class BlockOverlay implements Renderer {
-    private int vao;
+    private final int vao;
     private final float[] cubeEdges = {
             // Bottom square
             0.0f, 0.0f, 0.0f,   1.01f, 0.0f, 0.0f,

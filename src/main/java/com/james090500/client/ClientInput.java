@@ -55,6 +55,10 @@ public class ClientInput {
         }
     }
 
+    public void mouseScroll(long window, double xOffset, double yOffset) {
+        System.out.println(xOffset);
+    }
+
     public void leftClick() {
         List<Screen> screens = new ArrayList<>(ScreenManager.active());
         for (Screen screen : screens) {
@@ -71,6 +75,20 @@ public class ClientInput {
             } else {
                 BlockGame.getInstance().pause();
             }
+        }
+
+        if(keys.getOrDefault(GLFW_KEY_BACKSPACE, false)) {
+            List<Screen> screens = new ArrayList<>(ScreenManager.active());
+            for (Screen screen : screens) {
+                screen.type(-1);
+            }
+        }
+    }
+
+    public void keyTyped(long window, int codepoint) {
+        List<Screen> screens = new ArrayList<>(ScreenManager.active());
+        for (Screen screen : screens) {
+            screen.type(codepoint);
         }
     }
 }

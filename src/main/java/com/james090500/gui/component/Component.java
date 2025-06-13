@@ -1,4 +1,4 @@
-package com.james090500.gui.button;
+package com.james090500.gui.component;
 
 import com.james090500.utils.FontManager;
 import com.james090500.utils.TextureManager;
@@ -9,7 +9,7 @@ import org.lwjgl.nanovg.NVGPaint;
 import static org.lwjgl.nanovg.NanoVG.*;
 
 @Getter
-public class Button {
+public class Component {
 
     private final String text;
     private final float x;
@@ -21,7 +21,13 @@ public class Button {
     @Setter
     private boolean enabled = true;
 
-    public Button(String text, float x, float y, float width, float height, Runnable onclick) {
+    @Setter
+    private boolean selected = false;
+
+    @Setter
+    private String typedValue = "";
+
+    public Component(String text, float x, float y, float width, float height, Runnable onclick) {
         this.text = text;
         this.x = x;
         this.y = y;
@@ -30,8 +36,16 @@ public class Button {
         this.onclick = onclick;
     }
 
-    public static Button create(String text, float x, float y, float width, float height, Runnable onclick) {
-        return new Button(text, x, y, width, height, onclick);
+    public static Component create(String text, float x, float y, float width, float height, Runnable onclick) {
+        return new Component(text, x, y, width, height, onclick);
+    }
+
+    public void onType(int key) {
+        if(key == -1 && !this.typedValue.isEmpty()) {
+            this.typedValue = this.typedValue.substring(0, this.typedValue.length() - 1);
+        } else {
+            this.typedValue += (char) key;
+        }
     }
 
     public void render(long vg, boolean hovered) {
