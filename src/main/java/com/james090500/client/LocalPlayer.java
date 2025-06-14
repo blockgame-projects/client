@@ -7,7 +7,6 @@ import com.james090500.renderer.gui.ArmOverlay;
 import com.james090500.renderer.gui.BlockOverlay;
 import com.james090500.utils.Clock;
 import lombok.Getter;
-import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
 

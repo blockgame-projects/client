@@ -6,6 +6,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class Config {
+    private String runDir;
     private String name = "BlockGame Client";
     private String version = "0.0.1";
 

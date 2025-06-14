@@ -14,13 +14,16 @@ public class World {
     private final HashMap<ChunkPos, Chunk> chunks = new HashMap<>();
     private final Map<ChunkPos, List<BlockPlacement>> deferredBlocks = new HashMap<>();
 
-    record ChunkPos(int x, int y) { }
-    record BlockPlacement(int x, int y, int z, byte blockId) {}
-    record ChunkOffset(int dx, int dz, int distSq) {}
+    public record ChunkPos(int x, int y) { }
+    public record BlockPlacement(int x, int y, int z, byte blockId) {}
+    public record ChunkOffset(int dx, int dz, int distSq) {}
 
     @Getter
     private final int worldSeed;
     private final int worldSize = 16;
+
+    @Getter
+    private String name = "world_name";
 
     private int lastPlayerX = 0;
     private int lastPlayerZ = 0;
