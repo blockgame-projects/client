@@ -3,6 +3,7 @@ package com.james090500.blocks;
 public class LogBlock extends Block {
     public LogBlock(byte id) {
         super(id);
+        this.name = "Log";
         this.texture = 20;
     }
 

@@ -59,9 +59,26 @@ public class FontManager {
 
     public FontManager uiText(String text, float size, float x, float y) {
         if(text != null) {
+            NVGColor textBackground = NVGColor.calloc();
+            NVGColor textColor = NVGColor.calloc();
+
+            nvgRGBA((byte) 92, (byte) 88, (byte) 95, (byte) 255, textBackground);
+            nvgRGBA((byte) 255, (byte) 255, (byte) 255, (byte) 255, textColor);
+
+            // Text Background
             nvgFontSize(vg, size);
             nvgFontFace(vg, "default");
+            nvgFillColor(vg, textBackground);
+            nvgText(vg, x + 2, y + 2, text);
+
+            // Text
+            nvgFontSize(vg, size);
+            nvgFontFace(vg, "default");
+            nvgFillColor(vg, textColor);
             nvgText(vg, x, y, text);
+
+            textBackground.free();
+            textColor.free();
         }
         return this;
     }

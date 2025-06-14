@@ -32,70 +32,39 @@ public class ArmOverlay implements Renderer {
             0.5f,  0.5f,  0.5f,
             -0.5f,  0.5f,  0.5f,
 
-            // Back face
-            0.5f, -0.5f, -0.5f,
-            -0.5f, -0.5f, -0.5f,
-            -0.5f,  0.5f, -0.5f,
-            0.5f,  0.5f, -0.5f,
-
-            // Left face
-            -0.5f, -0.5f, -0.5f,
-            -0.5f, -0.5f,  0.5f,
-            -0.5f,  0.5f,  0.5f,
-            -0.5f,  0.5f, -0.5f,
-
-            // Right face
-            0.5f, -0.5f,  0.5f,
-            0.5f, -0.5f, -0.5f,
-            0.5f,  0.5f, -0.5f,
-            0.5f,  0.5f,  0.5f,
-
             // Top face
             -0.5f,  0.5f,  0.5f,
             0.5f,  0.5f,  0.5f,
             0.5f,  0.5f, -0.5f,
             -0.5f,  0.5f, -0.5f,
-
-            // Bottom face
-            -0.5f, -0.5f, -0.5f,
-            0.5f, -0.5f, -0.5f,
-            0.5f, -0.5f,  0.5f,
-            -0.5f, -0.5f,  0.5f
     };
 
     int[] indices = {
             0, 1, 2,   2, 3, 0,       // Front
-            4, 5, 6,   6, 7, 4,       // Back
-            8, 9,10,  10,11, 8,       // Left
-            12,13,14,  14,15,12,       // Right
-            16,17,18,  18,19,16,       // Top
-            20,21,22,  22,23,20        // Bottom
+            4, 5, 6,   6, 7, 4,       // Top
     };
 
     private float[] texCoords;
 
-    public ArmOverlay() {
-        this.create();
-    }
-
     public void create() {
-//        float[] uv = Blocks.ids[BlockGame.getInstance().getLocalPlayer().getCurrentBlock()].getTexture();
-        float[] uv = Blocks.dirtBlock.getTexture();
+        float[] sideUV = Blocks.ids[BlockGame.getInstance().getLocalPlayer().getCurrentBlock()].getTexture();
+        float[] topUV = Blocks.ids[BlockGame.getInstance().getLocalPlayer().getCurrentBlock()].getTexture("top");
+
         float tileSize = 1.0f / 16.0f;
 
-        float[] texCoords = new float[6 * 4 * 2]; // 6 faces × 4 vertices × 2 UVs
+        float[] texCoords = new float[8 * 2]; // 2 faces × 4 vertices × 2 coords
 
-        float[] faceUV = {
-                uv[0], uv[1] + tileSize,             // Bottom-left
-                uv[0] + tileSize, uv[1] + tileSize,  // Bottom-right
-                uv[0] + tileSize, uv[1],             // Top-right
-                uv[0], uv[1]                         // Top-left
-        };
+        // Front (side) face
+        texCoords[0] = sideUV[0];                texCoords[1] = sideUV[1];            // bottom-left
+        texCoords[2] = sideUV[0] + tileSize;     texCoords[3] = sideUV[1];            // bottom-right
+        texCoords[4] = sideUV[0] + tileSize;     texCoords[5] = sideUV[1] + tileSize; // top-right
+        texCoords[6] = sideUV[0];                texCoords[7] = sideUV[1] + tileSize; // top-left
 
-        // Fill texCoords with the same faceUV 6 times
-        for (int i = 0; i < 6; i++) {
-            System.arraycopy(faceUV, 0, texCoords, i * 8, 8);
-        }
+        // Top face
+        texCoords[8] = topUV[0];                 texCoords[9] = topUV[1] + tileSize;
+        texCoords[10] = topUV[0] + tileSize;     texCoords[11] = topUV[1] + tileSize;
+        texCoords[12] = topUV[0] + tileSize;     texCoords[13] = topUV[1];
+        texCoords[14] = topUV[0];                texCoords[15] = topUV[1];
 
         vao = glGenVertexArrays();
         glBindVertexArray(vao);
@@ -132,10 +101,10 @@ public class ArmOverlay implements Renderer {
 
     public Matrix4f getModel() {
         return new Matrix4f()
-                .translate(0.6f, -0.6f, -1.5f) // Right, down, forward from camera
-                .rotateX((float) Math.toRadians(-20)) // Optional tilt
-                .rotateY((float) Math.toRadians(30))
-                .scale(0.4f); // Scale down to fit in view
+                .translate(0.93f, -0.7f, -1.5f) // Right, down, forward from camera
+                .rotateX((float) Math.toRadians(10)) // Optional tilt
+                .rotateY((float) Math.toRadians(-35))
+                .scale(0.5f); // Scale down to fit in view
     }
 
     @Override

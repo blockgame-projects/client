@@ -14,15 +14,34 @@ public class TextComponent extends Component {
 
     @Override
     public void render(long vg, boolean hovered) {
-        NVGColor color = NVGColor.calloc(); // or .malloc() if you're managing memory manually
+        FontManager.create().uiText("Seed", 20f, this.getX(), this.getY());
+
+        // Text
+        NVGColor color = NVGColor.calloc();
         nvgRGBA((byte) 0, (byte) 0, (byte) 0, (byte) 255, color);
 
+        // Border
+        NVGColor borderColor = NVGColor.calloc();
+        if(!this.isSelected()) {
+            nvgRGBA((byte) 92, (byte) 88, (byte) 95, (byte) 255, borderColor);
+        } else {
+            nvgRGBA((byte) 255, (byte) 255, (byte) 255, (byte) 255, borderColor);
+        }
+
+        // Border
         nvgBeginPath(vg);
         nvgRect(vg, this.getX(), this.getY(), this.getWidth(), this.getHeight());
+        nvgFillColor(vg, borderColor);
+        nvgFill(vg);
+
+        // Text
+        nvgBeginPath(vg);
+        nvgRect(vg, this.getX() + 2, this.getY() + 2, this.getWidth() - 4, this.getHeight() - 4);
         nvgFillColor(vg, color);
         nvgFill(vg);
 
         color.free();
+        borderColor.free();
 
         FontManager.create().color(1f, 1f, 1f, 1f)
                 .center()

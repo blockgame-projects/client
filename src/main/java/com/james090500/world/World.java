@@ -20,7 +20,7 @@ public class World {
 
     @Getter
     private final int worldSeed;
-    private final int worldSize = 12;
+    private final int worldSize = 16;
 
     private int lastPlayerX = 0;
     private int lastPlayerZ = 0;
@@ -62,6 +62,19 @@ public class World {
      */
     public Chunk getChunk(int x, int z) {
         return this.chunks.get(new ChunkPos(x, z));
+    }
+
+    /**
+     * Get a block via a Vector3f
+     * @param pos Position to check
+     * @return
+     */
+    public Block getBlock(Vector3f pos) {
+        return getBlock(
+                (int) Math.floor(pos.x),
+                (int) Math.floor(pos.y),
+                (int) Math.floor(pos.z)
+        );
     }
 
     /**

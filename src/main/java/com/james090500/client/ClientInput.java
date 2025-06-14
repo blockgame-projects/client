@@ -56,7 +56,11 @@ public class ClientInput {
     }
 
     public void mouseScroll(long window, double xOffset, double yOffset) {
-        System.out.println(xOffset);
+        if (xOffset > 0) {
+           BlockGame.getInstance().getLocalPlayer().changeHand(1);
+        } else if (xOffset < 0) {
+            BlockGame.getInstance().getLocalPlayer().changeHand(-1);
+        }
     }
 
     public void leftClick() {
@@ -72,7 +76,7 @@ public class ClientInput {
         if (keys.getOrDefault(GLFW_KEY_ESCAPE, false)) {
             if (ScreenManager.active().stream().anyMatch(Screen::isCloseable)) {
                 ScreenManager.clear();
-            } else {
+            } else if(!BlockGame.getInstance().getConfig().isPaused()) {
                 BlockGame.getInstance().pause();
             }
         }

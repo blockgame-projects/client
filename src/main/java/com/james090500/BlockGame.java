@@ -79,6 +79,9 @@ public class BlockGame {
         this.camera = new Camera(0, 150, 0);
         this.localPlayer = new LocalPlayer();
         this.world = new World(seed);
+
+        this.localPlayer.loadGui();
+
         ScreenManager.add(new DebugScreen());
     }
 

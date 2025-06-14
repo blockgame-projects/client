@@ -1,9 +1,9 @@
 package com.james090500.gui;
 
 import com.james090500.BlockGame;
+import com.james090500.blocks.Blocks;
 import com.james090500.utils.FontManager;
 import com.james090500.world.Chunk;
-import com.james090500.world.World;
 import org.joml.Vector3f;
 
 public class DebugScreen extends Screen {
@@ -36,6 +36,10 @@ public class DebugScreen extends Screen {
         FontManager.create().text("Chunk Needs Queued: " + chunk.queued, 20f, 10f, 270f);
         FontManager.create().text("Chunk Solid Vertices: " + chunk.getChunkRenderer().solidVertexCount, 20f, 10f, 290f);
         FontManager.create().text("Chunk Trans Vertices: " + chunk.getChunkRenderer().transVertexCount, 20f, 10f, 310f);
+
+
+        FontManager.create().text("Player Info", 20f, 10f, 350f);
+        FontManager.create().text("Player Hand: " + Blocks.ids[BlockGame.getInstance().getLocalPlayer().getCurrentBlock()].getName(), 20f, 10f, 370f);
 
         super.render();
     }

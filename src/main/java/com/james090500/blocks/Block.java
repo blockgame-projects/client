@@ -11,6 +11,8 @@ public class Block {
     boolean transparent = false;
     @Getter
     boolean solid = true;
+    @Getter
+    String name = "UNKNOWN";
 
     public Block(byte id) {
         this.id = id;

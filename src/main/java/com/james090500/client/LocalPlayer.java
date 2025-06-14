@@ -2,10 +2,12 @@ package com.james090500.client;
 
 import com.james090500.BlockGame;
 import com.james090500.blocks.Block;
+import com.james090500.blocks.Blocks;
 import com.james090500.renderer.gui.ArmOverlay;
 import com.james090500.renderer.gui.BlockOverlay;
 import com.james090500.utils.Clock;
 import lombok.Getter;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
 
@@ -20,6 +22,7 @@ public class LocalPlayer {
     private boolean noclip = false;
     private boolean jumping = false;
     private boolean falling = false;
+    private boolean swimming = false;
 
     Clock clock = new Clock();
     private final float playerWidth = 0.4f;
@@ -49,11 +52,18 @@ public class LocalPlayer {
         float moveSpeed = 0.9f;
         if (this.noclip) {
             moveSpeed = 10f;
+        } else if(this.swimming) {
+            moveSpeed = 0.4f;
         }
 
         // Get necessary references
         Camera camera = BlockGame.getInstance().getCamera();
         HashMap<Integer, Boolean> keys = BlockGame.getInstance().getClientWindow().getClientInput().getKeys();
+
+        // Current Block the player is in
+        Vector3f playerPos = new Vector3f(camera.getPosition());
+        playerPos.y -= 1;
+        Block currentBlock = BlockGame.getInstance().getWorld().getBlock(playerPos);
 
         Vector3f dir = new Vector3f(camera.getDirection());
         dir.y = 0;
@@ -74,7 +84,6 @@ public class LocalPlayer {
         Vector3f acceleration = new Vector3f();
 
         // Lets not try any movement until the chunk is loaded
-        Vector3f playerPos = BlockGame.getInstance().getCamera().getPosition();
         int playerPosX = (int) Math.floor(playerPos.x / 16);
         int playerPosZ = (int) Math.floor(playerPos.z / 16);
         if(!BlockGame.getInstance().getWorld().isChunkLoaded(playerPosX, playerPosZ)) {
@@ -99,34 +108,61 @@ public class LocalPlayer {
             this.velocity.add(acceleration.mul((float) delta)); // scale per frame
         }
 
-        // Start jump if grounded and Space is pressed
-        if (!this.jumping && !this.falling && keys.getOrDefault(GLFW_KEY_SPACE, false)) {
-            keys.put(GLFW_KEY_SPACE, false);
-            this.jumping = true;
-            this.jumpStartTime = this.clock.getElapsedTime();
+        // No Clip Logic, else Swimming Logic, else Jumping Logic
+        boolean newSwimming = currentBlock != null && !currentBlock.isSolid();
+        if(this.swimming && !newSwimming) {
+            this.fallVelocity.y = 10;
         }
+        this.swimming = newSwimming;
 
-        double timeSinceJump = this.clock.getElapsedTime() - this.jumpStartTime;
-        float maxJumpTime = 0.2f; // Adjust for smooth 1.2 block rise
-
-        // Ascend phase
-        if (this.jumping && timeSinceJump < maxJumpTime) {
-            this.fallVelocity.y = 5; // Initial jump velocity upward
-        } else {
-            this.jumping = false;
-        }
-
-        // Apply gravity if not jumping
-        if (!this.noclip && !this.jumping) {
-            float gravity = 50f;
-            float terminalVelocity = -90;
-            this.fallVelocity.y -= (float) (gravity * delta);
-            if (this.fallVelocity.y < terminalVelocity) {
-                this.fallVelocity.y = terminalVelocity;
+        if(this.noclip) {
+            if (keys.getOrDefault(GLFW_KEY_SPACE, false)) {
+                this.fallVelocity.y = 15;
+            } else if (keys.getOrDefault(GLFW_KEY_LEFT_SHIFT, false)) {
+                this.fallVelocity.y = -15;
+            } else {
+                this.fallVelocity.y = 0;
             }
-        } else if (!this.jumping) {
-            this.fallVelocity.y = 0;
+        } else if (this.swimming) {
+            if (keys.getOrDefault(GLFW_KEY_SPACE, false)) {
+                this.fallVelocity.y = 5;
+            } else {
+                float gravity = 20f;
+                float terminalVelocity = -20;
+                this.fallVelocity.y -= (float) (gravity * delta);
+                if (this.fallVelocity.y < terminalVelocity) {
+                    this.fallVelocity.y = terminalVelocity;
+                }
+            }
+        } else {
+            // Start jump if grounded and Space is pressed
+            if (!this.jumping && !this.falling && keys.getOrDefault(GLFW_KEY_SPACE, false)) {
+                keys.put(GLFW_KEY_SPACE, false);
+                this.jumping = true;
+                this.jumpStartTime = this.clock.getElapsedTime();
+            }
+
+            double timeSinceJump = this.clock.getElapsedTime() - this.jumpStartTime;
+            float maxJumpTime = 0.2f; // Adjust for smooth 1.2 block rise
+
+            // Ascend phase
+            if (this.jumping && timeSinceJump < maxJumpTime && !this.swimming) {
+                this.fallVelocity.y = 5; // Initial jump velocity upward
+            } else {
+                this.jumping = false;
+            }
+
+            // Apply gravity if not jumping
+            if (!this.jumping) {
+                float gravity = 45f;
+                float terminalVelocity = -90;
+                this.fallVelocity.y -= (float) (gravity * delta);
+                if (this.fallVelocity.y < terminalVelocity) {
+                    this.fallVelocity.y = terminalVelocity;
+                }
+            }
         }
+
         float yVelocity = (float) (this.fallVelocity.y * delta);
 
         // Half the players width
@@ -169,7 +205,7 @@ public class LocalPlayer {
             }
 
             if(mouse.getOrDefault(GLFW_MOUSE_BUTTON_RIGHT, false)) {
-                BlockGame.getInstance().getWorld().setBlock(raycast[0].x, raycast[0].y, raycast[0].z, (byte) 1);
+                BlockGame.getInstance().getWorld().setBlock(raycast[0].x, raycast[0].y, raycast[0].z, (byte) this.currentBlock);
                 mouse.put(GLFW_MOUSE_BUTTON_RIGHT, false);
             }
 
@@ -186,13 +222,9 @@ public class LocalPlayer {
      * @param {Vector3} min - Minimum bounds of the AABB.
      * @param {Vector3} max - Maximum bounds of the AABB.
      * @param {Object} futureBlock - Are we attempting to place a block?
-     * @returns {boolean} True if a collision is found.
+     * @returns {boolean} If the player is colliding
      */
     private boolean isAABBColliding(Vector3f min, Vector3f max) {
-        if (this.noclip) {
-            return false;
-        }
-
         for (int x = (int) Math.floor(min.x); x <= Math.floor(max.x); x++) {
             for (int y = (int) Math.floor(min.y); y <= Math.floor(max.y); y++) {
                 for (int z = (int) Math.floor(min.z); z <= Math.floor(max.z); z++) {
@@ -207,7 +239,7 @@ public class LocalPlayer {
 //                    }
 
                     Block block = BlockGame.getInstance().getWorld().getBlock(x, y, z);
-                    if (block != null && block.isSolid()) {
+                    if(block != null && block.isSolid()) {
                         return true;
                     }
                 }
@@ -238,7 +270,7 @@ public class LocalPlayer {
 
         Vector3f max = new Vector3f(pos.x + halfWidth, pos.y, pos.z + halfWidth);
 
-        if (!this.isAABBColliding(min, max)) {
+        if (!this.isAABBColliding(min, max) || this.noclip) {
             BlockGame.getInstance().getCamera().setPosition(axis, pos.get(axis));
             return true;
         }
@@ -279,7 +311,7 @@ public class LocalPlayer {
         while (distance <= maxDistance) {
             // Check the block
             Block block = BlockGame.getInstance().getWorld().getBlock(current.x, current.y, current.z);
-            if (block != null) {
+            if (block != null && block.isSolid()) {
                 return new Vector3i[] { previousBlock, current };
             }
 
@@ -333,4 +365,18 @@ public class LocalPlayer {
         this.updateMovement(delta);
     }
 
+    public void loadGui() {
+        this.armOverlay.create();
+    }
+
+    public void changeHand(int i) {
+        this.currentBlock += i;
+        if(this.currentBlock > Blocks.ids.length - 1) {
+            this.currentBlock = 1;
+        } else if(this.currentBlock <= 0) {
+            this.currentBlock = Blocks.ids.length - 1;
+        }
+
+        armOverlay.create();
+    }
 }

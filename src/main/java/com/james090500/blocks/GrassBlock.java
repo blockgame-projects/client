@@ -3,6 +3,7 @@ package com.james090500.blocks;
 public class GrassBlock extends Block {
     public GrassBlock(byte id) {
         super(id);
+        this.name = "Grass";
         this.texture = 3;
     }
 
