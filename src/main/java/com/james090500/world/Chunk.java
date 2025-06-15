@@ -11,6 +11,7 @@ import com.james090500.utils.OpenSimplexNoise;
 import com.james090500.utils.ThreadUtil;
 import lombok.Getter;
 
+import java.io.IOException;
 import java.util.List;
 
 public class Chunk {
@@ -67,6 +68,32 @@ public class Chunk {
                 }
             }
 
+            // Save the state
+            try {
+                this.saveChunk();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            this.generated = true;
+            this.needsUpdate = true;
+            this.getChunkRenderer().mesh();
+        });
+    }
+
+    public Chunk(int chunkX, int chunkZ, List<World.BlockPlacement> blockPlacements, byte[] chunkData) {
+        this.chunkX = chunkX;
+        this.chunkZ = chunkZ;
+        this.chunkData = chunkData;
+
+        ThreadUtil.getQueue("worldGen").submit(() -> {
+            //Add Deferred Blocks
+            if (blockPlacements != null && !blockPlacements.isEmpty()) {
+                for (World.BlockPlacement bp : blockPlacements) {
+                    this.setBlock(bp.x(), bp.y(), bp.z(), bp.blockId());
+                }
+            }
+
             this.generated = true;
             this.needsUpdate = true;
             this.getChunkRenderer().mesh();
@@ -109,6 +136,7 @@ public class Chunk {
             return null;
         }
 
+        int index = this.getIndex(x, y, z);
         int blockID = this.chunkData[this.getIndex(x, y, z)];
         return Blocks.ids[blockID];
     }
@@ -248,5 +276,11 @@ public class Chunk {
         }
 
         return total / maxValue;
+    }
+
+    public void saveChunk() throws IOException {
+        if(this.generated && this.chunkData != null) {
+            BlockGame.getInstance().getWorld().saveChunk(this.chunkX, this.chunkZ, this.chunkData);
+        }
     }
 }

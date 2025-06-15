@@ -7,9 +7,12 @@ import com.james090500.utils.ThreadUtil;
 import lombok.Getter;
 import org.joml.Vector3f;
 
+import java.io.IOException;
 import java.util.*;
 
 public class World {
+
+    private final Map<String, Region> regions = new HashMap<>();
 
     private final HashMap<ChunkPos, Chunk> chunks = new HashMap<>();
     private final Map<ChunkPos, List<BlockPlacement>> deferredBlocks = new HashMap<>();
@@ -221,7 +224,23 @@ public class World {
 
             if (!chunks.containsKey(pos)) {
                 List<BlockPlacement> blockPlacements = deferredBlocks.remove(pos);
-                Chunk newChunk = new Chunk(pos.x(), pos.y(), blockPlacements);
+
+                // Try and load data from disk
+                byte[] chunkData;
+                try {
+                    chunkData = loadChunk(pos.x(), pos.y());
+                } catch (IOException e) {
+                    chunkData = null;
+                }
+
+                // Generate chunk from data or new terrain
+                Chunk newChunk;
+                if(chunkData == null) {
+                    newChunk = new Chunk(pos.x(), pos.y(), blockPlacements);
+                } else {
+                    newChunk = new Chunk(pos.x(), pos.y(), blockPlacements, chunkData);
+                }
+
                 chunks.put(pos, newChunk);
             }
         }
@@ -242,6 +261,11 @@ public class World {
         // Remove broken chunks from array
         chunks.keySet().removeIf(pos -> {
             Chunk chunk = chunks.get(pos);
+            try {
+                chunk.saveChunk();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             return chunk != null && !chunk.loaded;
         });
     }
@@ -262,5 +286,27 @@ public class World {
      */
     public int getChunkCount() {
        return chunks.size();
+    }
+
+    public void saveWorld() throws IOException {
+        for(Chunk chunk : this.chunks.values()) {
+            chunk.saveChunk();
+        }
+    }
+
+    public Region getRegion(int chunkX, int chunkZ) {
+        int regionX = Math.floorDiv(chunkX, 32);
+        int regionZ = Math.floorDiv(chunkZ, 32);
+        String key = regionX + "," + regionZ;
+
+        return regions.computeIfAbsent(key, k -> new Region(regionX, regionZ));
+    }
+
+    public void saveChunk(int chunkX, int chunkZ, byte[] data) throws IOException {
+        getRegion(chunkX, chunkZ).saveChunk(chunkX, chunkZ, data);
+    }
+
+    public byte[] loadChunk(int chunkX, int chunkZ) throws IOException {
+        return getRegion(chunkX, chunkZ).loadChunk(chunkX, chunkZ);
     }
 }
