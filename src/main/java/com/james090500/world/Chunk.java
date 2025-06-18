@@ -68,6 +68,9 @@ public class Chunk {
                 }
             }
 
+            this.generated = true;
+            this.needsUpdate = true;
+
             // Save the state
             try {
                 this.saveChunk();
@@ -75,8 +78,6 @@ public class Chunk {
                 e.printStackTrace();
             }
 
-            this.generated = true;
-            this.needsUpdate = true;
             this.getChunkRenderer().mesh();
         });
     }

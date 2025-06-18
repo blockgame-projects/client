@@ -18,6 +18,7 @@ import static org.lwjgl.nanovg.NanoVG.*;
 public class TextureManager {
 
     public static int logo;
+    public static int pack;
     public static int background;
     public static int button;
     public static int button_active;
@@ -26,6 +27,7 @@ public class TextureManager {
 
     static {
         logo = loadVGTexture("gui/logo.png");
+        pack = loadVGTexture("gui/pack.png");
         background = loadVGTexture("gui/background.png");
         button = loadVGTexture("gui/button.png");
         button_active = loadVGTexture("gui/button_active.png");

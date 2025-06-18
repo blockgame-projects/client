@@ -21,6 +21,8 @@ public class FontManager {
         }
     }
 
+    private boolean center;
+
     private static long loadFont(String resourceName) {
         // Load from classpath
         InputStream stream = FontManager.class.getResourceAsStream("/" + resourceName);
@@ -45,7 +47,7 @@ public class FontManager {
     }
 
     public FontManager center() {
-        nvgTextAlign(vg, NVG_ALIGN_CENTER);
+        this.center = true;
         return this;
     }
 
@@ -64,6 +66,12 @@ public class FontManager {
 
             nvgRGBA((byte) 92, (byte) 88, (byte) 95, (byte) 255, textBackground);
             nvgRGBA((byte) 255, (byte) 255, (byte) 255, (byte) 255, textColor);
+
+            if(center) {
+                nvgTextAlign(vg, NVG_ALIGN_CENTER);
+            } else {
+                nvgTextAlign(vg, NVG_ALIGN_LEFT);
+            }
 
             // Text Background
             nvgFontSize(vg, size);

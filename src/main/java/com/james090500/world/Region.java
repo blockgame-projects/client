@@ -1,5 +1,7 @@
 package com.james090500.world;
 
+import com.james090500.BlockGame;
+
 import java.io.*;
 
 public class Region {
@@ -8,11 +10,11 @@ public class Region {
 
     private final int size = 32;
 
-    public Region(int regionX, int regionZ) {
-        this.regionFile = new File("region/r." + regionX + "." + regionZ + ".bgr");
+    public Region(String worldName, int regionX, int regionZ) {
+        this.regionFile = new File("worlds/" + worldName + "/regions/r." + regionX + "." + regionZ + ".bgr");
 
         // Ensure the "region" folder exists
-        new File("region").mkdirs();
+        new File("worlds/" + worldName + "/regions").mkdir();
     }
 
     void saveChunk(int chunkX, int chunkZ, byte[] chunkData) throws IOException {

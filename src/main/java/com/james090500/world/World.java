@@ -7,7 +7,9 @@ import com.james090500.utils.ThreadUtil;
 import lombok.Getter;
 import org.joml.Vector3f;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.*;
 
 public class World {
@@ -22,27 +24,54 @@ public class World {
     public record ChunkOffset(int dx, int dz, int distSq) {}
 
     @Getter
-    private final int worldSeed;
+    private int worldSeed;
     private final int worldSize = 16;
 
     @Getter
-    private String name = "world_name";
+    private String worldName = "world_name";
 
     private int lastPlayerX = 0;
     private int lastPlayerZ = 0;
 
-    public World(String seed) {
-        int finalWorldSeed;
-        if(!seed.isEmpty()) {
-            try {
-                finalWorldSeed = Integer.parseInt(seed);
-            } catch (NumberFormatException e) {
-                finalWorldSeed = seed.hashCode();
+    /**
+     * Start a world instance
+     * @param name The name, if exists it will load a world otherwise load a new one
+     * @param seed The seed if specified it will use the seed provided or a random.
+     */
+    public World(String name, String seed) {
+        this.worldName = name;
+        File worldPath = new File("worlds/" + worldName);
+        File worldData = new File("worlds/" + worldName + "/world.bg");
+        if(!worldPath.exists()) {
+            // Make world path
+            worldPath.mkdirs();
+
+            // Generate seed
+            int finalWorldSeed;
+            if(!seed.isEmpty()) {
+                try {
+                    finalWorldSeed = Integer.parseInt(seed);
+                } catch (NumberFormatException e) {
+                    finalWorldSeed = seed.hashCode();
+                }
+            } else {
+                finalWorldSeed = (int) Math.floor(Math.random() * Integer.MAX_VALUE);
+            }
+            this.worldSeed = finalWorldSeed;
+
+            // Write to file
+            try (RandomAccessFile raf = new RandomAccessFile(worldData, "rw")) {
+                raf.writeInt(worldSeed);
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         } else {
-            finalWorldSeed = (int) Math.floor(Math.random() * 1000000);
+            try (RandomAccessFile raf = new RandomAccessFile(worldData, "rw")) {
+                this.worldSeed = raf.readInt();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
-        this.worldSeed = finalWorldSeed;
     }
 
     /**
@@ -288,18 +317,22 @@ public class World {
        return chunks.size();
     }
 
-    public void saveWorld() throws IOException {
-        for(Chunk chunk : this.chunks.values()) {
-            chunk.saveChunk();
-        }
-    }
-
     public Region getRegion(int chunkX, int chunkZ) {
         int regionX = Math.floorDiv(chunkX, 32);
         int regionZ = Math.floorDiv(chunkZ, 32);
         String key = regionX + "," + regionZ;
 
-        return regions.computeIfAbsent(key, k -> new Region(regionX, regionZ));
+        return regions.computeIfAbsent(key, k -> new Region(worldName, regionX, regionZ));
+    }
+
+    public void saveWorld() {
+        for(Chunk chunk : this.chunks.values()) {
+            try {
+                chunk.saveChunk();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     public void saveChunk(int chunkX, int chunkZ, byte[] data) throws IOException {

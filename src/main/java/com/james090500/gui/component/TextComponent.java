@@ -14,7 +14,8 @@ public class TextComponent extends Component {
 
     @Override
     public void render(long vg, boolean hovered) {
-        FontManager.create().uiText("Seed", 20f, this.getX(), this.getY());
+        // Label
+        FontManager.create().uiText(this.getText(), 20f, this.getX(), this.getY());
 
         // Text
         NVGColor color = NVGColor.calloc();
