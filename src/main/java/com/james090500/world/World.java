@@ -255,12 +255,8 @@ public class World {
                 List<BlockPlacement> blockPlacements = deferredBlocks.remove(pos);
 
                 // Try and load data from disk
-                byte[] chunkData;
-                try {
-                    chunkData = loadChunk(pos.x(), pos.y());
-                } catch (IOException e) {
-                    chunkData = null;
-                }
+                //TODO remove this from main thread as its slow
+                byte[] chunkData = loadChunk(pos.x(), pos.y());
 
                 // Generate chunk from data or new terrain
                 Chunk newChunk;
@@ -290,12 +286,12 @@ public class World {
         // Remove broken chunks from array
         chunks.keySet().removeIf(pos -> {
             Chunk chunk = chunks.get(pos);
-            try {
+            if(!chunk.loaded) {
+                //TODO remove this from main thread as its slow
                 chunk.saveChunk();
-            } catch (IOException e) {
-                e.printStackTrace();
+                return true;
             }
-            return chunk != null && !chunk.loaded;
+            return false;
         });
     }
 
@@ -322,24 +318,34 @@ public class World {
         int regionZ = Math.floorDiv(chunkZ, 32);
         String key = regionX + "," + regionZ;
 
-        return regions.computeIfAbsent(key, k -> new Region(worldName, regionX, regionZ));
+        return regions.computeIfAbsent(key, k -> {
+            try {
+                return new Region(worldName, regionX, regionZ);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     public void saveWorld() {
         for(Chunk chunk : this.chunks.values()) {
-            try {
-                chunk.saveChunk();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            BlockGame.getInstance().getWorld().saveChunk(chunk.chunkX, chunk.chunkZ, chunk.chunkData);
         }
     }
 
-    public void saveChunk(int chunkX, int chunkZ, byte[] data) throws IOException {
-        getRegion(chunkX, chunkZ).saveChunk(chunkX, chunkZ, data);
+    public void saveChunk(int chunkX, int chunkZ, byte[] data) {
+        try {
+            getRegion(chunkX, chunkZ).saveChunk(chunkX, chunkZ, data);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public byte[] loadChunk(int chunkX, int chunkZ) throws IOException {
-        return getRegion(chunkX, chunkZ).loadChunk(chunkX, chunkZ);
+    public byte[] loadChunk(int chunkX, int chunkZ) {
+        try {
+            return getRegion(chunkX, chunkZ).loadChunk(chunkX, chunkZ);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

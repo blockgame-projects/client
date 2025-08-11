@@ -16,7 +16,7 @@ import java.util.List;
 
 public class Chunk {
 
-    private final byte[] chunkData;
+    public final byte[] chunkData;
 
     @Getter
     private final ChunkRenderer chunkRenderer = new ChunkRenderer(this);
@@ -72,12 +72,7 @@ public class Chunk {
             this.needsUpdate = true;
 
             // Save the state
-            try {
-                this.saveChunk();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
+            this.saveChunk();
             this.getChunkRenderer().mesh();
         });
     }
@@ -279,9 +274,9 @@ public class Chunk {
         return total / maxValue;
     }
 
-    public void saveChunk() throws IOException {
+    public void saveChunk() {
         if(this.generated && this.chunkData != null) {
-            BlockGame.getInstance().getWorld().saveChunk(this.chunkX, this.chunkZ, this.chunkData);
+            ThreadUtil.getQueue("worldDisk").submit(() -> BlockGame.getInstance().getWorld().saveChunk(this.chunkX, this.chunkZ, this.chunkData));
         }
     }
 }

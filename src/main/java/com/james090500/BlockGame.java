@@ -75,12 +75,14 @@ public class BlockGame {
      * Starting a game so generates the player, world, camera etc
      */
     public void start(String name, String seed) {
-        this.unpause();
         this.camera = new Camera(0, 150, 0);
         this.localPlayer = new LocalPlayer();
+
         this.world = new World(name, seed);
 
         this.localPlayer.loadGui();
+
+        this.unpause();
 
         ScreenManager.add(new DebugScreen());
     }
