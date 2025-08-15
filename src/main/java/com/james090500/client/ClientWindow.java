@@ -17,7 +17,7 @@ import static org.lwjgl.system.MemoryUtil.NULL;
 
 public class ClientWindow {
 
-    private final String title = "BlockGame";
+    private final String title = "BlockGame " + BlockGame.getInstance().getConfig().getVersion();
 
     @Getter
     private int baseWidth = 854;
