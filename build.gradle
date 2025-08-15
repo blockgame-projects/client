@@ -6,7 +6,7 @@ plugins {
 }
 
 group = 'com.james090500'
-version = '1.0-SNAPSHOT'
+version = '0.0.1'
 
 repositories {
     mavenCentral()
@@ -18,36 +18,6 @@ repositories {
 dependencies {
     implementation "org.joml:joml:1.10.8"
     implementation 'org.lz4:lz4-java:1.8.0'
-}
-
-/**
- * Application plugin:
- * - installDist / distZip produce:
- *   build/install/<project>/{bin,lib} and build/distributions/<project>.zip
- * - lib/ contains your jar + all runtime deps (including LWJGL + natives)
- */
-application {
-    // Gradle 8 syntax
-    mainClass = 'com.james090500.BlockGame'
-
-    // Ensure the distribution (distZip/distTar) doesn't choke on duplicates
-    distributions {
-        main {
-            contents {
-                duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-            }
-        }
-    }
-}
-
-// Also set a global duplicate strategy for archive tasks (zip/tar)
-tasks.withType(org.gradle.api.tasks.bundling.AbstractArchiveTask).configureEach {
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-}
-
-// (Optional) If you have any custom Copy tasks, keep this too
-tasks.withType(Copy).configureEach {
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 lwjgl3 {
