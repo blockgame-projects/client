@@ -5,8 +5,27 @@ plugins {
     id("com.osmerion.lwjgl3") version "0.5.0"
 }
 
+// Creates the SHA Commit Hash
+def gitSha = { ->
+    try {
+        def p = "git rev-parse --short HEAD".execute()
+        p.waitFor()
+        return p.exitValue() == 0 ? p.in.text.trim() : "unknown"
+    } catch (ignored) {
+        return "unknown"
+    }
+}()
+
+// Check if we are in dev mode
+def isDev = (project.findProperty("dev") ?: "true").toString().toBoolean()
+
 group = 'com.james090500'
-version = '0.0.1'
+version = isDev ? "${project.version}-${gitSha}" : "${project.version}"
+
+java {
+    toolchain { languageVersion = JavaLanguageVersion.of(21) }
+}
+
 
 repositories {
     mavenCentral()
@@ -34,5 +53,33 @@ lwjgl3 {
         macosX64()
         windowsX64()
         linuxX64()
+    }
+}
+
+// Builds the JAr
+tasks.withType(Jar).configureEach {
+    archiveBaseName.set(project.findProperty("archivesBaseName") ?: project.name)
+    archiveVersion.set(project.version) // already includes -<sha> when dev=true
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    manifest {
+        attributes(
+            'Implementation-Title': project.name,
+            'Implementation-Version': project.version
+        )
+    }
+}
+
+/** Tiny helper tasks for CI */
+tasks.register("printVersion") {
+    doLast { println project.version }
+}
+tasks.register("printIsDev") {
+    doLast { println isDev ? "true" : "false" }
+}
+
+// build.gradle
+tasks.register("printJvmArgs") {
+    doLast {
+        println java.lang.management.ManagementFactory.getRuntimeMXBean().getInputArguments()
     }
 }

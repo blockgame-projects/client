@@ -3,10 +3,8 @@ package com.james090500.gui;
 import com.james090500.BlockGame;
 import com.james090500.gui.component.Component;
 import com.james090500.gui.component.StandardButton;
-import com.james090500.gui.component.TextComponent;
 import com.james090500.gui.component.WorldComponent;
 
-import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;

@@ -4,14 +4,12 @@ import com.james090500.BlockGame;
 import com.james090500.blocks.Block;
 import com.james090500.blocks.Blocks;
 import com.james090500.blocks.GrassBlock;
-import com.james090500.renderer.RenderManager;
 import com.james090500.renderer.world.ChunkRenderer;
 import com.james090500.structure.Tree;
 import com.james090500.utils.OpenSimplexNoise;
 import com.james090500.utils.ThreadUtil;
 import lombok.Getter;
 
-import java.io.IOException;
 import java.util.List;
 
 public class Chunk {

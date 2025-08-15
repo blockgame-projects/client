@@ -2,19 +2,12 @@ package com.james090500.renderer.gui;
 
 import com.james090500.BlockGame;
 import com.james090500.blocks.Blocks;
-import com.james090500.client.Camera;
 import com.james090500.renderer.Renderer;
 import com.james090500.renderer.ShaderManager;
 import com.james090500.utils.TextureManager;
-import lombok.Getter;
-import lombok.Setter;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.lwjgl.system.MemoryUtil;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.glEnableVertexAttribArray;

@@ -4,7 +4,6 @@ import com.james090500.utils.FontManager;
 import org.lwjgl.nanovg.NVGColor;
 
 import static org.lwjgl.nanovg.NanoVG.*;
-import static org.lwjgl.nanovg.NanoVG.nvgFill;
 
 public class TextComponent extends Component {
 
