@@ -236,7 +236,7 @@ public class LocalPlayer {
                 stepCooldown -= delta; // deltaTime is the time since last frame
                 if (stepCooldown <= 0f) {
                     Block blockAtFeet = BlockGame.getInstance().getWorld().getBlock(camera.getPosition().sub(new Vector3f(0, 2, 0)));
-                    if(blockAtFeet.getSound() != null) {
+                    if(blockAtFeet != null && blockAtFeet.getSound() != null) {
                         int sound = 1 + (int) (Math.random() * 4);
                         SoundManager.play("assets/sound/block/" + blockAtFeet.getSound() + sound + ".ogg");
                         stepCooldown = 0.5f; // play every half second while moving

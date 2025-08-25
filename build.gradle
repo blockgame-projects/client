@@ -78,9 +78,23 @@ tasks.register("printIsDev") {
     doLast { println isDev ? "true" : "false" }
 }
 
-// build.gradle
-tasks.register("printJvmArgs") {
+tasks.register("generateAssetManifest") {
+    def inputDir = file("src/main/resources/assets")
+    def outputFile = file("src/main/resources/assets.txt")
+
     doLast {
-        println java.lang.management.ManagementFactory.getRuntimeMXBean().getInputArguments()
+        if (!inputDir.exists()) return
+        def lines = []
+        inputDir.eachFileRecurse { file ->
+            if (file.isFile()) {
+                def relativePath = file.path - inputDir.path - File.separator
+                lines << relativePath.replace(File.separator, "/")
+            }
+        }
+        outputFile.text = lines.join("\n")
+        println "Generated files.txt with ${lines.size()} entries"
     }
 }
+
+// Make sure this runs before processing resources
+processResources.dependsOn(tasks.generateAssetManifest)

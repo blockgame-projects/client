@@ -41,14 +41,7 @@ public class TextureManager {
      * @return
      */
     public static int loadGLTexture(String resourceName) {
-        try {
-            Path tempFile = Path.of(resourceName);
-            int textureId = loadTextureFromFile(tempFile.toString());
-            Files.delete(tempFile);
-            return textureId;
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to load texture: " + resourceName, e);
-        }
+        return loadTextureFromFile(resourceName);
     }
 
     /**
@@ -57,14 +50,7 @@ public class TextureManager {
      * @return
      */
     private static int loadVGTexture(String resourceName) {
-        try {
-            Path tempFile = Path.of(resourceName);
-            int textureId = nvgCreateImage(BlockGame.getInstance().getClientWindow().getVg(), tempFile.toString(), NVG_IMAGE_REPEATX | NVG_IMAGE_REPEATY);
-            Files.delete(tempFile);
-            return textureId;
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to load texture: " + resourceName, e);
-        }
+        return nvgCreateImage(BlockGame.getInstance().getClientWindow().getVg(), resourceName, NVG_IMAGE_REPEATX | NVG_IMAGE_REPEATY);
     }
 
     /**

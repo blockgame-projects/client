@@ -10,55 +10,35 @@ import java.util.List;
 public class AssetManager {
 
     public static void extractAssets() {
-        File outputDir = new File("/assets");
-        // Create output directory if missing
+        File outputDir = new File("assets");
         if (!outputDir.exists()) {
             outputDir.mkdirs();
         }
 
-        // Check if running from a JAR
-        List<String> filenames = getFiles("/assets");
-        try {
-            for (String filename : filenames) {
-                // filename is like "/assets/dir/file.ext"
-                String relative = filename.replaceFirst("^/assets/?", "");
-                Path out = Path.of("assets").resolve(relative);
-                Files.createDirectories(out.getParent());
-                try (InputStream in = AssetManager.class.getResourceAsStream(filename)) {
-                    if (in != null) Files.copy(in, out, StandardCopyOption.REPLACE_EXISTING);
+        try (InputStream in = AssetManager.class.getResourceAsStream("/assets.txt");
+             BufferedReader br = new BufferedReader(new InputStreamReader(in))) {
+
+            String line;
+            while ((line = br.readLine()) != null) {
+                line = line.trim();
+                if (line.isEmpty() || line.startsWith("#")) continue;
+
+                InputStream asset = AssetManager.class.getResourceAsStream("/assets/" + line);
+                if (asset == null) {
+                    System.err.println("Missing asset: /assets/" + line);
+                    continue;
                 }
+
+                Path out = Path.of("assets").resolve(line.replace("\\", "/"));
+                Files.createDirectories(out.getParent());
+                Files.copy(asset, out, StandardCopyOption.REPLACE_EXISTING);
+                System.out.println("Asset placed in " + out.toAbsolutePath());
             }
+
         } catch (IOException e) {
             e.printStackTrace();
         }
+
         System.out.println("Assets successfully extracted");
-    }
-
-    /**
-     * Recursive loop to get all files
-     * @param path
-     * @return
-     */
-    private static List<String> getFiles(String path) {
-        List<String> filenames = new ArrayList<>();
-
-        try (
-            InputStream in = AssetManager.class.getResourceAsStream(path);
-            BufferedReader br = new BufferedReader(new InputStreamReader(in))) {
-            String resource;
-
-            while ((resource = br.readLine()) != null) {
-                if(resource.contains(".")) {
-                    filenames.add(path + "/" + resource);
-                } else {
-                    List<String> moreFiles = getFiles(path + "/" + resource);
-                    filenames.addAll(moreFiles);
-                }
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        return filenames;
     }
 }
