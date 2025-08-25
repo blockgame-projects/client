@@ -4,15 +4,15 @@ import com.james090500.BlockGame;
 import com.james090500.gui.component.Component;
 import com.james090500.gui.component.StandardButton;
 import com.james090500.gui.component.WorldComponent;
+import com.james090500.io.WorldManager;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 public class WorldScreen extends Screen {
 
     private String selectedWorld;
-    private final List<String> worlds = new ArrayList<>();
+    private List<String> worlds = new ArrayList<>();
 
     private Component playWorld;
     private Component deleteWorld;
@@ -23,13 +23,7 @@ public class WorldScreen extends Screen {
         setBackground(true);
         setTitle("Singleplayer");
 
-        File path = new File("worlds");
-        File[] folders = path.listFiles(File::isDirectory);
-        if (folders != null) {
-            for (File folder : folders) {
-                worlds.add(folder.getName());
-            }
-        }
+        worlds = WorldManager.getWorlds();
 
         init();
     }
@@ -86,7 +80,7 @@ public class WorldScreen extends Screen {
                 300f,
                 40f,
                 () -> {
-                    ScreenManager.add(new NewWorldScreen());
+                    ScreenManager.add(new DeleteWorldScreen(selectedWorld));
                     this.close();
                 }
         );

@@ -3,6 +3,7 @@ package com.james090500.gui;
 import com.james090500.BlockGame;
 import com.james090500.gui.component.Component;
 import com.james090500.utils.FontManager;
+import com.james090500.utils.SoundManager;
 import com.james090500.utils.TextureManager;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -51,6 +52,7 @@ public class Screen {
 
             if(hovered && component.isEnabled()) {
                 if(component.getOnclick() != null) {
+                    SoundManager.play("assets/sound/gui/click.ogg");
                     component.getOnclick().run();
                 }
                 component.setSelected(true);

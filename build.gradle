@@ -47,6 +47,7 @@ lwjgl3 {
         modules.add("lwjgl-opengl")
         modules.add("lwjgl-stb")
         modules.add("lwjgl-nanovg")
+        modules.add("lwjgl-openal")
 
         // Platforms (includes natives for each target)
         macosARM64()

@@ -12,6 +12,8 @@ public class Block {
     @Getter
     boolean solid = true;
     @Getter
+    String sound = null;
+    @Getter
     String name = "UNKNOWN";
 
     public Block(byte id) {

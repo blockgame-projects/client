@@ -26,13 +26,13 @@ public class TextureManager {
     public static int terrainTexture;
 
     static {
-        logo = loadVGTexture("gui/logo.png");
-        pack = loadVGTexture("gui/pack.png");
-        background = loadVGTexture("gui/background.png");
-        button = loadVGTexture("gui/button.png");
-        button_active = loadVGTexture("gui/button_active.png");
-        button_disabled = loadVGTexture("gui/button_disabled.png");
-        terrainTexture = loadGLTexture("terrain.png");
+        logo = loadVGTexture("assets/gui/logo.png");
+        pack = loadVGTexture("assets/gui/pack.png");
+        background = loadVGTexture("assets/gui/background.png");
+        button = loadVGTexture("assets/gui/button.png");
+        button_active = loadVGTexture("assets/gui/button_active.png");
+        button_disabled = loadVGTexture("assets/gui/button_disabled.png");
+        terrainTexture = loadGLTexture("assets/terrain.png");
     }
 
     /**
@@ -42,7 +42,7 @@ public class TextureManager {
      */
     public static int loadGLTexture(String resourceName) {
         try {
-            Path tempFile = extractResourceToTempFile(resourceName);
+            Path tempFile = Path.of(resourceName);
             int textureId = loadTextureFromFile(tempFile.toString());
             Files.delete(tempFile);
             return textureId;
@@ -58,29 +58,13 @@ public class TextureManager {
      */
     private static int loadVGTexture(String resourceName) {
         try {
-            Path tempFile = extractResourceToTempFile(resourceName);
+            Path tempFile = Path.of(resourceName);
             int textureId = nvgCreateImage(BlockGame.getInstance().getClientWindow().getVg(), tempFile.toString(), NVG_IMAGE_REPEATX | NVG_IMAGE_REPEATY);
             Files.delete(tempFile);
             return textureId;
         } catch (IOException e) {
             throw new RuntimeException("Failed to load texture: " + resourceName, e);
         }
-    }
-
-    /**
-     * Extract a resource from the JAR to a temp file
-     * @param resourceName The resource name
-     * @return
-     * @throws IOException
-     */
-    private static Path extractResourceToTempFile(String resourceName) throws IOException {
-        InputStream stream = TextureManager.class.getResourceAsStream("/" + resourceName);
-        if (stream == null) {
-            throw new RuntimeException("Resource not found: " + resourceName);
-        }
-        Path tempFile = Files.createTempFile("texture", ".png");
-        Files.copy(stream, tempFile, StandardCopyOption.REPLACE_EXISTING);
-        return tempFile;
     }
 
     /**

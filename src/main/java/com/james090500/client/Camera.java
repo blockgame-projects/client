@@ -40,6 +40,12 @@ public class Camera {
                 far);
     }
 
+    public void setPosition(float x, float y, float z) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+    }
+
     public void setPosition(int axis, float value) {
         switch(axis) {
             case 0:
@@ -52,6 +58,11 @@ public class Camera {
                 z = value;
                 break;
         }
+    }
+
+    public void setRotation(float pitch, float yaw) {
+        this.pitch = pitch;
+        this.yaw = yaw;
     }
 
     public Vector3f getDirection() {

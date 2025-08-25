@@ -7,7 +7,9 @@ import com.james090500.gui.DebugScreen;
 import com.james090500.gui.MainMenu;
 import com.james090500.gui.PauseScreen;
 import com.james090500.gui.ScreenManager;
+import com.james090500.io.AssetManager;
 import com.james090500.renderer.RenderManager;
+import com.james090500.utils.SoundManager;
 import com.james090500.utils.ThreadUtil;
 import com.james090500.world.World;
 import lombok.Getter;
@@ -35,6 +37,9 @@ public class BlockGame {
 
         clientWindow = new ClientWindow();
         clientWindow.create();
+
+        // Extract Assets
+        AssetManager.extractAssets();
 
         // Start the Menu
         ScreenManager.add(new MainMenu());
@@ -76,10 +81,10 @@ public class BlockGame {
      */
     public void start(String name, String seed) {
         this.camera = new Camera(0, 150, 0);
-        this.localPlayer = new LocalPlayer();
 
         this.world = new World(name, seed);
 
+        this.localPlayer = new LocalPlayer(name);
         this.localPlayer.loadGui();
 
         this.unpause();
@@ -98,6 +103,7 @@ public class BlockGame {
         ThreadUtil.shutdown();
         RenderManager.clear();
 
+        BlockGame.getInstance().getLocalPlayer().savePlayer();
         BlockGame.getInstance().getWorld().saveWorld();
 
         this.localPlayer = null;
@@ -112,6 +118,7 @@ public class BlockGame {
      */
     public void close() {
         ThreadUtil.shutdown();
+        SoundManager.destroy();
         glfwSetWindowShouldClose(BlockGame.getInstance().getClientWindow().getWindow(), true);
     }
 

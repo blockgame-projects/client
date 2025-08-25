@@ -41,7 +41,7 @@ public class World {
     public World(String name, String seed) {
         this.worldName = name;
         File worldPath = new File("worlds/" + worldName);
-        File worldData = new File("worlds/" + worldName + "/world.bg");
+        File worldData = new File(worldPath + "/world.bg");
         if(!worldPath.exists()) {
             // Make world path
             worldPath.mkdirs();
@@ -193,6 +193,7 @@ public class World {
         // Update block and flag for meshing
         target.setBlock(x, y, z, block);
         target.needsUpdate = true;
+        target.needsSaving = true;
 
         // Check if the block is on the chunk border, and update neighbors
         if (x == 0) {
@@ -329,7 +330,9 @@ public class World {
 
     public void saveWorld() {
         for(Chunk chunk : this.chunks.values()) {
-            BlockGame.getInstance().getWorld().saveChunk(chunk.chunkX, chunk.chunkZ, chunk.chunkData);
+            if(chunk.needsSaving) {
+                BlockGame.getInstance().getWorld().saveChunk(chunk.chunkX, chunk.chunkZ, chunk.chunkData);
+            }
         }
     }
 

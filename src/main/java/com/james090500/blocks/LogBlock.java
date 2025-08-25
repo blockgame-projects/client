@@ -4,6 +4,7 @@ public class LogBlock extends Block {
     public LogBlock(byte id) {
         super(id);
         this.name = "Log";
+        this.sound = "wood";
         this.texture = 20;
     }
 

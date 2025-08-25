@@ -4,6 +4,7 @@ public class GrassBlock extends Block {
     public GrassBlock(byte id) {
         super(id);
         this.name = "Grass";
+        this.sound = "grass";
         this.texture = 3;
     }
 

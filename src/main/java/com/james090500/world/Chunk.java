@@ -27,6 +27,7 @@ public class Chunk {
     public boolean loaded = true;
     public boolean queued = true;
     public boolean needsUpdate = false;
+    public boolean needsSaving = false;
     public boolean generated = false;
 
     public Chunk(int chunkX, int chunkZ, List<World.BlockPlacement> blockPlacements) {
@@ -68,6 +69,7 @@ public class Chunk {
 
             this.generated = true;
             this.needsUpdate = true;
+            this.needsSaving = true;
 
             // Save the state
             this.saveChunk();
@@ -131,7 +133,7 @@ public class Chunk {
         }
 
         int index = this.getIndex(x, y, z);
-        int blockID = this.chunkData[this.getIndex(x, y, z)];
+        int blockID = this.chunkData[index];
         return Blocks.ids[blockID];
     }
 
@@ -273,7 +275,8 @@ public class Chunk {
     }
 
     public void saveChunk() {
-        if(this.generated && this.chunkData != null) {
+        if(this.generated && this.chunkData != null && this.needsSaving) {
+            this.needsSaving = false;
             ThreadUtil.getQueue("worldDisk").submit(() -> BlockGame.getInstance().getWorld().saveChunk(this.chunkX, this.chunkZ, this.chunkData));
         }
     }

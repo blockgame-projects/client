@@ -6,10 +6,14 @@ import com.james090500.blocks.Blocks;
 import com.james090500.renderer.gui.ArmOverlay;
 import com.james090500.renderer.gui.BlockOverlay;
 import com.james090500.utils.Clock;
+import com.james090500.utils.SoundManager;
 import lombok.Getter;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.HashMap;
 
 import static org.lwjgl.glfw.GLFW.*;
@@ -29,9 +33,57 @@ public class LocalPlayer {
     private final Vector3f velocity = new Vector3f();
     private final Vector3f fallVelocity = new Vector3f();
     private double jumpStartTime = 0;
+    private float stepCooldown;
+    private String worldName;
 
     BlockOverlay blockOverlay = new BlockOverlay();
     ArmOverlay armOverlay = new ArmOverlay();
+
+    public LocalPlayer(String worldName) {
+        this.worldName = worldName;
+
+        File playerPath = new File("worlds/" + worldName + "/players");
+        File playerData = new File(playerPath + "/player.dat");
+        Camera camera = BlockGame.getInstance().getCamera();
+
+        if(!playerPath.exists()) {
+            playerPath.mkdirs();
+
+            savePlayer();
+        } else {
+            try (RandomAccessFile raf = new RandomAccessFile(playerData, "rw")) {
+                float x = raf.readFloat();
+                float y = raf.readFloat();
+                float z = raf.readFloat();
+                float pitch = raf.readFloat();
+                float yaw = raf.readFloat();
+
+                camera.setPosition(x, y, z);
+                camera.setRotation(pitch, yaw);
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void savePlayer() {
+        File playerPath = new File("worlds/" + worldName + "/players");
+        File playerData = new File(playerPath + "/player.dat");
+        Camera camera = BlockGame.getInstance().getCamera();
+
+        // Write to file
+        try (RandomAccessFile raf = new RandomAccessFile(playerData, "rw")) {
+            raf.setLength(0);
+            raf.writeFloat(camera.getPosition().x);
+            raf.writeFloat(camera.getPosition().y);
+            raf.writeFloat(camera.getPosition().z);
+            raf.writeFloat(camera.pitch);
+            raf.writeFloat(camera.yaw);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     private void updateControls() {
         HashMap<Integer, Boolean> keys = BlockGame.getInstance().getClientWindow().getClientInput().getKeys();
@@ -175,8 +227,24 @@ public class LocalPlayer {
         }
 
         // Try horizontal movement along X and Z axes
-        this.tryMove(this.velocity, 0, halfWidth, this.playerHeight);
-        this.tryMove(this.velocity, 2, halfWidth, this.playerHeight);
+        boolean canMove1 = this.tryMove(this.velocity, 0, halfWidth, this.playerHeight);
+        boolean canMove2 = this.tryMove(this.velocity, 2, halfWidth, this.playerHeight);
+
+        if(canMove1 && canMove2) {
+            // Play the movement sound
+            if (velocity.lengthSquared() > 0.0004f && !this.falling && !this.jumping) {
+                stepCooldown -= delta; // deltaTime is the time since last frame
+                if (stepCooldown <= 0f) {
+                    Block blockAtFeet = BlockGame.getInstance().getWorld().getBlock(camera.getPosition().sub(new Vector3f(0, 2, 0)));
+                    if(blockAtFeet.getSound() != null) {
+                        int sound = 1 + (int) (Math.random() * 4);
+                        SoundManager.play("assets/sound/block/" + blockAtFeet.getSound() + sound + ".ogg");
+                        stepCooldown = 0.5f; // play every half second while moving
+                    }
+                }
+            }
+        }
+
         camera.updateFrustum();
     }
 

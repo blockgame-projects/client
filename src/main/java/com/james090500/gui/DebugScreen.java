@@ -34,8 +34,9 @@ public class DebugScreen extends Screen {
         FontManager.create().text("Chunk Loaded: " + chunk.loaded, 20f, 10f, 230f);
         FontManager.create().text("Chunk Needs Update: " + chunk.needsUpdate, 20f, 10f, 250f);
         FontManager.create().text("Chunk Needs Queued: " + chunk.queued, 20f, 10f, 270f);
-        FontManager.create().text("Chunk Solid Vertices: " + chunk.getChunkRenderer().solidVertexCount, 20f, 10f, 290f);
-        FontManager.create().text("Chunk Trans Vertices: " + chunk.getChunkRenderer().transVertexCount, 20f, 10f, 310f);
+        FontManager.create().text("Chunk Needs Saving: " + chunk.needsSaving, 20f, 10f, 290f);
+        FontManager.create().text("Chunk Solid Vertices: " + chunk.getChunkRenderer().solidVertexCount, 20f, 10f, 310f);
+        FontManager.create().text("Chunk Trans Vertices: " + chunk.getChunkRenderer().transVertexCount, 20f, 10f, 330f);
 
 
         FontManager.create().text("Player Info", 20f, 10f, 350f);
