@@ -28,19 +28,20 @@ public class DebugScreen extends Screen {
         int playerPosZ = (int) Math.floor(position.z / 16);
         Chunk chunk = BlockGame.getInstance().getWorld().getChunk(playerPosX, playerPosZ);
 
-        FontManager.create().text("Current Chunk Info", 20f, 10f, 170f);
-        FontManager.create().text("Chunk Coords: " + playerPosX + ", " + playerPosZ, 20f, 10f, 190f);
-        FontManager.create().text("Chunk Generated: " + chunk.generated, 20f, 10f, 210f);
-        FontManager.create().text("Chunk Loaded: " + chunk.loaded, 20f, 10f, 230f);
-        FontManager.create().text("Chunk Needs Update: " + chunk.needsUpdate, 20f, 10f, 250f);
-        FontManager.create().text("Chunk Needs Queued: " + chunk.queued, 20f, 10f, 270f);
-        FontManager.create().text("Chunk Needs Saving: " + chunk.needsSaving, 20f, 10f, 290f);
-        FontManager.create().text("Chunk Solid Vertices: " + chunk.getChunkRenderer().solidVertexCount, 20f, 10f, 310f);
-        FontManager.create().text("Chunk Trans Vertices: " + chunk.getChunkRenderer().transVertexCount, 20f, 10f, 330f);
+        if(chunk != null) {
+            FontManager.create().text("Current Chunk Info", 20f, 10f, 170f);
+            FontManager.create().text("Chunk Coords: " + playerPosX + ", " + playerPosZ, 20f, 10f, 190f);
+            FontManager.create().text("Chunk Generated: " + chunk.generated, 20f, 10f, 210f);
+            FontManager.create().text("Chunk Loaded: " + chunk.loaded, 20f, 10f, 230f);
+            FontManager.create().text("Chunk Needs Update: " + chunk.needsUpdate, 20f, 10f, 250f);
+            FontManager.create().text("Chunk Needs Queued: " + chunk.queued, 20f, 10f, 270f);
+            FontManager.create().text("Chunk Needs Saving: " + chunk.needsSaving, 20f, 10f, 290f);
+            FontManager.create().text("Chunk Solid Vertices: " + chunk.getChunkRenderer().solidVertexCount, 20f, 10f, 310f);
+            FontManager.create().text("Chunk Trans Vertices: " + chunk.getChunkRenderer().transVertexCount, 20f, 10f, 330f);
 
-
-        FontManager.create().text("Player Info", 20f, 10f, 350f);
-        FontManager.create().text("Player Hand: " + Blocks.ids[BlockGame.getInstance().getLocalPlayer().getCurrentBlock()].getName(), 20f, 10f, 370f);
+            FontManager.create().text("Player Info", 20f, 10f, 350f);
+            FontManager.create().text("Player Hand: " + Blocks.ids[BlockGame.getInstance().getLocalPlayer().getCurrentBlock()].getName(), 20f, 10f, 370f);
+        }
 
         super.render();
     }

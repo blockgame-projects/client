@@ -1,5 +1,6 @@
 package com.james090500.utils;
 
+import org.lwjgl.BufferUtils;
 import org.lwjgl.openal.AL;
 import org.lwjgl.openal.AL10;
 import org.lwjgl.openal.ALC;
@@ -7,7 +8,6 @@ import org.lwjgl.openal.ALC10;
 import org.lwjgl.stb.STBVorbis;
 import org.lwjgl.stb.STBVorbisInfo;
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.BufferUtils;
 import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
@@ -26,20 +26,30 @@ public class SoundManager {
         String defaultDeviceName = ALC10.alcGetString(0, ALC10.ALC_DEFAULT_DEVICE_SPECIFIER);
 
         // init OpenAL once
-        System.out.println(defaultDeviceName);
         device = ALC10.alcOpenDevice(defaultDeviceName);
         context = ALC10.alcCreateContext(device, (IntBuffer) null);
         ALC10.alcMakeContextCurrent(context);
         AL.createCapabilities(ALC.createCapabilities(device));
     }
 
-    public static void play(String filename) {
+    public static void play(String location) {
+        play(location, 1);
+    }
+
+    public static void play(String location, int choices) {
+        String soundNo = "";
+        if(choices > 1) {
+            soundNo = String.valueOf(1 + (int) (Math.random() * choices));
+        }
+
+        String fileName = location + soundNo + ".ogg";
+
         new Thread(() -> {
             int buffer = AL10.alGenBuffers();
             int source = AL10.alGenSources();
 
             try (MemoryStack stack = MemoryStack.stackPush()) {
-                Path path = Paths.get(filename);
+                Path path = Paths.get(fileName);
                 byte[] bytes = Files.readAllBytes(path);
                 ByteBuffer vorbis = BufferUtils.createByteBuffer(bytes.length).put(bytes);
                 vorbis.flip();

@@ -37,9 +37,21 @@ public class Shader {
             throw new RuntimeException("Shader linking failed:\n" + glGetProgramInfoLog(programId));
         }
 
-        System.out.println(glGetShaderInfoLog(vertexShader));
-        System.out.println(glGetShaderInfoLog(fragmentShader));
-        System.out.println(glGetProgramInfoLog(programId));
+        String vsLog = glGetShaderInfoLog(vertexShader);
+        if (!vsLog.isEmpty()) {
+            BlockGame.getLogger().severe("Vertex Shader log:\n" + vsLog);
+        }
+
+        String fsLog = glGetShaderInfoLog(fragmentShader);
+        if (!fsLog.isEmpty()) {
+            BlockGame.getLogger().severe("Fragment Shader log:\n" + fsLog);
+        }
+
+        String progLog = glGetProgramInfoLog(programId);
+        if (!progLog.isEmpty()) {
+            BlockGame.getLogger().severe("Program link log:\n" + progLog);
+        }
+
 
         glDeleteShader(vertexShader);
         glDeleteShader(fragmentShader);

@@ -5,6 +5,8 @@ import com.james090500.blocks.Block;
 import com.james090500.blocks.Blocks;
 import com.james090500.renderer.gui.ArmOverlay;
 import com.james090500.renderer.gui.BlockOverlay;
+import com.james090500.renderer.gui.CrosshairOverlay;
+import com.james090500.utils.AABB;
 import com.james090500.utils.Clock;
 import com.james090500.utils.SoundManager;
 import lombok.Getter;
@@ -28,8 +30,9 @@ public class LocalPlayer {
     private boolean swimming = false;
 
     Clock clock = new Clock();
+    private final AABB aabb;
     private final float playerWidth = 0.4f;
-    private final float playerHeight = 1.5f;
+    private final float playerHeight = 1.75f;
     private final Vector3f velocity = new Vector3f();
     private final Vector3f fallVelocity = new Vector3f();
     private double jumpStartTime = 0;
@@ -38,50 +41,58 @@ public class LocalPlayer {
 
     BlockOverlay blockOverlay = new BlockOverlay();
     ArmOverlay armOverlay = new ArmOverlay();
+    CrosshairOverlay crosshairOverlay = new CrosshairOverlay();
 
-    public LocalPlayer(String worldName) {
-        this.worldName = worldName;
-
-        File playerPath = new File("worlds/" + worldName + "/players");
-        File playerData = new File(playerPath + "/player.dat");
+    public LocalPlayer() {
+        this.aabb = new AABB(playerWidth, playerHeight);
+        this.worldName = BlockGame.getInstance().getWorld().getWorldName();
         Camera camera = BlockGame.getInstance().getCamera();
 
-        if(!playerPath.exists()) {
-            playerPath.mkdirs();
-
-            savePlayer();
+        if(BlockGame.getInstance().getWorld().isRemote()) {
+            camera.setPosition(0, 100, 0);
         } else {
-            try (RandomAccessFile raf = new RandomAccessFile(playerData, "rw")) {
-                float x = raf.readFloat();
-                float y = raf.readFloat();
-                float z = raf.readFloat();
-                float pitch = raf.readFloat();
-                float yaw = raf.readFloat();
+            File playerPath = new File("worlds/" + worldName + "/players");
+            File playerData = new File(playerPath + "/player.dat");
 
-                camera.setPosition(x, y, z);
-                camera.setRotation(pitch, yaw);
+            if (!playerPath.exists()) {
+                playerPath.mkdirs();
 
-            } catch (IOException e) {
-                e.printStackTrace();
+                savePlayer();
+            } else {
+                try (RandomAccessFile raf = new RandomAccessFile(playerData, "rw")) {
+                    float x = raf.readFloat();
+                    float y = raf.readFloat();
+                    float z = raf.readFloat();
+                    float pitch = raf.readFloat();
+                    float yaw = raf.readFloat();
+
+                    camera.setPosition(x, y, z);
+                    camera.setRotation(pitch, yaw);
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
 
     public void savePlayer() {
-        File playerPath = new File("worlds/" + worldName + "/players");
-        File playerData = new File(playerPath + "/player.dat");
-        Camera camera = BlockGame.getInstance().getCamera();
+        if(!BlockGame.getInstance().getWorld().isRemote()) {
+            File playerPath = new File("worlds/" + worldName + "/players");
+            File playerData = new File(playerPath + "/player.dat");
+            Camera camera = BlockGame.getInstance().getCamera();
 
-        // Write to file
-        try (RandomAccessFile raf = new RandomAccessFile(playerData, "rw")) {
-            raf.setLength(0);
-            raf.writeFloat(camera.getPosition().x);
-            raf.writeFloat(camera.getPosition().y);
-            raf.writeFloat(camera.getPosition().z);
-            raf.writeFloat(camera.pitch);
-            raf.writeFloat(camera.yaw);
-        } catch (IOException e) {
-            e.printStackTrace();
+            // Write to file
+            try (RandomAccessFile raf = new RandomAccessFile(playerData, "rw")) {
+                raf.setLength(0);
+                raf.writeFloat(camera.getPosition().x);
+                raf.writeFloat(camera.getPosition().y);
+                raf.writeFloat(camera.getPosition().z);
+                raf.writeFloat(camera.pitch);
+                raf.writeFloat(camera.yaw);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -216,10 +227,7 @@ public class LocalPlayer {
 
         float yVelocity = (float) (this.fallVelocity.y * delta);
 
-        // Half the players width
-        float halfWidth = this.playerWidth / 2;
-
-        if (!this.tryMove(new Vector3f(0, yVelocity, 0), 1, halfWidth, this.playerHeight)) {
+        if (!this.tryMove(new Vector3f(0, yVelocity, 0), 1)) {
             this.fallVelocity.y = 0;
             this.falling = false;
         } else if (!this.noclip) {
@@ -227,8 +235,8 @@ public class LocalPlayer {
         }
 
         // Try horizontal movement along X and Z axes
-        boolean canMove1 = this.tryMove(this.velocity, 0, halfWidth, this.playerHeight);
-        boolean canMove2 = this.tryMove(this.velocity, 2, halfWidth, this.playerHeight);
+        boolean canMove1 = this.tryMove(this.velocity, 0);
+        boolean canMove2 = this.tryMove(this.velocity, 2);
 
         if(canMove1 && canMove2) {
             // Play the movement sound
@@ -237,8 +245,7 @@ public class LocalPlayer {
                 if (stepCooldown <= 0f) {
                     Block blockAtFeet = BlockGame.getInstance().getWorld().getBlock(camera.getPosition().sub(new Vector3f(0, 2, 0)));
                     if(blockAtFeet != null && blockAtFeet.getSound() != null) {
-                        int sound = 1 + (int) (Math.random() * 4);
-                        SoundManager.play("assets/sound/block/" + blockAtFeet.getSound() + sound + ".ogg");
+                        SoundManager.play("assets/sound/block/" + blockAtFeet.getSound(), 4);
                         stepCooldown = 0.5f; // play every half second while moving
                     }
                 }
@@ -250,9 +257,8 @@ public class LocalPlayer {
 
     /**
      * Update interaction via mouse picking
-     * @param delta
      */
-    private void updateInteraction(double delta) {
+    private void updateInteraction() {
         Camera camera = BlockGame.getInstance().getCamera();
         Vector3f origin = new Vector3f(camera.getPosition());
         Vector3f dir = new Vector3f(camera.getDirection()).normalize();
@@ -267,52 +273,26 @@ public class LocalPlayer {
 
             HashMap<Integer, Boolean> mouse = BlockGame.getInstance().getClientWindow().getClientInput().getMouse();
             if(mouse.getOrDefault(GLFW_MOUSE_BUTTON_LEFT, false)) {
+                Block currentBlock = BlockGame.getInstance().getWorld().getBlock(raycast[1].x, raycast[1].y, raycast[1].z);
                 BlockGame.getInstance().getWorld().setBlock(raycast[1].x, raycast[1].y, raycast[1].z, (byte) 0);
+                SoundManager.play("assets/sound/block/" + currentBlock.getSound(), 4);
                 mouse.put(GLFW_MOUSE_BUTTON_LEFT, false);
             }
 
             if(mouse.getOrDefault(GLFW_MOUSE_BUTTON_RIGHT, false)) {
-                BlockGame.getInstance().getWorld().setBlock(raycast[0].x, raycast[0].y, raycast[0].z, (byte) this.currentBlock);
+                if(!aabb.isColliding(origin, raycast[0])) {
+                    Block currentBlock = Blocks.ids[this.currentBlock];
+                    BlockGame.getInstance().getWorld().setBlock(raycast[0].x, raycast[0].y, raycast[0].z, currentBlock.getId());
+                    SoundManager.play("assets/sound/block/" + currentBlock.getSound(), 4);
+                }
                 mouse.put(GLFW_MOUSE_BUTTON_RIGHT, false);
             }
-
-//            if(mouse.getOrDefault(GLFW_MOUSE_))
         }
     }
 
     public void render() {
         armOverlay.render();
-    }
-
-    /**
-     * Checks if the player's AABB collides with any solid blocks in the world.
-     * @param {Vector3} min - Minimum bounds of the AABB.
-     * @param {Vector3} max - Maximum bounds of the AABB.
-     * @param {Object} futureBlock - Are we attempting to place a block?
-     * @returns {boolean} If the player is colliding
-     */
-    private boolean isAABBColliding(Vector3f min, Vector3f max) {
-        for (int x = (int) Math.floor(min.x); x <= Math.floor(max.x); x++) {
-            for (int y = (int) Math.floor(min.y); y <= Math.floor(max.y); y++) {
-                for (int z = (int) Math.floor(min.z); z <= Math.floor(max.z); z++) {
-//                    if (futureBlock) {
-//                        if (
-//                                futureBlock[0] === x &&
-//                                        futureBlock[1] === y &&
-//                                        futureBlock[2] === z
-//                        ) {
-//                            return true
-//                        }
-//                    }
-
-                    Block block = BlockGame.getInstance().getWorld().getBlock(x, y, z);
-                    if(block != null && block.isSolid()) {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
+        crosshairOverlay.render();
     }
 
     /**
@@ -325,19 +305,11 @@ public class LocalPlayer {
      * @param {Object} world - The world object to query blocks from.
      * @returns {boolean} True if the move was successful.
      */
-    public boolean tryMove(Vector3f velocity, int axis, float halfWidth, float playerHeight) {
+    public boolean tryMove(Vector3f velocity, int axis) {
         Vector3f pos = new Vector3f(BlockGame.getInstance().getCamera().getPosition());
         pos.setComponent(axis,pos.get(axis) + velocity.get(axis));
 
-        Vector3f min = new Vector3f(
-                pos.x - halfWidth,
-                pos.y - playerHeight,
-                pos.z - halfWidth
-        );
-
-        Vector3f max = new Vector3f(pos.x + halfWidth, pos.y, pos.z + halfWidth);
-
-        if (!this.isAABBColliding(min, max) || this.noclip) {
+        if (!aabb.isColliding(pos) || this.noclip) {
             BlockGame.getInstance().getCamera().setPosition(axis, pos.get(axis));
             return true;
         }
@@ -428,7 +400,7 @@ public class LocalPlayer {
 
     public void update(double delta) {
         this.updateControls();
-        this.updateInteraction(delta);
+        this.updateInteraction();
         this.updateMovement(delta);
     }
 

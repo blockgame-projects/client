@@ -1,0 +1,53 @@
+package com.james090500.gui.multiplayer;
+
+import com.james090500.gui.MainMenu;
+import com.james090500.gui.Screen;
+import com.james090500.gui.ScreenManager;
+import com.james090500.gui.component.StandardButton;
+import com.james090500.gui.component.TextComponent;
+import com.james090500.network.NettyHandler;
+
+public class MultiplayerScreen extends Screen {
+    public MultiplayerScreen() {
+        setCloseable(false);
+        setBackground(true);
+        setTitle("Multiplayer");
+
+        TextComponent serverIp = new TextComponent(
+                "Server IP",
+                this.width / 2 - 200F,
+                100f,
+                400f,
+                40f
+        );
+        addComponent(serverIp);
+
+        addComponent(
+                StandardButton.create(
+                        "Connect",
+                        this.width / 2 - 200F,
+                        260,
+                        400f,
+                        40f,
+                        () -> {
+                            NettyHandler test = new NettyHandler(serverIp.getTypedValue(), 25565);
+                            test.run();
+                        }
+                )
+        );
+
+        addComponent(
+                StandardButton.create(
+                    "Cancel",
+                    this.width / 2 - 150F,
+                    this.height - 60F,
+                    300f,
+                    40f,
+                    () -> {
+                        ScreenManager.add(new MainMenu());
+                        this.close();
+                    }
+                )
+        );
+    }
+}

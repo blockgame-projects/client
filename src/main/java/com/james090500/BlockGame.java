@@ -9,6 +9,7 @@ import com.james090500.gui.PauseScreen;
 import com.james090500.gui.ScreenManager;
 import com.james090500.io.AssetManager;
 import com.james090500.renderer.RenderManager;
+import com.james090500.utils.GameLogger;
 import com.james090500.utils.SoundManager;
 import com.james090500.utils.ThreadUtil;
 import com.james090500.world.World;
@@ -25,7 +26,7 @@ public class BlockGame {
 
     @Getter private static BlockGame instance;
     private final Config config = new Config();
-    @Getter private static final Logger logger = Logger.getLogger("BlockGame");
+    @Getter private static final Logger logger = GameLogger.get("BlockGame");
     private final ClientWindow clientWindow;
 
     private LocalPlayer localPlayer;
@@ -84,7 +85,20 @@ public class BlockGame {
 
         this.world = new World(name, seed);
 
-        this.localPlayer = new LocalPlayer(name);
+        this.localPlayer = new LocalPlayer();
+        this.localPlayer.loadGui();
+
+        this.unpause();
+
+        ScreenManager.add(new DebugScreen());
+    }
+
+    public void startRemote() {
+        this.camera = new Camera(0, 150, 0);
+
+        this.world = new World();
+
+        this.localPlayer = new LocalPlayer();
         this.localPlayer.loadGui();
 
         this.unpause();
@@ -104,7 +118,7 @@ public class BlockGame {
         RenderManager.clear();
 
         BlockGame.getInstance().getLocalPlayer().savePlayer();
-        BlockGame.getInstance().getWorld().saveWorld();
+        BlockGame.getInstance().getWorld().exitWorld();
 
         this.localPlayer = null;
         this.world = null;

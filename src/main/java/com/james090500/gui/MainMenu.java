@@ -1,8 +1,9 @@
 package com.james090500.gui;
 
 import com.james090500.BlockGame;
-import com.james090500.gui.component.Component;
 import com.james090500.gui.component.StandardButton;
+import com.james090500.gui.multiplayer.MultiplayerScreen;
+import com.james090500.gui.singleplayer.WorldScreen;
 import com.james090500.utils.TextureManager;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.nanovg.NVGPaint;
@@ -30,16 +31,19 @@ public class MainMenu extends Screen {
                 )
         );
 
-        Component multiplayerBtn = StandardButton.create(
-                "Multiplayer",
-                this.width / 2 - 200F,
-                200f,
-                400f,
-                40f,
-                this::close
+        addComponent(
+            StandardButton.create(
+                    "Multiplayer",
+                    this.width / 2 - 200F,
+                    200f,
+                    400f,
+                    40f,
+                    () -> {
+                        ScreenManager.add(new MultiplayerScreen());
+                        this.close();
+                    }
+            )
         );
-        multiplayerBtn.setEnabled(false);
-        addComponent(multiplayerBtn);
 
         addComponent(
                 StandardButton.create(

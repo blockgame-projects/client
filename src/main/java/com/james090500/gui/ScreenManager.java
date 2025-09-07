@@ -12,8 +12,7 @@ public class ScreenManager {
     private static final List<Screen> activeScreens = new ArrayList<>();
 
     public static void clear() {
-        activeScreens.removeIf(Screen::isCloseable);
-        BlockGame.getInstance().unpause();
+        activeScreens.clear();
     }
 
     public static List<Screen> active() {
@@ -68,7 +67,7 @@ public class ScreenManager {
 
         for (Screen screen : activeScreens) {
             if(!screen.isInGame()) {
-                screen.render(); // This uses logical coords like 854x480
+                screen.render();
             }
         }
 

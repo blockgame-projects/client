@@ -275,7 +275,7 @@ public class Chunk {
     }
 
     public void saveChunk() {
-        if(this.generated && this.chunkData != null && this.needsSaving) {
+        if(this.generated && this.chunkData != null && this.needsSaving && !BlockGame.getInstance().getWorld().isRemote()) {
             this.needsSaving = false;
             ThreadUtil.getQueue("worldDisk").submit(() -> BlockGame.getInstance().getWorld().saveChunk(this.chunkX, this.chunkZ, this.chunkData));
         }

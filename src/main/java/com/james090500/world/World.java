@@ -5,12 +5,16 @@ import com.james090500.blocks.Block;
 import com.james090500.renderer.RenderManager;
 import com.james090500.utils.ThreadUtil;
 import lombok.Getter;
+import lombok.Setter;
 import org.joml.Vector3f;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class World {
 
@@ -23,15 +27,27 @@ public class World {
     public record BlockPlacement(int x, int y, int z, byte blockId) {}
     public record ChunkOffset(int dx, int dz, int distSq) {}
 
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+
     @Getter
     private int worldSeed;
     private final int worldSize = 16;
 
     @Getter
-    private String worldName = "world_name";
+    private String worldName;
+
+    @Getter @Setter
+    private boolean remote = false;
 
     private int lastPlayerX = 0;
     private int lastPlayerZ = 0;
+
+    /**
+     * Starts a remote world
+     */
+    public World() {
+        this.remote = true;
+    }
 
     /**
      * Start a world instance
@@ -72,6 +88,8 @@ public class World {
                 e.printStackTrace();
             }
         }
+
+        scheduler.scheduleAtFixedRate(this::saveWorld, 5, 5, TimeUnit.MINUTES);
     }
 
     /**
@@ -214,6 +232,12 @@ public class World {
         }
     }
 
+    public void loadRemoteChunk(int chunkX, int chunkZ, byte[] chunkData) {
+        ChunkPos pos = new ChunkPos(chunkX, chunkZ);
+        Chunk newChunk = new Chunk(pos.x(), pos.y(), null, chunkData);
+        chunks.put(pos, newChunk);
+    }
+
     /**
      * update the world. This also loads and remove chunks as needed
      */
@@ -253,21 +277,25 @@ public class World {
             requiredChunks.add(pos);
 
             if (!chunks.containsKey(pos)) {
-                List<BlockPlacement> blockPlacements = deferredBlocks.remove(pos);
-
-                // Try and load data from disk
-                //TODO remove this from main thread as its slow
-                byte[] chunkData = loadChunk(pos.x(), pos.y());
-
-                // Generate chunk from data or new terrain
-                Chunk newChunk;
-                if(chunkData == null) {
-                    newChunk = new Chunk(pos.x(), pos.y(), blockPlacements);
+                if(remote) {
+                    //BlockGame.getLogger().info("Asking server for " + pos);
                 } else {
-                    newChunk = new Chunk(pos.x(), pos.y(), blockPlacements, chunkData);
-                }
+                    List<BlockPlacement> blockPlacements = deferredBlocks.remove(pos);
 
-                chunks.put(pos, newChunk);
+                    // Try and load data from disk
+                    //TODO remove this from main thread as its slow
+                    byte[] chunkData = loadChunk(pos.x(), pos.y());
+
+                    // Generate chunk from data or new terrain
+                    Chunk newChunk;
+                    if (chunkData == null) {
+                        newChunk = new Chunk(pos.x(), pos.y(), blockPlacements);
+                    } else {
+                        newChunk = new Chunk(pos.x(), pos.y(), blockPlacements, chunkData);
+                    }
+
+                    chunks.put(pos, newChunk);
+                }
             }
         }
 
@@ -329,14 +357,23 @@ public class World {
     }
 
     public void saveWorld() {
+        // Dont save remote worlds
+        if(remote) return;
+
+        BlockGame.getLogger().info("Saving World...");
         for(Chunk chunk : this.chunks.values()) {
             if(chunk.needsSaving) {
                 BlockGame.getInstance().getWorld().saveChunk(chunk.chunkX, chunk.chunkZ, chunk.chunkData);
+                chunk.needsSaving = false;
             }
         }
+        BlockGame.getLogger().info("Save Complete!");
     }
 
     public void saveChunk(int chunkX, int chunkZ, byte[] data) {
+        // Dont save remote chunks
+        if(remote) return;
+
         try {
             getRegion(chunkX, chunkZ).saveChunk(chunkX, chunkZ, data);
         } catch (IOException e) {
@@ -345,10 +382,21 @@ public class World {
     }
 
     public byte[] loadChunk(int chunkX, int chunkZ) {
+        // Dont load remote chunks
+        if(remote) return null;
+
         try {
             return getRegion(chunkX, chunkZ).loadChunk(chunkX, chunkZ);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * Exit the world
+     */
+    public void exitWorld() {
+        this.scheduler.close();
+        this.saveWorld();
     }
 }

@@ -52,7 +52,7 @@ public class Screen {
 
             if(hovered && component.isEnabled()) {
                 if(component.getOnclick() != null) {
-                    SoundManager.play("assets/sound/gui/click.ogg");
+                    SoundManager.play("assets/sound/gui/click");
                     component.getOnclick().run();
                 }
                 component.setSelected(true);

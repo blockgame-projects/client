@@ -1,5 +1,7 @@
-package com.james090500.gui;
+package com.james090500.gui.singleplayer;
 
+import com.james090500.gui.Screen;
+import com.james090500.gui.ScreenManager;
 import com.james090500.gui.component.LabelComponent;
 import com.james090500.gui.component.StandardButton;
 import com.james090500.io.WorldManager;

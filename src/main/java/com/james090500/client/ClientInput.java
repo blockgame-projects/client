@@ -1,6 +1,7 @@
 package com.james090500.client;
 
 import com.james090500.BlockGame;
+import com.james090500.gui.DebugScreen;
 import com.james090500.gui.Screen;
 import com.james090500.gui.ScreenManager;
 import lombok.Getter;
@@ -56,9 +57,11 @@ public class ClientInput {
     }
 
     public void mouseScroll(long window, double xOffset, double yOffset) {
-        if (xOffset > 0) {
+        if(BlockGame.getInstance().getConfig().isPaused()) return;
+
+        if (xOffset > 0 || yOffset > 0) {
            BlockGame.getInstance().getLocalPlayer().changeHand(1);
-        } else if (xOffset < 0) {
+        } else if (xOffset < 0 || yOffset < 0) {
             BlockGame.getInstance().getLocalPlayer().changeHand(-1);
         }
     }
@@ -74,8 +77,10 @@ public class ClientInput {
         keys.put(key, action > GLFW_RELEASE);
 
         if (keys.getOrDefault(GLFW_KEY_ESCAPE, false)) {
-            if (ScreenManager.active().stream().anyMatch(Screen::isCloseable)) {
+            if (BlockGame.getInstance().getConfig().isPaused() && BlockGame.getInstance().getWorld() != null) {
                 ScreenManager.clear();
+                ScreenManager.add(new DebugScreen());
+                BlockGame.getInstance().unpause();
             } else if(!BlockGame.getInstance().getConfig().isPaused()) {
                 BlockGame.getInstance().pause();
             }

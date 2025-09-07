@@ -17,7 +17,4 @@ public class Clock {
         return glfwGetTime() - startTime;
     }
 
-    public boolean hasElapsed(double seconds) {
-        return getElapsedTime() >= seconds;
-    }
 }
