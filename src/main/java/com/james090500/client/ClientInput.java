@@ -86,6 +86,10 @@ public class ClientInput {
             }
         }
 
+        if(keys.getOrDefault(GLFW_KEY_M, false)) {
+            glfwSetInputMode(BlockGame.getInstance().getClientWindow().getWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        }
+
         if(keys.getOrDefault(GLFW_KEY_BACKSPACE, false)) {
             List<Screen> screens = new ArrayList<>(ScreenManager.active());
             for (Screen screen : screens) {

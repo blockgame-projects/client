@@ -273,9 +273,7 @@ public class LocalPlayer {
 
             HashMap<Integer, Boolean> mouse = BlockGame.getInstance().getClientWindow().getClientInput().getMouse();
             if(mouse.getOrDefault(GLFW_MOUSE_BUTTON_LEFT, false)) {
-                Block currentBlock = BlockGame.getInstance().getWorld().getBlock(raycast[1].x, raycast[1].y, raycast[1].z);
                 BlockGame.getInstance().getWorld().setBlock(raycast[1].x, raycast[1].y, raycast[1].z, (byte) 0);
-                SoundManager.play("assets/sound/block/" + currentBlock.getSound(), 4);
                 mouse.put(GLFW_MOUSE_BUTTON_LEFT, false);
             }
 
@@ -283,7 +281,6 @@ public class LocalPlayer {
                 if(!aabb.isColliding(origin, raycast[0])) {
                     Block currentBlock = Blocks.ids[this.currentBlock];
                     BlockGame.getInstance().getWorld().setBlock(raycast[0].x, raycast[0].y, raycast[0].z, currentBlock.getId());
-                    SoundManager.play("assets/sound/block/" + currentBlock.getSound(), 4);
                 }
                 mouse.put(GLFW_MOUSE_BUTTON_RIGHT, false);
             }

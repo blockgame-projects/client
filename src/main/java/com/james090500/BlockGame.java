@@ -13,6 +13,7 @@ import com.james090500.utils.GameLogger;
 import com.james090500.utils.SoundManager;
 import com.james090500.utils.ThreadUtil;
 import com.james090500.world.World;
+import io.netty.channel.Channel;
 import lombok.Getter;
 
 import java.util.logging.Logger;
@@ -32,6 +33,8 @@ public class BlockGame {
     private LocalPlayer localPlayer;
     private Camera camera;
     private World world;
+
+    private Channel channel;
 
     public BlockGame() {
         instance = this;
@@ -93,7 +96,9 @@ public class BlockGame {
         ScreenManager.add(new DebugScreen());
     }
 
-    public void startRemote() {
+    public void startRemote(Channel channel) {
+        this.channel = channel;
+
         this.camera = new Camera(0, 150, 0);
 
         this.world = new World();

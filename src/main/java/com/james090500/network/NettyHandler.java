@@ -12,6 +12,9 @@ import io.netty.channel.MultiThreadIoEventLoopGroup;
 import io.netty.channel.nio.NioIoHandler;
 import io.netty.channel.socket.nio.NioSocketChannel;
 
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+
 public class NettyHandler {
 
     private final String host;
@@ -28,14 +31,17 @@ public class NettyHandler {
 
         EventLoopGroup group = new MultiThreadIoEventLoopGroup(NioIoHandler.newFactory());
 
-        Bootstrap bootstrap = new Bootstrap().group(group).channel(NioSocketChannel.class).handler(new NettyInitializer());
+        Bootstrap bootstrap = new Bootstrap()
+                .group(group)
+                .channel(NioSocketChannel.class)
+                .handler(new NettyInitializer());
 
         ChannelFuture channelFuture = bootstrap.connect(host, port);
         channelFuture.addListener((ChannelFuture future) -> {
             if(future.isSuccess()) {
                 ThreadUtil.getMainQueue().add(() -> {
                     ScreenManager.clear();
-                    BlockGame.getInstance().startRemote();
+                    BlockGame.getInstance().startRemote(future.channel());
                 });
             } else {
                 String error = future.cause().getLocalizedMessage();

@@ -56,6 +56,7 @@ public class BlockOverlay implements Renderer {
 
     @Override
     public void render() {
+
         Matrix4f model = new Matrix4f().translate(this.getPosition());
 
         ShaderManager.basicShader.use();

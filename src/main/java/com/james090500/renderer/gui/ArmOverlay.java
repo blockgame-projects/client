@@ -104,7 +104,6 @@ public class ArmOverlay implements Renderer {
     public void render() {
         glDisable(GL_DEPTH_TEST);
 
-
         // Create identity view matrix (static in camera space)
         Matrix4f view = new Matrix4f(); // No camera transform
 

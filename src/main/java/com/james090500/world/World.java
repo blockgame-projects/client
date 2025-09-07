@@ -2,7 +2,13 @@ package com.james090500.world;
 
 import com.james090500.BlockGame;
 import com.james090500.blocks.Block;
+import com.james090500.blocks.Blocks;
+import com.james090500.entity.Entity;
+import com.james090500.entity.PlayerEntity;
+import com.james090500.network.packets.BlockUpdatePacket;
+import com.james090500.network.packets.DisconnectPacket;
 import com.james090500.renderer.RenderManager;
+import com.james090500.utils.SoundManager;
 import com.james090500.utils.ThreadUtil;
 import lombok.Getter;
 import lombok.Setter;
@@ -26,6 +32,8 @@ public class World {
     public record ChunkPos(int x, int y) { }
     public record BlockPlacement(int x, int y, int z, byte blockId) {}
     public record ChunkOffset(int dx, int dz, int distSq) {}
+
+    public final HashMap<Integer, Entity> entities = new HashMap<>();
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
@@ -149,6 +157,14 @@ public class World {
      * @param block The block or null if no block
      */
     public void setBlock(int x, int y, int z, byte block) {
+        Block currentBlock = block == 0 ? BlockGame.getInstance().getWorld().getBlock(x, y, z) : Blocks.ids[block];
+        SoundManager.play("assets/sound/block/" + currentBlock.getSound(), 4);
+
+        if(this.remote) {
+            BlockUpdatePacket blockUpdatePacket = new BlockUpdatePacket(x, y, z, block);
+            blockUpdatePacket.write(BlockGame.getInstance().getChannel());
+        }
+
         this.setChunkBlock(0, 0, x, y, z, block);
     }
 
@@ -396,7 +412,12 @@ public class World {
      * Exit the world
      */
     public void exitWorld() {
-        this.scheduler.close();
-        this.saveWorld();
+        if(this.remote) {
+            DisconnectPacket disconnectPacket = new DisconnectPacket();
+            disconnectPacket.write(BlockGame.getInstance().getChannel());
+        } else {
+            this.scheduler.close();
+            this.saveWorld();
+        }
     }
 }

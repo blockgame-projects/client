@@ -46,5 +46,10 @@ public class RenderManager {
                 renderer.renderTransparent();
             }
         }
+
+        // Render any entitiess
+        BlockGame.getInstance().getWorld().entities.forEach((integer, entity) -> {
+            entity.getModel().render();
+        });
     }
 }

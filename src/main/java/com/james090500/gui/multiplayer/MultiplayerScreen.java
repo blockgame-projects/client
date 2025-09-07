@@ -30,7 +30,7 @@ public class MultiplayerScreen extends Screen {
                         400f,
                         40f,
                         () -> {
-                            NettyHandler test = new NettyHandler(serverIp.getTypedValue(), 25565);
+                            NettyHandler test = new NettyHandler(serverIp.getTypedValue(), 28004);
                             test.run();
                         }
                 )
