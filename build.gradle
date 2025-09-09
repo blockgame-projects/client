@@ -1,26 +1,11 @@
 plugins {
     id 'java'
-    id 'application'
     id("io.freefair.lombok") version "8.13.1"
     id("com.osmerion.lwjgl3") version "0.5.0"
 }
 
-// Creates the SHA Commit Hash
-def gitSha = { ->
-    try {
-        def p = "git rev-parse --short HEAD".execute()
-        p.waitFor()
-        return p.exitValue() == 0 ? p.in.text.trim() : "unknown"
-    } catch (ignored) {
-        return "unknown"
-    }
-}()
-
-// Check if we are in dev mode
-def isDev = (project.findProperty("dev") ?: "true").toString().toBoolean()
-
 group = 'com.james090500'
-version = isDev ? "${project.version}-${gitSha}" : "${project.version}"
+version = project.version
 
 java {
     toolchain { languageVersion = JavaLanguageVersion.of(21) }
@@ -35,9 +20,13 @@ repositories {
 }
 
 dependencies {
-    implementation 'io.netty:netty-all:4.2.5.Final'
     implementation "org.joml:joml:1.10.8"
     implementation 'org.lz4:lz4-java:1.8.0'
+
+    implementation platform('io.netty:netty-bom:4.2.6.Final')
+    implementation 'io.netty:netty-transport'
+    implementation 'io.netty:netty-handler'
+    implementation 'io.netty:netty-codec'
 }
 
 lwjgl3 {
@@ -71,14 +60,6 @@ tasks.withType(Jar).configureEach {
     }
 }
 
-/** Tiny helper tasks for CI */
-tasks.register("printVersion") {
-    doLast { println project.version }
-}
-tasks.register("printIsDev") {
-    doLast { println isDev ? "true" : "false" }
-}
-
 tasks.register("generateAssetManifest") {
     def inputDir = file("src/main/resources/assets")
     def outputFile = file("src/main/resources/assets.txt")
@@ -95,6 +76,11 @@ tasks.register("generateAssetManifest") {
         outputFile.text = lines.join("\n")
         println "Generated files.txt with ${lines.size()} entries"
     }
+}
+
+tasks.register("publishToWorld", Exec) {
+    executable = 'powershell'
+    args = ['-File', 'scripts/PublishBuild.ps1']
 }
 
 // Make sure this runs before processing resources
