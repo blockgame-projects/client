@@ -60,9 +60,9 @@ public class ClientInput {
         if(BlockGame.getInstance().getConfig().isPaused()) return;
 
         if (xOffset > 0 || yOffset > 0) {
-           BlockGame.getInstance().getLocalPlayer().changeHand(1);
+           BlockGame.getInstance().getLocalPlayer().scrollHotbar(true);
         } else if (xOffset < 0 || yOffset < 0) {
-            BlockGame.getInstance().getLocalPlayer().changeHand(-1);
+            BlockGame.getInstance().getLocalPlayer().scrollHotbar(false);
         }
     }
 

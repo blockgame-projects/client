@@ -43,6 +43,7 @@ public class SoundManager {
         }
 
         String fileName = location + soundNo + ".ogg";
+        if(location == null) return;
 
         new Thread(() -> {
             int buffer = AL10.alGenBuffers();

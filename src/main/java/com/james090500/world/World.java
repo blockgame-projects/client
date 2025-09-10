@@ -10,6 +10,10 @@ import com.james090500.network.packets.DisconnectPacket;
 import com.james090500.renderer.RenderManager;
 import com.james090500.utils.SoundManager;
 import com.james090500.utils.ThreadUtil;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import lombok.Getter;
 import lombok.Setter;
 import org.joml.Vector3f;
@@ -26,16 +30,17 @@ public class World {
 
     private final Map<String, Region> regions = new HashMap<>();
 
-    private final HashMap<ChunkPos, Chunk> chunks = new HashMap<>();
-    private final Map<ChunkPos, List<BlockPlacement>> deferredBlocks = new HashMap<>();
+    private final Object2ObjectMap<ChunkPos, Chunk> chunks = new Object2ObjectOpenHashMap<>();
 
     public record ChunkPos(int x, int y) { }
-    public record BlockPlacement(int x, int y, int z, byte blockId) {}
     public record ChunkOffset(int dx, int dz, int distSq) {}
 
-    public final HashMap<Integer, Entity> entities = new HashMap<>();
+    public final Int2ObjectOpenHashMap<Entity> entities = new Int2ObjectOpenHashMap<>();
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+
+    private int lastPlayerX;
+    private int lastPlayerZ;
 
     @Getter
     private int worldSeed;
@@ -46,9 +51,6 @@ public class World {
 
     @Getter @Setter
     private boolean remote = false;
-
-    private int lastPlayerX = 0;
-    private int lastPlayerZ = 0;
 
     /**
      * Starts a remote world
@@ -101,18 +103,16 @@ public class World {
     }
 
     /**
-     * Checks whether the player chunk is loaded
+     * Checks whether the player chunk exists and is a specific status
      * @return
      */
-    public boolean isChunkLoaded(int x, int z) {
+    public boolean isChunkStatus(int x, int z, ChunkStatus status) {
         ChunkPos chunkPos = new ChunkPos(x, z);
-
         if(this.chunks.containsKey(chunkPos)) {
             Chunk chunk = this.chunks.get(chunkPos);
-            return chunk.generated;
+            return chunk.chunkStatus.ordinal() >= status.ordinal();
         }
-
-        return false;
+        return this.chunks.containsKey(chunkPos);
     }
 
     /**
@@ -215,42 +215,38 @@ public class World {
 
         ChunkPos chunkPos = new ChunkPos(chunkX, chunkZ);
         Chunk target = this.chunks.get(chunkPos);
-
         if (target == null) {
-            synchronized (deferredBlocks) {
-                deferredBlocks.computeIfAbsent(chunkPos, k -> new ArrayList<>())
-                        .add(new BlockPlacement(x, y, z, block));
-            }
+            BlockGame.getLogger().severe("Block tried to place outside area");
             return;
         }
 
         // Update block and flag for meshing
         target.setBlock(x, y, z, block);
-        target.needsUpdate = true;
+        target.needsMeshing = true;
         target.needsSaving = true;
 
         // Check if the block is on the chunk border, and update neighbors
         if (x == 0) {
             Chunk left = this.chunks.get(new ChunkPos(chunkX - 1, chunkZ));
-            if (left != null) left.needsUpdate = true;
+            if (left != null) left.needsMeshing = true;
         }
         if (x == 15) {
             Chunk right = this.chunks.get(new ChunkPos(chunkX + 1, chunkZ));
-            if (right != null) right.needsUpdate = true;
+            if (right != null) right.needsMeshing = true;
         }
         if (z == 0) {
             Chunk back = this.chunks.get(new ChunkPos(chunkX, chunkZ - 1));
-            if (back != null) back.needsUpdate = true;
+            if (back != null) back.needsMeshing = true;
         }
         if (z == 15) {
             Chunk front = this.chunks.get(new ChunkPos(chunkX, chunkZ + 1));
-            if (front != null) front.needsUpdate = true;
+            if (front != null) front.needsMeshing = true;
         }
     }
 
     public void loadRemoteChunk(int chunkX, int chunkZ, byte[] chunkData) {
         ChunkPos pos = new ChunkPos(chunkX, chunkZ);
-        Chunk newChunk = new Chunk(pos.x(), pos.y(), null, chunkData);
+        Chunk newChunk = new Chunk(pos.x(), pos.y(), chunkData);
         chunks.put(pos, newChunk);
     }
 
@@ -261,18 +257,6 @@ public class World {
         Vector3f playerPos = BlockGame.getInstance().getCamera().getPosition();
         int playerChunkX = (int) Math.floor(playerPos.x / 16);
         int playerChunkZ = (int) Math.floor(playerPos.z / 16);
-
-        if (playerChunkX == lastPlayerX && playerChunkZ == lastPlayerZ && !chunks.isEmpty()) {
-            // Only update mesh if chunk data has changed
-            for (Map.Entry<ChunkPos, Chunk> entry : chunks.entrySet()) {
-                Chunk chunk = entry.getValue();
-                queueChunkUpdate(chunk);
-            }
-            return;
-        }
-
-        lastPlayerX = playerChunkX;
-        lastPlayerZ = playerChunkZ;
 
         // Load/generate nearby chunks in render distance
         List<ChunkOffset> offsets = new ArrayList<>();
@@ -286,6 +270,18 @@ public class World {
 
         offsets.sort(Comparator.comparingInt(ChunkOffset::distSq)); // Closest first
 
+        for (ChunkOffset offset : offsets) {
+            ChunkPos pos = new ChunkPos(playerChunkX + offset.dx(), playerChunkZ + offset.dz());
+            Chunk chunk = chunks.get(pos);
+            if (chunk != null) {
+                chunk.generate();
+                this.queueChunkUpdate(chunk);
+            }
+        }
+
+        // No point looping if we aren't moving
+        if(playerChunkX == lastPlayerX && playerChunkZ == lastPlayerZ && !chunks.isEmpty()) return;
+
         // Render chunks from players pos.
         Set<ChunkPos> requiredChunks = new HashSet<>();
         for (ChunkOffset offset : offsets) {
@@ -296,8 +292,6 @@ public class World {
                 if(remote) {
                     //BlockGame.getLogger().info("Asking server for " + pos);
                 } else {
-                    List<BlockPlacement> blockPlacements = deferredBlocks.remove(pos);
-
                     // Try and load data from disk
                     //TODO remove this from main thread as its slow
                     byte[] chunkData = loadChunk(pos.x(), pos.y());
@@ -305,9 +299,9 @@ public class World {
                     // Generate chunk from data or new terrain
                     Chunk newChunk;
                     if (chunkData == null) {
-                        newChunk = new Chunk(pos.x(), pos.y(), blockPlacements);
+                        newChunk = new Chunk(pos.x(), pos.y());
                     } else {
-                        newChunk = new Chunk(pos.x(), pos.y(), blockPlacements, chunkData);
+                        newChunk = new Chunk(pos.x(), pos.y(), chunkData);
                     }
 
                     chunks.put(pos, newChunk);
@@ -315,29 +309,25 @@ public class World {
             }
         }
 
-        // Update required chunks
-        chunks.forEach((chunkPos, chunk) -> {
-            // Remove chunks no longer needed
+        // Loop through chunks generating and removing invalid ones
+        chunks.entrySet().removeIf(entry -> {
+            ChunkPos chunkPos = entry.getKey();
+            Chunk chunk = entry.getValue();
+
             if (!requiredChunks.contains(chunkPos)) {
                 if (chunk != null) {
                     RenderManager.remove(chunk.getChunkRenderer());
-                    chunk.loaded = false;
+                    //TODO remove this from main thread as its slow
+                    chunk.saveChunk();
+                    return true;
                 }
-            } else {
-                queueChunkUpdate(chunk);
             }
-        });
 
-        // Remove broken chunks from array
-        chunks.keySet().removeIf(pos -> {
-            Chunk chunk = chunks.get(pos);
-            if(!chunk.loaded) {
-                //TODO remove this from main thread as its slow
-                chunk.saveChunk();
-                return true;
-            }
             return false;
         });
+
+        this.lastPlayerX = playerChunkX;
+        this.lastPlayerZ = playerChunkZ;
     }
 
     /**
@@ -345,8 +335,8 @@ public class World {
      * @param chunk
      */
     private void queueChunkUpdate(Chunk chunk) {
-        if(chunk.needsUpdate && !chunk.queued && chunk.loaded && chunk.generated) {
-            chunk.queued = true;
+        if(chunk.needsMeshing) {
+            chunk.needsMeshing = false;
             ThreadUtil.getQueue("worldGen").submit(() -> chunk.getChunkRenderer().mesh());
         }
     }

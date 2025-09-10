@@ -9,6 +9,7 @@ import com.james090500.renderer.ShaderManager;
 import com.james090500.utils.TextureManager;
 import com.james090500.utils.ThreadUtil;
 import com.james090500.world.Chunk;
+import com.james090500.world.ChunkStatus;
 import com.james090500.world.World;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -37,22 +38,13 @@ public class ChunkRenderer implements LayeredRenderer {
     }
 
     public void mesh() {
-        // Escape if not loaded
-        if(!chunk.loaded) return;
-
         //Really we shouldn't mesh until we know the neighbours are generated (not meshed)
-        boolean neighborsLoaded =
-                BlockGame.getInstance().getWorld().isChunkLoaded(chunk.chunkX + 1, chunk.chunkZ) &&
-                        BlockGame.getInstance().getWorld().isChunkLoaded(chunk.chunkX - 1, chunk.chunkZ) &&
-                        BlockGame.getInstance().getWorld().isChunkLoaded(chunk.chunkX, chunk.chunkZ + 1) &&
-                        BlockGame.getInstance().getWorld().isChunkLoaded(chunk.chunkX, chunk.chunkZ - 1);
-
-        if(!neighborsLoaded) {
-            this.chunk.queued = false;
+        if(!chunk.isNeighbors(ChunkStatus.FINISHED)) {
+            this.chunk.needsMeshing = true;
             return;
         }
 
-        this.chunk.needsUpdate = false;
+        this.chunk.needsMeshing = false;
 
         VoxelResult solidResult = makeVoxels(new int[]{0, 0, 0}, new int[]{chunk.chunkSize, chunk.chunkHeight, chunk.chunkSize}, (x, y, z) -> {
             Block block = chunk.getBlock(x, y, z);
@@ -76,14 +68,10 @@ public class ChunkRenderer implements LayeredRenderer {
         ChunkMesh transparentChunkMesh = this.generateMesh(transparentResult.dims, transparentResult.voxels);
 
         ThreadUtil.getMainQueue().add(() -> {
-            // Escape if not loaded
-            if(!chunk.loaded) return;
-
             RenderManager.remove(this);
             this.createMesh(solidChunkMesh, false);
             this.createMesh(transparentChunkMesh, true);
             RenderManager.add(this);
-            this.chunk.queued = false;
         });
     }
 
