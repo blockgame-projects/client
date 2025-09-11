@@ -3,6 +3,7 @@ package com.james090500.gui;
 import com.james090500.BlockGame;
 import com.james090500.gui.component.StandardButton;
 import com.james090500.gui.multiplayer.MultiplayerScreen;
+import com.james090500.gui.options.OptionsScreen;
 import com.james090500.gui.singleplayer.WorldScreen;
 import com.james090500.utils.TextureManager;
 import org.lwjgl.BufferUtils;
@@ -18,27 +19,27 @@ public class MainMenu extends Screen {
         setBackground(true);
 
         addComponent(
-                StandardButton.create(
-                    "Singleplayer",
-                    this.width / 2 - 200F,
-                    150f,
-                    400f,
-                    40f,
-                    () -> {
-                        ScreenManager.add(new WorldScreen());
-                        this.close();
-                    }
-                )
+            new StandardButton(
+                "Singleplayer",
+                this.width / 2 - 200F,
+                150f,
+                400f,
+                40f,
+                (mouseX, mouseY) -> {
+                    ScreenManager.add(new WorldScreen());
+                    this.close();
+                }
+            )
         );
 
         addComponent(
-            StandardButton.create(
+            new StandardButton(
                     "Multiplayer",
                     this.width / 2 - 200F,
                     200f,
                     400f,
                     40f,
-                    () -> {
+                    (mouseX, mouseY) -> {
                         ScreenManager.add(new MultiplayerScreen());
                         this.close();
                     }
@@ -46,13 +47,27 @@ public class MainMenu extends Screen {
         );
 
         addComponent(
-                StandardButton.create(
+                new StandardButton(
+                        "Options",
+                        this.width / 2 - 200F,
+                        250f,
+                        400f,
+                        40f,
+                        (mouseX, mouseY) -> {
+                            ScreenManager.add(new OptionsScreen(false));
+                            this.close();
+                        }
+                )
+        );
+
+        addComponent(
+                new StandardButton(
                     "Quit Game",
                     this.width / 2 - 150F,
                     this.height - 60F,
                     300f,
                     40f,
-                    () -> BlockGame.getInstance().close()
+                    (mouseX, mouseY) -> BlockGame.getInstance().close()
                 )
         );
     }

@@ -48,12 +48,12 @@ public class Screen {
 
     public void click() {
         for(Component component : components) {
-            boolean hovered = isHovered(component.getX(), component.getY(), component.getWidth(), component.getHeight());
+            boolean hovered = isHovered(component);
 
             if(hovered && component.isEnabled()) {
                 if(component.getOnclick() != null) {
                     SoundManager.play("assets/sound/gui/click");
-                    component.getOnclick().run();
+                    component.getOnclick().onClick(getMouseComponentX(component), getMouseComponentY(component));
                 }
                 component.setSelected(true);
             } else {
@@ -67,13 +67,6 @@ public class Screen {
             if(component.isSelected()) {
                 component.onType(key);
             }
-        }
-    }
-
-    protected void renderButtons() {
-        for(Component component : components) {
-            boolean hovered = isHovered(component.getX(), component.getY(), component.getWidth(), component.getHeight());
-            component.render(vg, hovered);
         }
     }
 
@@ -101,41 +94,71 @@ public class Screen {
         }
     }
 
-    private boolean isHovered(float x, float y, float width, float height) {
+    private float getUIMouseX() {
         double mouseX = BlockGame.getInstance().getClientWindow().getMouseX(); // logical (window)
-        double mouseY = BlockGame.getInstance().getClientWindow().getMouseY();
 
         int windowWidth = BlockGame.getInstance().getClientWindow().getWindowWidth();      // logical
-        int windowHeight = BlockGame.getInstance().getClientWindow().getWindowHeight();    // logical
         int framebufferWidth = BlockGame.getInstance().getClientWindow().getFramebufferWidth(); // physical
-        int framebufferHeight = BlockGame.getInstance().getClientWindow().getFramebufferHeight(); // physical
 
         float baseWidth = BlockGame.getInstance().getClientWindow().getBaseWidth();   // e.g. 854
-        float baseHeight = BlockGame.getInstance().getClientWindow().getBaseHeight(); // e.g. 480
 
         // Convert mouse from logical (window) to physical (framebuffer)
         float dpiScaleX = (float) framebufferWidth / windowWidth;
-        float dpiScaleY = (float) framebufferHeight / windowHeight;
         float fbMouseX = (float) (mouseX * dpiScaleX);
+
+        // Apply inverse UI scaling
+        float scale = (float) framebufferWidth / baseWidth;
+        float offsetX = (framebufferWidth - baseWidth * scale) / 2f;
+
+        return (fbMouseX - offsetX) / scale;
+    }
+
+    private float getUIMouseY() {
+        double mouseY = BlockGame.getInstance().getClientWindow().getMouseY();
+
+        int windowHeight = BlockGame.getInstance().getClientWindow().getWindowHeight();    // logical
+        int framebufferHeight = BlockGame.getInstance().getClientWindow().getFramebufferHeight(); // physical
+
+        float baseHeight = BlockGame.getInstance().getClientWindow().getBaseHeight(); // e.g. 480
+
+        // Convert mouse from logical (window) to physical (framebuffer)
+        float dpiScaleY = (float) framebufferHeight / windowHeight;
         float fbMouseY = (float) (mouseY * dpiScaleY);
 
         // Apply inverse UI scaling
-        float scale = Math.min((float) framebufferWidth / baseWidth, (float) framebufferHeight / baseHeight);
-        float offsetX = (framebufferWidth - baseWidth * scale) / 2f;
+        float scale = (float) framebufferHeight / baseHeight;
         float offsetY = (framebufferHeight - baseHeight * scale) / 2f;
 
-        float uiMouseX = (fbMouseX - offsetX) / scale;
-        float uiMouseY = (fbMouseY - offsetY) / scale;
+        return (fbMouseY - offsetY) / scale;
+    }
 
-        return uiMouseX >= x && uiMouseX <= x + width &&
-                uiMouseY >= y && uiMouseY <= y + height;
+    private boolean isHovered(Component component) {
+        float uiMouseX = getUIMouseX();
+        float uiMouseY = getUIMouseY();
+
+        return uiMouseX >= component.getX() && uiMouseX <= component.getX() + component.getWidth() &&
+                uiMouseY >= component.getY() && uiMouseY <= component.getY() + component.getHeight();
+    }
+
+    private float getMouseComponentX(Component component) {
+        float uiMouseX = getUIMouseX();
+        return (uiMouseX - component.getX()) / component.getWidth();
+    }
+
+    private float getMouseComponentY(Component component) {
+        float uiMouseY = getUIMouseY();
+        return (uiMouseY - component.getY()) / component.getHeight();
     }
 
     public void render() {
-        renderButtons();
+        for(Component component : components) {
+            boolean hovered = isHovered(component);
+            component.render(vg, hovered);
+        }
+
         FontManager.create().color(1f, 1f, 1f, 1f)
                 .center()
-                .uiText(title, 20f, width / 2f, 60f);
+                .text(title, 20f, width / 2f, 60f);
     }
 
     public void close() {

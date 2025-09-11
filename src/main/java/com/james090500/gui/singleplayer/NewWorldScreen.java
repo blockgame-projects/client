@@ -31,13 +31,13 @@ public class NewWorldScreen extends Screen {
         addComponent(worldSeed);
 
         addComponent(
-                StandardButton.create(
+                new StandardButton(
                         "Create World",
                         this.width / 2 - 200F,
                         260,
                         400f,
                         40f,
-                        () -> {
+                        (mouseX, mouseY) -> {
                             BlockGame.getInstance().start(worldName.getTypedValue(), worldSeed.getTypedValue());
                             this.close();
                         }
@@ -45,13 +45,13 @@ public class NewWorldScreen extends Screen {
         );
 
         addComponent(
-                StandardButton.create(
+                new StandardButton(
                     "Cancel",
                     this.width / 2 - 150F,
                     this.height - 60F,
                     300f,
                     40f,
-                    () -> {
+                    (mouseX, mouseY) -> {
                         ScreenManager.add(new WorldScreen());
                         this.close();
                     }

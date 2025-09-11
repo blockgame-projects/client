@@ -14,7 +14,7 @@ public class TextComponent extends Component {
     @Override
     public void render(long vg, boolean hovered) {
         // Label
-        FontManager.create().uiText(this.getText(), 20f, this.getX(), this.getY());
+        FontManager.create().text(this.getText(), 20f, this.getX(), this.getY());
 
         // Text
         NVGColor color = NVGColor.calloc();
@@ -44,7 +44,6 @@ public class TextComponent extends Component {
         borderColor.free();
 
         FontManager.create().color(1f, 1f, 1f, 1f)
-                .center()
-                .uiText(this.getTypedValue(), 20f, this.getX() + (this.getWidth() / 2), this.getY() + this.getHeight());
+                .textFixed(this.getTypedValue(), 20f, this.getX() + 4, this.getY() + this.getHeight(), this.getWidth());
     }
 }

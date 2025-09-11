@@ -79,7 +79,6 @@ public class ClientInput {
         if (keys.getOrDefault(GLFW_KEY_ESCAPE, false)) {
             if (BlockGame.getInstance().getConfig().isPaused() && BlockGame.getInstance().getWorld() != null) {
                 ScreenManager.clear();
-                ScreenManager.add(new DebugScreen());
                 BlockGame.getInstance().unpause();
             } else if(!BlockGame.getInstance().getConfig().isPaused()) {
                 BlockGame.getInstance().pause();

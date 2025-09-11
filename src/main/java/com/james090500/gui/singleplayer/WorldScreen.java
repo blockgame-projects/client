@@ -15,7 +15,7 @@ import java.util.List;
 public class WorldScreen extends Screen {
 
     private String selectedWorld;
-    private List<String> worlds = new ArrayList<>();
+    private List<String> worlds;
 
     private Component playWorld;
     private Component deleteWorld;
@@ -41,20 +41,20 @@ public class WorldScreen extends Screen {
                     75 * i,
                     610,
                     72,
-                    () -> selectedWorld = world
+                    (mouseX, mouseY) -> selectedWorld = world
             );
             worldComponents.add(worldComponent);
             addComponent(worldComponent);
             i++;
         }
 
-        playWorld = StandardButton.create(
+        playWorld = new StandardButton(
                 "Play World",
                 this.width / 4 - 80F,
                 this.height - 110F,
                 300f,
                 40f,
-                () -> {
+                (mouseX, mouseY) -> {
                     BlockGame.getInstance().start(selectedWorld, null);
                     this.close();
                 }
@@ -63,26 +63,26 @@ public class WorldScreen extends Screen {
         addComponent(playWorld);
 
         addComponent(
-                StandardButton.create(
+                new StandardButton(
                         "New World",
                         this.width / 4 + 230,
                         this.height - 110F,
                         300f,
                         40f,
-                        () -> {
+                        (mouseX, mouseY) -> {
                             ScreenManager.add(new NewWorldScreen());
                             this.close();
                         }
                 )
         );
 
-        deleteWorld = StandardButton.create(
+        deleteWorld = new StandardButton(
                 "Delete World",
                 this.width / 4 - 80F,
                 this.height - 60,
                 300f,
                 40f,
-                () -> {
+                (mouseX, mouseY) -> {
                     ScreenManager.add(new DeleteWorldScreen(selectedWorld));
                     this.close();
                 }
@@ -91,13 +91,13 @@ public class WorldScreen extends Screen {
         addComponent(deleteWorld);
 
         addComponent(
-                StandardButton.create(
+                new StandardButton(
                         "Cancel",
                         this.width / 4 + 230,
                         this.height - 60F,
                         300f,
                         40f,
-                        () -> {
+                        (mouseX, mouseY) -> {
                             ScreenManager.add(new MainMenu());
                             this.close();
                         }

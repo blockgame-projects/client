@@ -51,6 +51,13 @@ public class BlockGame {
         // Loop the game
         this.loop(clientWindow);
 
+        //
+        // Game Closes
+        //
+        this.exit();
+        ThreadUtil.shutdown();
+        SoundManager.destroy();
+
         // Free the window callbacks and destroy the window
         glfwFreeCallbacks(clientWindow.getWindow());
         glfwDestroyWindow(clientWindow.getWindow());
@@ -122,8 +129,13 @@ public class BlockGame {
         ThreadUtil.shutdown();
         RenderManager.clear();
 
-        BlockGame.getInstance().getLocalPlayer().savePlayer();
-        BlockGame.getInstance().getWorld().exitWorld();
+        if(BlockGame.getInstance().getLocalPlayer() != null) {
+            BlockGame.getInstance().getLocalPlayer().savePlayer();
+        }
+
+        if(BlockGame.getInstance().getWorld() != null) {
+            BlockGame.getInstance().getWorld().exitWorld();
+        }
 
         this.localPlayer = null;
         this.world = null;
@@ -136,8 +148,6 @@ public class BlockGame {
      * Closes the game so ends all pending tasks
      */
     public void close() {
-        ThreadUtil.shutdown();
-        SoundManager.destroy();
         glfwSetWindowShouldClose(BlockGame.getInstance().getClientWindow().getWindow(), true);
     }
 

@@ -14,7 +14,7 @@ public class LabelComponent extends Component {
     @Override
     public void render(long vg, boolean hovered) {
         // Label
-        FontManager.create().uiText(this.getText(), size, this.getX(), this.getY());
+        FontManager.create().text(this.getText(), size, this.getX(), this.getY());
 
         super.render(vg, hovered);
     }

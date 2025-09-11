@@ -13,34 +13,30 @@ public class DeleteWorldScreen extends Screen {
         setTitle("Delete World?");
 
         addComponent(
-                LabelComponent.create(
+                new LabelComponent(
                     "Are you sure you want to delete \"" + worldName + "\"\n",
+                    1f,
                     this.width / 2,
-                    150f,
-                    0,
-                    0,
-                    null
+                    150f
                 )
         );
         addComponent(
-                LabelComponent.create(
+                new LabelComponent(
                         "This action is permanent!",
+                        1f,
                         this.width / 2,
-                        180f,
-                        0,
-                        0,
-                        null
+                        180f
                 )
         );
 
         addComponent(
-                StandardButton.create(
+                new StandardButton(
                         "Cancel",
                         this.width / 6 - 5,
                         260F,
                         300f,
                         40f,
-                        () -> {
+                        (mouseX, mouseY) -> {
                             ScreenManager.add(new WorldScreen());
                             this.close();
                         }
@@ -48,13 +44,13 @@ public class DeleteWorldScreen extends Screen {
         );
 
         addComponent(
-                StandardButton.create(
+                new StandardButton(
                         "Delete",
                         this.width / 6 + 305F,
                         260F,
                         300f,
                         40f,
-                        () -> {
+                        (mouseX, mouseY) -> {
                             WorldManager.deleteWorld(worldName);
                             ScreenManager.add(new WorldScreen());
                             this.close();

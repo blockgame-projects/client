@@ -16,7 +16,7 @@ public class Component {
     private final float y;
     private final float width;
     private final float height;
-    private final Runnable onclick;
+    private final ComponentClick onclick;
 
     @Setter
     private boolean enabled = true;
@@ -26,8 +26,10 @@ public class Component {
 
     @Setter
     private String typedValue = "";
+    @Setter
+    private int maxValue = 0;
 
-    public Component(String text, float x, float y, float width, float height, Runnable onclick) {
+    public Component(String text, float x, float y, float width, float height, ComponentClick onclick) {
         this.text = text;
         this.x = x;
         this.y = y;
@@ -36,18 +38,23 @@ public class Component {
         this.onclick = onclick;
     }
 
-    public static Component create(String text, float x, float y, float width, float height, Runnable onclick) {
-        return new Component(text, x, y, width, height, onclick);
-    }
-
+    /**
+     * Handle typing
+     * @param key The key ID
+     */
     public void onType(int key) {
         if(key == -1 && !this.typedValue.isEmpty()) {
             this.typedValue = this.typedValue.substring(0, this.typedValue.length() - 1);
-        } else {
+        } else if(this.maxValue == 0 || this.maxValue > 0 && this.typedValue.length() < this.maxValue) {
             this.typedValue += (char) key;
         }
     }
 
+    /**
+     * Render the component
+     * @param vg nanoVG
+     * @param hovered If hovered
+     */
     public void render(long vg, boolean hovered) {
         NVGPaint paint = NVGPaint.calloc();
 
@@ -71,11 +78,17 @@ public class Component {
         if(enabled) {
             FontManager.create().color(1f, 1f, 1f, 1f)
                     .center()
-                    .uiText(text, 20f, x + (width / 2), y + height);
+                    .text(text, 20f, x + (width / 2), y + height);
         } else {
             FontManager.create().color(0.5f, 0.5f, 0.5f, 1f)
                     .center()
-                    .uiText(text, 20f, x + (width / 2), y + height);
+                    .text(text, 20f, x + (width / 2), y + height);
         }
     }
+
+    @FunctionalInterface
+    public interface ComponentClick {
+        void onClick(float mouseX, float mouseY);
+    }
+
 }

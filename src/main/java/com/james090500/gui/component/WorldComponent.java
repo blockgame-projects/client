@@ -9,7 +9,7 @@ import static org.lwjgl.nanovg.NanoVG.*;
 
 public class WorldComponent extends Component {
 
-    public WorldComponent(String text, float x, float y, float width, float height, Runnable onclick) {
+    public WorldComponent(String text, float x, float y, float width, float height, ComponentClick onclick) {
         super(text, x, y, width, height, onclick);
     }
 
@@ -43,7 +43,7 @@ public class WorldComponent extends Component {
         this.addIcon(vg);
 
         // Label
-        FontManager.create().uiText(this.getText(), 20f, this.getX() + 100, this.getY() + 40);
+        FontManager.create().text(this.getText(), 20f, this.getX() + 100, this.getY() + 40);
 
         // Free
         backgroundColor.free();

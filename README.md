@@ -6,10 +6,6 @@ A voxel game written in Java
 
 ## Running
 
-Windows and Linux should be able to double-click the jar
+Use BlockGame launcher to automatically download libraries
 
-MacOS will need to run with a flag
-
-```
-java -XstartOnFirstThread -jar blockgame.jar
-```
+https://blockgame.james090500.com

@@ -13,6 +13,7 @@ public class ScreenManager {
 
     public static void clear() {
         activeScreens.clear();
+        activeScreens.add(new DebugScreen());
     }
 
     public static List<Screen> active() {

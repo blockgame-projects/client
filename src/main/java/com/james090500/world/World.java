@@ -44,13 +44,15 @@ public class World {
 
     @Getter
     private int worldSeed;
-    private final int worldSize = 16;
 
     @Getter
     private String worldName;
 
     @Getter @Setter
     private boolean remote = false;
+
+    @Getter @Setter
+    private boolean forceUpdate = true;
 
     /**
      * Starts a remote world
@@ -260,6 +262,7 @@ public class World {
 
         // Load/generate nearby chunks in render distance
         List<ChunkOffset> offsets = new ArrayList<>();
+        int worldSize = BlockGame.getInstance().getConfig().getUserOptions().getRenderDistance().getValue();
         for (int dx = -worldSize; dx <= worldSize; dx++) {
             for (int dz = -worldSize; dz <= worldSize; dz++) {
                 int distSq = dx * dx + dz * dz;
@@ -280,7 +283,7 @@ public class World {
         }
 
         // No point looping if we aren't moving
-        if(playerChunkX == lastPlayerX && playerChunkZ == lastPlayerZ && !chunks.isEmpty()) return;
+        if(playerChunkX == lastPlayerX && playerChunkZ == lastPlayerZ && !this.forceUpdate) return;
 
         // Render chunks from players pos.
         Set<ChunkPos> requiredChunks = new HashSet<>();
@@ -328,6 +331,7 @@ public class World {
 
         this.lastPlayerX = playerChunkX;
         this.lastPlayerZ = playerChunkZ;
+        this.forceUpdate = false;
     }
 
     /**

@@ -12,25 +12,23 @@ public class ConnectionScreen extends Screen {
         setTitle("Multiplayer");
 
         addComponent(
-                LabelComponent.create(
+                new LabelComponent(
                         response,
+                        1f,
                         this.width / 2,
-                        150f,
-                        0,
-                        0,
-                        null
+                        150f
                 )
         );
 
 
         addComponent(
-                StandardButton.create(
+                new StandardButton(
                         "Close",
                         this.width / 2 - 150F,
                         this.height - 60F,
                         300f,
                         40f,
-                        () -> {
+                        (mouseX, mouseY) -> {
                             ScreenManager.add(new MultiplayerScreen());
                             this.close();
                         }
