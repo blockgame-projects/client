@@ -1,7 +1,6 @@
 package com.james090500.client;
 
 import com.james090500.BlockGame;
-import com.james090500.gui.DebugScreen;
 import com.james090500.gui.Screen;
 import com.james090500.gui.ScreenManager;
 import lombok.Getter;

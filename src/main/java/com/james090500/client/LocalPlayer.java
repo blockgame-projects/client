@@ -12,6 +12,7 @@ import com.james090500.utils.Raycast;
 import com.james090500.utils.SoundManager;
 import com.james090500.world.ChunkStatus;
 import lombok.Getter;
+import lombok.Setter;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
 
@@ -32,6 +33,7 @@ public class LocalPlayer {
     private boolean swimming = false;
 
     Clock clock = new Clock();
+    private final Camera camera;
     private final AABB aabb;
     private final float playerWidth = 0.4f;
     private final float playerHeight = 1.75f;
@@ -40,6 +42,10 @@ public class LocalPlayer {
     private double jumpStartTime = 0;
     private float stepCooldown;
     private String worldName;
+    @Getter @Setter
+    private int lastChunkX;
+    @Getter @Setter
+    private int lastChunkZ;
 
     BlockOverlay blockOverlay = new BlockOverlay();
     ArmOverlay armOverlay = new ArmOverlay();
@@ -48,10 +54,10 @@ public class LocalPlayer {
     public LocalPlayer() {
         this.aabb = new AABB(playerWidth, playerHeight);
         this.worldName = BlockGame.getInstance().getWorld().getWorldName();
-        Camera camera = BlockGame.getInstance().getCamera();
+        camera = BlockGame.getInstance().getCamera();
 
         if(BlockGame.getInstance().getWorld().isRemote()) {
-            camera.setPosition(0, 100, 0);
+            setPosition(0, 100, 0);
         } else {
             File playerPath = new File("worlds/" + worldName + "/players");
             File playerData = new File(playerPath + "/player.dat");
@@ -68,7 +74,7 @@ public class LocalPlayer {
                     float pitch = raf.readFloat();
                     float yaw = raf.readFloat();
 
-                    camera.setPosition(x, y, z);
+                    setPosition(x, y, z);
                     camera.setRotation(pitch, yaw);
 
                 } catch (IOException e) {
@@ -82,20 +88,27 @@ public class LocalPlayer {
         if(!BlockGame.getInstance().getWorld().isRemote()) {
             File playerPath = new File("worlds/" + worldName + "/players");
             File playerData = new File(playerPath + "/player.dat");
-            Camera camera = BlockGame.getInstance().getCamera();
 
             // Write to file
             try (RandomAccessFile raf = new RandomAccessFile(playerData, "rw")) {
                 raf.setLength(0);
-                raf.writeFloat(camera.getPosition().x);
-                raf.writeFloat(camera.getPosition().y);
-                raf.writeFloat(camera.getPosition().z);
+                raf.writeFloat(getPosition().x);
+                raf.writeFloat(getPosition().y);
+                raf.writeFloat(getPosition().z);
                 raf.writeFloat(camera.pitch);
                 raf.writeFloat(camera.yaw);
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
+    }
+
+    public Vector3f getPosition() {
+        return camera.getPosition();
+    }
+
+    public void setPosition(float x, float y, float z) {
+        camera.setPosition(x, y, z);
     }
 
     private void updateControls() {
@@ -113,6 +126,8 @@ public class LocalPlayer {
      * @param {number} delta - Time since last frame.
      */
     private void updateMovement(double delta) {
+        if(!BlockGame.getInstance().getWorld().isChunkStatus(lastChunkX, lastChunkZ, ChunkStatus.FINISHED)) return;
+
         float moveSpeed = 0.9f;
         if (this.noclip) {
             moveSpeed = 10f;
@@ -121,11 +136,10 @@ public class LocalPlayer {
         }
 
         // Get necessary references
-        Camera camera = BlockGame.getInstance().getCamera();
+        Vector3f playerPos = getPosition();
         HashMap<Integer, Boolean> keys = BlockGame.getInstance().getClientWindow().getClientInput().getKeys();
 
         // Current Block the player is in
-        Vector3f playerPos = new Vector3f(camera.getPosition());
         playerPos.y -= 1;
         Block currentBlock = BlockGame.getInstance().getWorld().getBlock(playerPos);
 
@@ -137,8 +151,8 @@ public class LocalPlayer {
         dir.cross(new Vector3f(0, 1, 0), right);
 
         // Stop playing falling through the world
-        if (camera.getPosition().y < -30) {
-            camera.getPosition().y = 100;
+        if (getPosition().y < -30) {
+            getPosition().y = 100;
         }
 
         // Dampen movement
@@ -245,7 +259,7 @@ public class LocalPlayer {
             if (velocity.lengthSquared() > 0.0004f && !this.falling && !this.jumping) {
                 stepCooldown -= delta; // deltaTime is the time since last frame
                 if (stepCooldown <= 0f) {
-                    Block blockAtFeet = BlockGame.getInstance().getWorld().getBlock(camera.getPosition().sub(new Vector3f(0, 2, 0)));
+                    Block blockAtFeet = BlockGame.getInstance().getWorld().getBlock(getPosition().sub(new Vector3f(0, 2, 0)));
                     if(blockAtFeet != null && blockAtFeet.getSound() != null) {
                         SoundManager.play("assets/sound/block/" + blockAtFeet.getSound(), 4);
                         stepCooldown = 0.5f; // play every half second while moving
@@ -261,8 +275,7 @@ public class LocalPlayer {
      * Update interaction via mouse picking
      */
     private void updateInteraction() {
-        Camera camera = BlockGame.getInstance().getCamera();
-        Vector3f origin = new Vector3f(camera.getPosition());
+        Vector3f origin = new Vector3f(getPosition());
         Vector3f dir = new Vector3f(camera.getDirection()).normalize();
 
         Vector3i[] raycast = Raycast.block(origin, dir, 5f);
@@ -312,11 +325,11 @@ public class LocalPlayer {
      * @returns {boolean} True if the move was successful.
      */
     public boolean tryMove(Vector3f velocity, int axis) {
-        Vector3f pos = new Vector3f(BlockGame.getInstance().getCamera().getPosition());
+        Vector3f pos = new Vector3f(getPosition());
         pos.setComponent(axis,pos.get(axis) + velocity.get(axis));
 
         if (!aabb.isColliding(pos) || this.noclip) {
-            BlockGame.getInstance().getCamera().setPosition(axis, pos.get(axis));
+            camera.setPosition(axis, pos.get(axis));
             return true;
         }
         return false;

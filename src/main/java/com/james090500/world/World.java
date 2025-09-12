@@ -3,8 +3,8 @@ package com.james090500.world;
 import com.james090500.BlockGame;
 import com.james090500.blocks.Block;
 import com.james090500.blocks.Blocks;
+import com.james090500.client.LocalPlayer;
 import com.james090500.entity.Entity;
-import com.james090500.entity.PlayerEntity;
 import com.james090500.network.packets.BlockUpdatePacket;
 import com.james090500.network.packets.DisconnectPacket;
 import com.james090500.renderer.RenderManager;
@@ -12,7 +12,6 @@ import com.james090500.utils.SoundManager;
 import com.james090500.utils.ThreadUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import lombok.Getter;
 import lombok.Setter;
@@ -38,9 +37,6 @@ public class World {
     public final Int2ObjectOpenHashMap<Entity> entities = new Int2ObjectOpenHashMap<>();
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-
-    private int lastPlayerX;
-    private int lastPlayerZ;
 
     @Getter
     private int worldSeed;
@@ -256,9 +252,9 @@ public class World {
      * update the world. This also loads and remove chunks as needed
      */
     public void update() {
-        Vector3f playerPos = BlockGame.getInstance().getCamera().getPosition();
-        int playerChunkX = (int) Math.floor(playerPos.x / 16);
-        int playerChunkZ = (int) Math.floor(playerPos.z / 16);
+        LocalPlayer player = BlockGame.getInstance().getLocalPlayer();
+        int playerChunkX = (int) Math.floor(player.getPosition().x / 16);
+        int playerChunkZ = (int) Math.floor(player.getPosition().z / 16);
 
         // Load/generate nearby chunks in render distance
         List<ChunkOffset> offsets = new ArrayList<>();
@@ -283,7 +279,7 @@ public class World {
         }
 
         // No point looping if we aren't moving
-        if(playerChunkX == lastPlayerX && playerChunkZ == lastPlayerZ && !this.forceUpdate) return;
+        if(playerChunkX == player.getLastChunkX() && playerChunkZ == player.getLastChunkZ() && !this.forceUpdate) return;
 
         // Render chunks from players pos.
         Set<ChunkPos> requiredChunks = new HashSet<>();
@@ -329,8 +325,8 @@ public class World {
             return false;
         });
 
-        this.lastPlayerX = playerChunkX;
-        this.lastPlayerZ = playerChunkZ;
+        player.setLastChunkX(playerChunkX);
+        player.setLastChunkZ(playerChunkZ);
         this.forceUpdate = false;
     }
 

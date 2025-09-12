@@ -15,6 +15,13 @@ public class DebugScreen extends Screen {
 
     @Override
     public void render() {
+        // Return if invalid
+        if(
+                BlockGame.getInstance().getWorld() == null ||
+                BlockGame.getInstance().getLocalPlayer() == null ||
+                BlockGame.getInstance().getCamera() == null
+        ) return;
+
         Vector3f position = BlockGame.getInstance().getCamera().getPosition();
         String playerPos = String.format("Position: %.2f, %.2f, %.2f", position.x, position.y, position.z);
 

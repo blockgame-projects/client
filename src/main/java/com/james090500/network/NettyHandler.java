@@ -12,9 +12,6 @@ import io.netty.channel.MultiThreadIoEventLoopGroup;
 import io.netty.channel.nio.NioIoHandler;
 import io.netty.channel.socket.nio.NioSocketChannel;
 
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-
 public class NettyHandler {
 
     private final String host;
