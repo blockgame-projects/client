@@ -223,7 +223,7 @@ public class Region {
     /**
      * Load a chunk at (chunkX, chunkZ). Returns null if the chunk isn't present.
      */
-    public byte[] loadChunk(int chunkX, int chunkZ) throws IOException {
+    public Chunk loadChunk(int chunkX, int chunkZ) throws IOException {
         synchronized (ioLock) {
             // ---- 1) Read directory entry ----
             int localX = Math.floorMod(chunkX, REGION_SIZE);
@@ -265,26 +265,32 @@ public class Region {
             byte[] payloadArr = payload.array();
 
             // ---- 4) Decompress according to codec ----
+            byte[] result;
             switch (codec) {
                 case CODEC_RAW:
                     if (payloadArr.length != uncompressedLen) {
                         // Defensive: RAW should match expected size
                         if (payloadArr.length < uncompressedLen) {
                             // pad with zeros if short (corrupt but survivable)
-                            byte[] fixed = new byte[uncompressedLen];
-                            System.arraycopy(payloadArr, 0, fixed, 0, payloadArr.length);
-                            return fixed;
+                            result = new byte[uncompressedLen];
+                            System.arraycopy(payloadArr, 0, result, 0, payloadArr.length);
+                            break;
                         }
                         // If longer, trim to expected length
-                        return Arrays.copyOf(payloadArr, uncompressedLen);
+                        result = Arrays.copyOf(payloadArr, uncompressedLen);
+                        break;
                     }
-                    return payloadArr;
+                    result = payloadArr;
+                    break;
                 case CODEC_LZ4:
                     LZ4SafeDecompressor decompressor = lz4.safeDecompressor();
-                    return decompressor.decompress(payloadArr, uncompressedLen);
+                    result = decompressor.decompress(payloadArr, uncompressedLen);
+                    break;
                 default:
                     throw new IOException("Unknown codec id: " + codec);
             }
+
+            return new Chunk(chunkX, chunkZ, result);
         }
     }
 

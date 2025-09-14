@@ -6,10 +6,7 @@ import com.james090500.blocks.Blocks;
 import com.james090500.renderer.gui.ArmOverlay;
 import com.james090500.renderer.gui.BlockOverlay;
 import com.james090500.renderer.gui.CrosshairOverlay;
-import com.james090500.utils.AABB;
-import com.james090500.utils.Clock;
-import com.james090500.utils.Raycast;
-import com.james090500.utils.SoundManager;
+import com.james090500.utils.*;
 import com.james090500.world.ChunkStatus;
 import lombok.Getter;
 import lombok.Setter;
@@ -156,7 +153,7 @@ public class LocalPlayer {
         }
 
         // Dampen movement
-        this.velocity.mul(0.75f);
+        this.velocity.mul(0.8f);
 
         // Apply input movement and apply friction
         Vector3f acceleration = new Vector3f();
@@ -256,7 +253,7 @@ public class LocalPlayer {
 
         if(canMove1 && canMove2) {
             // Play the movement sound
-            if (velocity.lengthSquared() > 0.0004f && !this.falling && !this.jumping) {
+            if (acceleration.lengthSquared() > 0f) {
                 stepCooldown -= delta; // deltaTime is the time since last frame
                 if (stepCooldown <= 0f) {
                     Block blockAtFeet = BlockGame.getInstance().getWorld().getBlock(getPosition().sub(new Vector3f(0, 2, 0)));

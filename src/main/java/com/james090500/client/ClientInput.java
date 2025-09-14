@@ -51,7 +51,11 @@ public class ClientInput {
         mouse.put(button, action > GLFW_RELEASE);
 
         if (mouse.getOrDefault(GLFW_MOUSE_BUTTON_LEFT, false)) {
-            this.leftClick();
+            List<Screen> screens = new ArrayList<>(ScreenManager.active());
+
+            for (Screen screen : screens) {
+                screen.click();
+            }
         }
     }
 
@@ -62,13 +66,6 @@ public class ClientInput {
            BlockGame.getInstance().getLocalPlayer().scrollHotbar(true);
         } else if (xOffset < 0 || yOffset < 0) {
             BlockGame.getInstance().getLocalPlayer().scrollHotbar(false);
-        }
-    }
-
-    public void leftClick() {
-        List<Screen> screens = new ArrayList<>(ScreenManager.active());
-        for (Screen screen : screens) {
-            screen.click();
         }
     }
 

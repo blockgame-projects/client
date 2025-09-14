@@ -293,14 +293,14 @@ public class World {
                 } else {
                     // Try and load data from disk
                     //TODO remove this from main thread as its slow
-                    byte[] chunkData = loadChunk(pos.x(), pos.y());
+                    Chunk chunkData = loadChunk(pos.x(), pos.y());
 
                     // Generate chunk from data or new terrain
                     Chunk newChunk;
                     if (chunkData == null) {
                         newChunk = new Chunk(pos.x(), pos.y());
                     } else {
-                        newChunk = new Chunk(pos.x(), pos.y(), chunkData);
+                        newChunk = chunkData;
                     }
 
                     chunks.put(pos, newChunk);
@@ -369,25 +369,25 @@ public class World {
         BlockGame.getLogger().info("Saving World...");
         for(Chunk chunk : this.chunks.values()) {
             if(chunk.needsSaving) {
-                BlockGame.getInstance().getWorld().saveChunk(chunk.chunkX, chunk.chunkZ, chunk.chunkData);
+                BlockGame.getInstance().getWorld().saveChunk(chunk);
                 chunk.needsSaving = false;
             }
         }
         BlockGame.getLogger().info("Save Complete!");
     }
 
-    public void saveChunk(int chunkX, int chunkZ, byte[] data) {
+    public void saveChunk(Chunk chunk) {
         // Dont save remote chunks
         if(remote) return;
 
         try {
-            getRegion(chunkX, chunkZ).saveChunk(chunkX, chunkZ, data);
+            getRegion(chunk.chunkX, chunk.chunkZ).saveChunk(chunk.chunkX, chunk.chunkZ, chunk.chunkData);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public byte[] loadChunk(int chunkX, int chunkZ) {
+    public Chunk loadChunk(int chunkX, int chunkZ) {
         // Dont load remote chunks
         if(remote) return null;
 

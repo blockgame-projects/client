@@ -8,11 +8,16 @@ import com.james090500.utils.TextureManager;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
+import org.lwjgl.glfw.GLFW;
+import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NVGPaint;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
+import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT;
+import static org.lwjgl.glfw.GLFW.glfwSetCursorPos;
 import static org.lwjgl.nanovg.NanoVG.*;
 
 @Setter
@@ -54,6 +59,9 @@ public class Screen {
                 if(component.getOnclick() != null) {
                     SoundManager.play("assets/sound/gui/click");
                     component.getOnclick().onClick(getMouseComponentX(component), getMouseComponentY(component));
+
+                    HashMap<Integer, Boolean> mouse = BlockGame.getInstance().getClientWindow().getClientInput().getMouse();
+                    mouse.put(GLFW_MOUSE_BUTTON_LEFT, false);
                 }
                 component.setSelected(true);
             } else {

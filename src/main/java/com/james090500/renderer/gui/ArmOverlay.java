@@ -102,6 +102,7 @@ public class ArmOverlay implements Renderer {
 
     @Override
     public void render() {
+        boolean depth = glIsEnabled(GL_DEPTH_TEST);
         glDisable(GL_DEPTH_TEST);
 
         // Create identity view matrix (static in camera space)
@@ -129,6 +130,6 @@ public class ArmOverlay implements Renderer {
         glBindVertexArray(0);
         ShaderManager.basicBlockShader.stop();
 
-        glEnable(GL_DEPTH_TEST);
+        if(depth) glEnable(GL_DEPTH_TEST);
     }
 }

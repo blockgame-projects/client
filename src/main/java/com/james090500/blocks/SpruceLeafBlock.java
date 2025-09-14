@@ -1,11 +1,11 @@
 package com.james090500.blocks;
 
-public class LeafBlock extends Block {
-    public LeafBlock(byte id) {
+public class SpruceLeafBlock extends Block {
+    public SpruceLeafBlock(byte id) {
         super(id);
         this.name = "Leaf";
         this.sound = "grass";
-        this.texture = 52;
+        this.texture = 7;
         this.transparent = true;
     }
 }

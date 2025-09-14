@@ -6,6 +6,6 @@ public class StoneBlock extends Block {
         super(id);
         this.name = "Stone";
         this.sound = "stone";
-        this.texture = 1;
+        this.texture = 3;
     }
 }

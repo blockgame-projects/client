@@ -1,40 +1,62 @@
 package com.james090500.renderer;
 
 import com.james090500.BlockGame;
+import com.james090500.client.LocalPlayer;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import org.joml.Vector3f;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 public class RenderManager {
-    private static final List<Renderer> renderQueue = new ArrayList<>();
+    private static final ObjectArrayList<Renderer> renderQueue = new ObjectArrayList<>();
+    private static final ObjectArrayList<LayeredRenderer> transparentQueue = new ObjectArrayList<>();
 
     public static void add(Renderer renderer) {
         renderQueue.add(renderer);
+
+        if(renderer instanceof LayeredRenderer) {
+            transparentQueue.add((LayeredRenderer) renderer);
+        }
+
+        sort();
     }
 
     public static void remove(Renderer renderer) {
         renderQueue.remove(renderer);
+
+        if(renderer instanceof LayeredRenderer) {
+            transparentQueue.add((LayeredRenderer) renderer);
+        }
+
+        sort();
+    }
+
+    private static void sort() {
+        Vector3f playerPos = BlockGame.getInstance().getLocalPlayer().getPosition();
+
+        renderQueue.sort(Comparator.comparingDouble((Renderer r) -> r.getPosition().distanceSquared(playerPos)).reversed());
+        transparentQueue.sort(Comparator.comparingDouble((LayeredRenderer r) -> r.getPosition().distanceSquared(playerPos)).reversed());
     }
 
     public static void clear() {
         renderQueue.clear();
+        transparentQueue.clear();
     }
 
     public static void render() {
         // Lets not render if not in game!
         if(BlockGame.getInstance().getWorld() == null) {
             renderQueue.clear();
+            transparentQueue.clear();
             return;
         }
 
-        List<LayeredRenderer> transparentQueue = new ArrayList<>();
-
         // Go through the render queue
         for (Renderer renderer : renderQueue) {
-            if (renderer instanceof LayeredRenderer) {
-                transparentQueue.add((LayeredRenderer) renderer);
-            }
-
             if (BlockGame.getInstance().getCamera().insideFrustum(renderer.getPosition(), renderer.getBoundingBox())) {
                 renderer.render();
             }

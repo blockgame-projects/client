@@ -5,6 +5,11 @@ gui/button_active.png
 gui/button_disabled.png
 gui/logo.png
 gui/pack.png
+piehole_terrain.png
+sound/block/cloth1.ogg
+sound/block/cloth2.ogg
+sound/block/cloth3.ogg
+sound/block/cloth4.ogg
 sound/block/grass1.ogg
 sound/block/grass2.ogg
 sound/block/grass3.ogg

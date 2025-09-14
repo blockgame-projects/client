@@ -5,6 +5,6 @@ public class SandBlock extends Block {
         super(id);
         this.name = "Sand";
         this.sound = "sand";
-        this.texture = 18;
+        this.texture = 4;
     }
 }

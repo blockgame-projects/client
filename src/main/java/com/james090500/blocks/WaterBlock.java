@@ -4,7 +4,7 @@ public class WaterBlock extends Block {
     public WaterBlock(byte id) {
         super(id);
         this.name = "Water";
-        this.texture = 205;
+        this.texture = 5;
         this.transparent = true;
         this.solid = false;
     }

@@ -6,7 +6,7 @@ public class Block {
 
     @Getter
     byte id;
-    int texture = 14;
+    int texture = 255;
     @Getter
     boolean transparent = false;
     @Getter
