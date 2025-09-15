@@ -17,7 +17,7 @@ import static org.lwjgl.opengl.GL30.glGenVertexArrays;
 
 public class PlayerModel implements Renderer {
 
-    private int vao;
+    private final int vao;
 
     // Cube centered at origin, side length = 1.0 (±0.5)
     float[] vertices = {

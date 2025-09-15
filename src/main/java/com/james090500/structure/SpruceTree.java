@@ -1,25 +1,33 @@
 package com.james090500.structure;
 
+import com.james090500.blocks.Block;
 import com.james090500.blocks.Blocks;
+import com.james090500.blocks.GrassBlock;
+import com.james090500.blocks.SnowyGrassBlock;
 import com.james090500.world.Chunk;
 
-public class Tree implements Structure {
+public class SpruceTree implements Structure {
 
-    private double noise;
-    private Chunk chunk;
+    private final double noise;
+    private final Chunk chunk;
 
-    public Tree(double noise, Chunk chunk) {
+    public SpruceTree(double noise, Chunk chunk) {
         this.noise = noise;
         this.chunk = chunk;
     }
 
     @Override
     public void build(int x, int y, int z) {
-        int trunkHeight = (int) (3 + Math.floor((noise - 0.9) * 10)); // 3-5 block tall trunk
+        Block block = chunk.getBlock(x, y, z);
+        if (!(block instanceof SnowyGrassBlock)) {
+            return;
+        }
+
+        int trunkHeight = (int) (6 + Math.floor((noise - 0.9) * 10)); // 6-7 block tall trunk
 
         // Build trunk
         for (int t = 0; t < trunkHeight; t++) {
-            chunk.setBlock(x, 1 + y + t, z, Blocks.logBlock.getId());
+            chunk.setBlock(x, 1 + y + t, z, Blocks.spruceLogBlock.getId());
         }
 
         // Build leaves
@@ -34,8 +42,8 @@ public class Tree implements Structure {
                         // narrower as ly goes up
                         byte blockToSet =
                                 ly < 3 && lx == 0 && lz == 0
-                                        ? Blocks.logBlock.getId()
-                                        : Blocks.leafBlock.getId();
+                                        ? Blocks.spruceLogBlock.getId()
+                                        : Blocks.spruceLeafBlock.getId();
 
                         chunk.setBlock(
                                 x + lx,

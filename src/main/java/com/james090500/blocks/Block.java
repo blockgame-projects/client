@@ -15,6 +15,8 @@ public class Block {
     String sound = null;
     @Getter
     String name = "UNKNOWN";
+    @Getter
+    BlockModel model = BlockModel.BLOCK;
 
     public Block(byte id) {
         this.id = id;

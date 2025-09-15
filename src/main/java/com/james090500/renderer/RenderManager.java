@@ -29,7 +29,7 @@ public class RenderManager {
         renderQueue.remove(renderer);
 
         if(renderer instanceof LayeredRenderer) {
-            transparentQueue.add((LayeredRenderer) renderer);
+            transparentQueue.remove((LayeredRenderer) renderer);
         }
 
         sort();

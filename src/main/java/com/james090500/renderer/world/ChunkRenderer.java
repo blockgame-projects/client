@@ -2,7 +2,9 @@ package com.james090500.renderer.world;
 
 import com.james090500.BlockGame;
 import com.james090500.blocks.Block;
+import com.james090500.blocks.BlockModel;
 import com.james090500.blocks.Blocks;
+import com.james090500.blocks.CactusBlock;
 import com.james090500.renderer.LayeredRenderer;
 import com.james090500.renderer.RenderManager;
 import com.james090500.renderer.ShaderManager;
@@ -13,12 +15,14 @@ import com.james090500.world.ChunkStatus;
 import com.james090500.world.World;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+import org.joml.Vector3i;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
+import java.util.List;
 
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL30.*;
@@ -32,6 +36,8 @@ public class ChunkRenderer implements LayeredRenderer {
 
     private int transVAO;
     public int transVertexCount;
+
+    List<Vector3f> cactusBlocks = new ArrayList<>();
 
     public ChunkRenderer(Chunk chunk) {
         this.chunk = chunk;
@@ -48,7 +54,7 @@ public class ChunkRenderer implements LayeredRenderer {
 
         VoxelResult solidResult = makeVoxels(new int[]{0, 0, 0}, new int[]{chunk.chunkSize, chunk.chunkHeight, chunk.chunkSize}, (x, y, z) -> {
             Block block = chunk.getBlock(x, y, z);
-            if (block != null && !block.isTransparent()) {
+            if (block != null && !block.isTransparent() && block.getModel().equals(BlockModel.BLOCK)) {
                 return block.getId();
             } else {
                 return 0;
@@ -57,7 +63,18 @@ public class ChunkRenderer implements LayeredRenderer {
 
         VoxelResult transparentResult = makeVoxels(new int[]{0, 0, 0}, new int[]{chunk.chunkSize, chunk.chunkHeight, chunk.chunkSize}, (x, y, z) -> {
             Block block = chunk.getBlock(x, y, z);
-            if (block != null && block.isTransparent()) {
+            if (block != null && block.isTransparent() && block.getModel().equals(BlockModel.BLOCK)) {
+                return block.getId();
+            } else {
+                return 0;
+            }
+        });
+
+        List<Vector3f> newCactusBlocks = new ArrayList<>();
+        makeVoxels(new int[]{0, 0, 0}, new int[]{chunk.chunkSize, chunk.chunkHeight, chunk.chunkSize}, (x, y, z) -> {
+            Block block = chunk.getBlock(x, y, z);
+            if (block instanceof CactusBlock) {
+                newCactusBlocks.add(new Vector3f(x + this.chunk.chunkX * this.chunk.chunkSize, y, z + this.chunk.chunkZ * this.chunk.chunkSize));
                 return block.getId();
             } else {
                 return 0;
@@ -72,6 +89,9 @@ public class ChunkRenderer implements LayeredRenderer {
             this.createMesh(solidChunkMesh, false);
             this.createMesh(transparentChunkMesh, true);
             RenderManager.add(this);
+
+            cactusBlocks.clear();
+            cactusBlocks.addAll(newCactusBlocks);
         });
     }
 
@@ -84,7 +104,7 @@ public class ChunkRenderer implements LayeredRenderer {
         IntBuffer indexBuffer = ByteBuffer.allocateDirect(numFaces * 6 * Integer.BYTES).order(ByteOrder.nativeOrder()).asIntBuffer();
         FloatBuffer uvBuffer = ByteBuffer.allocateDirect(numVertices * 2 * Float.BYTES).order(ByteOrder.nativeOrder()).asFloatBuffer();
         FloatBuffer texOffsetBuffer = ByteBuffer.allocateDirect(numVertices * 2 * Float.BYTES).order(ByteOrder.nativeOrder()).asFloatBuffer();
-        FloatBuffer aoBuffer = ByteBuffer.allocateDirect(numVertices * 1 * Float.BYTES).order(ByteOrder.nativeOrder()).asFloatBuffer();
+        FloatBuffer aoBuffer = ByteBuffer.allocateDirect(numVertices * Float.BYTES).order(ByteOrder.nativeOrder()).asFloatBuffer();
 
         for (int i = 0; i < chunkMesh.vertices.size(); i++) {
             float[] v = chunkMesh.vertices.get(i);
@@ -213,6 +233,8 @@ public class ChunkRenderer implements LayeredRenderer {
 
         glBindVertexArray(0);
         ShaderManager.chunk.stop();
+
+        cactusBlocks.forEach(Blocks.cactusBlock::render);
     }
 
     @Override
@@ -341,9 +363,9 @@ public class ChunkRenderer implements LayeredRenderer {
             Block b2 = world.getChunkBlock(chunk.chunkX, chunk.chunkZ, x + side2[0], y + side2[1], z + side2[2]);
             Block b3 = world.getChunkBlock(chunk.chunkX, chunk.chunkZ, x + corner[0], y + corner[1], z + corner[2]);
 
-            int hasSide1 = (b1 != null && !b1.isTransparent()) ? 1 : 0;
-            int hasSide2 = (b2 != null && !b2.isTransparent()) ? 1 : 0;
-            int hasCorner = (b3 != null && !b3.isTransparent()) ? 1 : 0;
+            int hasSide1 = (b1 != null && !b1.isTransparent() && b1.getModel().equals(BlockModel.BLOCK)) ? 1 : 0;
+            int hasSide2 = (b2 != null && !b2.isTransparent() && b2.getModel().equals(BlockModel.BLOCK)) ? 1 : 0;
+            int hasCorner = (b3 != null && !b3.isTransparent() && b3.getModel().equals(BlockModel.BLOCK)) ? 1 : 0;
 
             int ao = (hasSide1 == 1 && hasSide2 == 1) ? 0 : 3 - (hasSide1 + hasSide2 + hasCorner);
             aoLevels[i] = ao;
@@ -371,12 +393,13 @@ public class ChunkRenderer implements LayeredRenderer {
         }
 
         // Hide face if both blocks are transparent (internal face)
-        if (block.isTransparent() && neighbor.isTransparent()) {
+        // Exclude solid blocks from this as it causes leaves/glass to die
+        if (block.isTransparent() && neighbor.isTransparent() && !block.isSolid() && !neighbor.isSolid()) {
             return 0;
         }
 
         // Hide face if neighbor is opaque
-        if (!neighbor.isTransparent()) {
+        if (!neighbor.isTransparent() && neighbor.getModel().equals(BlockModel.BLOCK)) {
             return 0;
         }
 

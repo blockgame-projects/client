@@ -4,9 +4,11 @@ import com.james090500.BlockGame;
 import com.james090500.blocks.Block;
 import com.james090500.blocks.Blocks;
 import com.james090500.blocks.GrassBlock;
-import com.james090500.blocks.WaterBlock;
 import com.james090500.renderer.world.ChunkRenderer;
-import com.james090500.structure.Tree;
+import com.james090500.structure.Cactus;
+import com.james090500.structure.OakTree;
+import com.james090500.structure.SpruceTree;
+import com.james090500.structure.Structure;
 import com.james090500.utils.NoiseManager;
 import com.james090500.utils.OpenSimplexNoise;
 import com.james090500.utils.ThreadUtil;
@@ -132,7 +134,7 @@ public class Chunk {
             } else if (this.chunkStatus == ChunkStatus.TERRAIN) {
                 if (isNeighbors(ChunkStatus.EMPTY)) {
                     this.chunkStatus = ChunkStatus.DECORATIONS;
-                    this.generateTrees();
+                    this.generateDecorations();
                 }
             } else if (this.chunkStatus == ChunkStatus.DECORATIONS) {
                 // We have finished generation time to mesh
@@ -230,7 +232,7 @@ public class Chunk {
     /**
      * Generate trees
      */
-    private void generateTrees() {
+    private void generateDecorations() {
         int treeSeed = BlockGame.getInstance().getWorld().getWorldSeed() + 2390; // Don't follow terrain otherwise it looks odd
 
         for (int x = 0; x < this.chunkSize; x++) {
@@ -239,24 +241,31 @@ public class Chunk {
                 int nz = z + this.chunkZ * this.chunkSize;
 
                 Biomes biome = BiomeGenerator.getBiome(nx, nz);
-                double treeCap;
+                double noise = OpenSimplexNoise.noise2(treeSeed, nx, nz);
+
+                double decorCap;
+                Structure structure;
 
                 if (biome.equals(Biomes.FOREST)) {
-                    treeCap = 0.75;
+                    decorCap = 0.75;
+                    structure = new OakTree(noise, this);
                 } else if(biome.equals(Biomes.PLAINS)) {
-                    treeCap = 0.90;
+                    decorCap = 0.90;
+                    structure = new OakTree(noise, this);
+                } else if(biome.equals(Biomes.DESERT)) {
+                    decorCap = 0.90;
+                    structure = new Cactus(noise, this);
+                } else if(biome.equals(Biomes.TAIGA)) {
+                    decorCap = 0.90;
+                    structure = new SpruceTree(noise, this);
                 } else {
                     return;
                 }
 
-                double noise = OpenSimplexNoise.noise2(treeSeed, nx, nz);
-                if (noise > treeCap) {
+
+                if (noise > decorCap) {
                     for (int y = this.chunkHeight - 1; y >= 0; y--) {
-                        Block block = this.getBlock(x, y, z);
-                        if (block instanceof GrassBlock) {
-                            Tree tree = new Tree(noise, this);
-                            tree.build(x, y, z);
-                        }
+                        structure.build(x, y, z);
                     }
                 }
             }

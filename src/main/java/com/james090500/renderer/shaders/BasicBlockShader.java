@@ -32,7 +32,9 @@ public class BasicBlockShader extends Shader {
                 uniform sampler2D tex;
                 
                 void main() {
-                    FragColor = texture(tex, vTexCord);
+                    vec4 color = texture(tex, vTexCord);
+                    if (color.a < 0.5) discard;
+                    FragColor = color;
                 }
                 """;
 
