@@ -3,6 +3,8 @@ package com.james090500.renderer;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.lwjgl.system.MemoryUtil;
 
+import java.util.Arrays;
+
 import static org.lwjgl.opengl.GL11.GL_FLOAT;
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL15.GL_STATIC_DRAW;
@@ -17,26 +19,27 @@ public class ModelBuilder {
 
     protected record Cube(float x, float y, float z, float width, float height, float depth) {
         public float[] getVertices() {
-            float x0 = x;
-            float y0 = y;
-            float z0 = z;
-            float x1 = x + width;
-            float y1 = y + height;
-            float z1 = z + depth;
+            float blockWidthX = x + width;
+            float blockWidthZ = z + width;
+            float blockHeight = y + height;
+            
+            float blockDepthZ = z + depth;
+            float blockDepthNeg = width - depth;
+            float blockDepthX = x + depth;
 
             return new float[]{
                     // Front face
-                    x0, y0, z1,   x1, y0, z1,   x1, y1, z1,   x0, y1, z1,
+                    x, y, blockDepthZ,  blockWidthX, y, blockDepthZ,   blockWidthX, blockHeight, blockDepthZ,   x, blockHeight, blockDepthZ,
                     // Back face
-                    x1, y0, z0,   x0, y0, z0,   x0, y1, z0,   x1, y1, z0,
+                    blockWidthX, y, blockDepthNeg,   x, y, blockDepthNeg,   x, blockHeight, blockDepthNeg,   blockWidthX, blockHeight, blockDepthNeg,
                     // Left face
-                    x0, y0, z0,   x0, y0, z1,   x0, y1, z1,   x0, y1, z0,
+                    blockDepthNeg, y, z,   blockDepthNeg, y, blockWidthZ,   blockDepthNeg, blockHeight, blockWidthZ,   blockDepthNeg, blockHeight, z,
                     // Right face
-                    x1, y0, z1,   x1, y0, z0,   x1, y1, z0,   x1, y1, z1,
+                    blockDepthX, y, blockWidthZ,   blockDepthX, y, z,   blockDepthX, blockHeight, z,   blockDepthX, blockHeight, blockWidthZ,
                     // Top face
-                    x0, y1, z1,   x1, y1, z1,   x1, y1, z0,   x0, y1, z0,
+                    x, blockHeight, blockWidthZ,   blockWidthX, blockHeight, blockWidthZ,   blockWidthX, blockHeight, z,   x, blockHeight, z,
                     // Bottom face
-                    x0, y0, z0,   x1, y0, z0,   x1, y0, z1,   x0, y0, z1
+                    x, y, z,   blockWidthX, y, z,   blockWidthX, y, blockWidthZ,   x, y, blockWidthZ
             };
         }
 
@@ -51,30 +54,85 @@ public class ModelBuilder {
             };
         }
     }
-    protected record UV(float x, float z, float texture) {};
 
     private final ObjectArrayList<Cube> cubes = new ObjectArrayList<>();
-    private final ObjectArrayList<UV> uvs = new ObjectArrayList<>();
+    private float[] texCoords;
 
+    /**
+     * Create a new instance
+     * @return
+     */
     public static ModelBuilder create() {
         return new ModelBuilder();
     }
 
+    /**
+     * Add a cube to the builder
+     * @param x Start X position
+     * @param y Start Y position
+     * @param z Start z position
+     * @param width Width of the cube
+     * @param height Height of the cube
+     * @param depth Depth of the cube
+     * @return ModelBuilder instance
+     */
     public ModelBuilder addCube(float x, float y, float z, float width, float height, float depth) {
         cubes.add(new Cube(x, y, z, width, height, depth));
         return this;
     }
 
-    public ModelBuilder setTexture(float x, float z, float texture) {
-        uvs.add(new UV(x, z, texture));
+    /**
+     * Adds the UV texture to the cube
+     * @param texture The texture to add to all sides
+     * @return ModelBuilder instance
+     */
+    public ModelBuilder setTexture(float[] texture) {
+        float[][] uvBases = new float[][] { texture, texture, texture, texture, texture, texture };
+        return setTexture(uvBases);
+    }
+
+    /**
+     * Adds the UV texture to the cube
+     * @param uvBases The float array of texture order
+     * @return ModelBuilder instance
+     */
+    public ModelBuilder setTexture(float[][] uvBases) {
+        float tileSize = 1.0f / 16.0f;
+        texCoords = new float[24 * 2];
+        for (int face = 0; face < 6; face++) {
+            float u0 = uvBases[face][0];
+            float v0 = uvBases[face][1];
+            int dest = face * 8; // 4 verts * 2 coords
+
+            // bottom-left  (0,0)
+            texCoords[dest + 0] = u0 + 0f * tileSize;
+            texCoords[dest + 1] = v0 + 0f * tileSize;
+
+            // bottom-right (1,0)
+            texCoords[dest + 2] = u0 + tileSize;
+            texCoords[dest + 3] = v0 + 0f * tileSize;
+
+            // top-right    (1,1)
+            texCoords[dest + 4] = u0 + tileSize;
+            texCoords[dest + 5] = v0 + tileSize;
+
+            // top-left     (0,1)
+            texCoords[dest + 6] = u0 + 0f * tileSize;
+            texCoords[dest + 7] = v0 + tileSize;
+        }
         return this;
     }
-    
-    public Model build(float[] texCoords) {
+
+    /**
+     * Build the cubes into a vertices array
+     * @return The result
+     */
+    public Model build() {
         // 1. Precompute total length
         int totalVertices = 0;
         int totalIndices = 0;
         for (Cube cube : cubes) {
+            System.out.println(Arrays.toString(cube.getVertices()));
             totalVertices += cube.getVertices().length;
             totalIndices += cube.getIndices().length;
         }
@@ -97,7 +155,6 @@ public class ModelBuilder {
             indiPos += indis.length;
         }
 
-        
         int vao = glGenVertexArrays();
         glBindVertexArray(vao);
 

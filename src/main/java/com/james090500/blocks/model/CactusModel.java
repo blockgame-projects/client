@@ -27,35 +27,9 @@ public class CactusModel implements IBlockModel {
         float[] sideUV   = Blocks.cactusBlock.getTexture();
         float[] topUV    = Blocks.cactusBlock.getTexture("top");
         float[] bottomUV = Blocks.cactusBlock.getTexture("bottom");
-        float tileSize = 1.0f / 16.0f;
-
-        // Build texcoords: each face samples the full tile (0..tileSize) so spike pixels in the margin will be visible.
-        float[] texCoords = new float[24 * 2];
         float[][] uvBases = new float[][] { sideUV, sideUV, sideUV, sideUV, topUV, bottomUV };
 
-        for (int face = 0; face < 6; face++) {
-            float u0 = uvBases[face][0];
-            float v0 = uvBases[face][1];
-            int dest = face * 8; // 4 verts * 2 coords
-
-            // bottom-left  (0,0)
-            texCoords[dest + 0] = u0 + 0f * tileSize;
-            texCoords[dest + 1] = v0 + 0f * tileSize;
-
-            // bottom-right (1,0)
-            texCoords[dest + 2] = u0 + tileSize;
-            texCoords[dest + 3] = v0 + 0f * tileSize;
-
-            // top-right    (1,1)
-            texCoords[dest + 4] = u0 + tileSize;
-            texCoords[dest + 5] = v0 + tileSize;
-
-            // top-left     (0,1)
-            texCoords[dest + 6] = u0 + 0f * tileSize;
-            texCoords[dest + 7] = v0 + tileSize;
-        }
-
-        cactusModel = ModelBuilder.create().addCube(0.0625f, 0f, 0.0625f, 0.875f, 1, 0.875f).build(texCoords);
+        cactusModel = ModelBuilder.create().addCube(0f, 0f, 0f, 1f, 1f, 0.9375f).setTexture(uvBases).build();
     }
 
     /**
