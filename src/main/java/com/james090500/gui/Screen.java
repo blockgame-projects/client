@@ -8,8 +8,6 @@ import com.james090500.utils.TextureManager;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
-import org.lwjgl.glfw.GLFW;
-import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NVGPaint;
 
@@ -17,7 +15,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT;
-import static org.lwjgl.glfw.GLFW.glfwSetCursorPos;
 import static org.lwjgl.nanovg.NanoVG.*;
 
 @Setter

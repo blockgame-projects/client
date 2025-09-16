@@ -1,15 +1,10 @@
 package com.james090500.renderer;
 
 import com.james090500.BlockGame;
-import com.james090500.client.LocalPlayer;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.joml.Vector3f;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
-import java.util.List;
 
 public class RenderManager {
     private static final ObjectArrayList<Renderer> renderQueue = new ObjectArrayList<>();

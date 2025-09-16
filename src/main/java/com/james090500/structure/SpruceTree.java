@@ -2,7 +2,6 @@ package com.james090500.structure;
 
 import com.james090500.blocks.Block;
 import com.james090500.blocks.Blocks;
-import com.james090500.blocks.GrassBlock;
 import com.james090500.blocks.SnowyGrassBlock;
 import com.james090500.world.Chunk;
 

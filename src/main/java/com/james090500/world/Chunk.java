@@ -3,7 +3,6 @@ package com.james090500.world;
 import com.james090500.BlockGame;
 import com.james090500.blocks.Block;
 import com.james090500.blocks.Blocks;
-import com.james090500.blocks.GrassBlock;
 import com.james090500.renderer.world.ChunkRenderer;
 import com.james090500.structure.Cactus;
 import com.james090500.structure.OakTree;
@@ -13,6 +12,7 @@ import com.james090500.utils.NoiseManager;
 import com.james090500.utils.OpenSimplexNoise;
 import com.james090500.utils.ThreadUtil;
 import lombok.Getter;
+import org.joml.Vector3i;
 
 public class Chunk {
 

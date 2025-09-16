@@ -1,8 +1,16 @@
 package com.james090500.blocks;
 
+import java.util.Arrays;
+
 public class Blocks {
 
     public static Block[] ids;
+
+    public enum Models {
+        BLOCK,
+        WATER,
+        CACTUS
+    }
 
     public static final GrassBlock grassBlock = new GrassBlock((byte) 1);
     public static final DirtBlock dirtBlock = new DirtBlock((byte) 2);
@@ -41,6 +49,13 @@ public class Blocks {
                 snowyGrassBlock,
                 cactusBlock,
         };
+
+        // Build models
+        for(Block block : Blocks.ids) {
+            if(block instanceof IBlockRender) {
+                block.getModel().create();
+            }
+        }
     }
 
 }

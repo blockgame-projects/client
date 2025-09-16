@@ -1,6 +1,9 @@
 package com.james090500.blocks;
 
+import com.james090500.blocks.model.IBlockModel;
 import lombok.Getter;
+import lombok.Setter;
+import org.joml.Vector3i;
 
 public class Block {
 
@@ -16,7 +19,7 @@ public class Block {
     @Getter
     String name = "UNKNOWN";
     @Getter
-    BlockModel model = BlockModel.BLOCK;
+    IBlockModel model = null;
 
     public Block(byte id) {
         this.id = id;
