@@ -132,7 +132,6 @@ public class ModelBuilder {
         int totalVertices = 0;
         int totalIndices = 0;
         for (Cube cube : cubes) {
-            System.out.println(Arrays.toString(cube.getVertices()));
             totalVertices += cube.getVertices().length;
             totalIndices += cube.getIndices().length;
         }

@@ -15,6 +15,7 @@ public class ChunkShader extends Shader {
                 uniform mat4 view;
                 uniform mat4 projection;
                
+                out vec3 mvPos;
                 out vec2 vUv;
                 out vec2 vTexOffset;
                 out float vAo;
@@ -24,7 +25,9 @@ public class ChunkShader extends Shader {
                     vTexOffset = texOffset;
                     vAo = ao;
         
-                    gl_Position = projection * view * model * vec4(position, 1.0);
+                    vec4 modelViewMatrix = view * model * vec4(position, 1.0);
+                    gl_Position = projection * modelViewMatrix;
+                    mvPos = modelViewMatrix.xyz;
                 }
                """;
 
@@ -34,11 +37,16 @@ public class ChunkShader extends Shader {
                 
                 uniform sampler2D baseTexture;
 
+                in vec3 mvPos;
                 in vec2 vUv;
                 in vec2 vTexOffset;
                 in float vAo;
                 
                 out vec4 FragColor;
+                
+                """
+                + GlobalShader.FOG_METHOD +
+                """
 
                 void main() {
                     vec2 tileSize = vec2(0.0625);
@@ -49,7 +57,8 @@ public class ChunkShader extends Shader {
                 
                     float finalAO = mix(0.15, 1.0, vAo / 3.0);
 
-                    FragColor = vec4(texel.rgb * finalAO * faceLight, texel.a);
+                    vec4 finalColor = vec4(texel.rgb * finalAO * faceLight, texel.a);
+                    FragColor = calcFog(mvPos, finalColor);
                 }
                 """;
 

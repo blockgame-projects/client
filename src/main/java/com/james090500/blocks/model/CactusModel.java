@@ -22,10 +22,9 @@ public class CactusModel implements IBlockModel {
     ModelBuilder.Model cactusModel;
 
     public void create() {
-
         // inputs
-        float[] sideUV   = Blocks.cactusBlock.getTexture();
-        float[] topUV    = Blocks.cactusBlock.getTexture("top");
+        float[] sideUV = Blocks.cactusBlock.getTexture();
+        float[] topUV = Blocks.cactusBlock.getTexture("top");
         float[] bottomUV = Blocks.cactusBlock.getTexture("bottom");
         float[][] uvBases = new float[][] { sideUV, sideUV, sideUV, sideUV, topUV, bottomUV };
 
