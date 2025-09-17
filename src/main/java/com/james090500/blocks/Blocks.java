@@ -4,12 +4,6 @@ public class Blocks {
 
     public static Block[] ids;
 
-    public enum Models {
-        BLOCK,
-        WATER,
-        CACTUS
-    }
-
     public static final GrassBlock grassBlock = new GrassBlock((byte) 1);
     public static final DirtBlock dirtBlock = new DirtBlock((byte) 2);
     public static final StoneBlock stoneBlock = new StoneBlock((byte) 3);
@@ -26,6 +20,7 @@ public class Blocks {
     public static final GlassBlock glassBlock = new GlassBlock((byte) 14);
     public static final SnowyGrassBlock snowyGrassBlock = new SnowyGrassBlock((byte) 15);
     public static final CactusBlock cactusBlock = new CactusBlock((byte) 16);
+    public static final ShortGrassBlock shortGrassBlock = new ShortGrassBlock((byte) 17);
 
     static {
         ids = new Block[] {
@@ -46,6 +41,7 @@ public class Blocks {
                 glassBlock,
                 snowyGrassBlock,
                 cactusBlock,
+                shortGrassBlock,
         };
 
         // Build models

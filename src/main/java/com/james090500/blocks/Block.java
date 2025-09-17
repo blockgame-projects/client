@@ -13,6 +13,8 @@ public class Block {
     @Getter
     boolean solid = true;
     @Getter
+    boolean liquid = false;
+    @Getter
     String sound = null;
     @Getter
     String name = "UNKNOWN";

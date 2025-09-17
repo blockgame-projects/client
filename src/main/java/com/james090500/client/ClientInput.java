@@ -91,6 +91,16 @@ public class ClientInput {
                 screen.type(-1);
             }
         }
+
+        if(!BlockGame.getInstance().getConfig().isPaused()) {
+            if(keys.getOrDefault(GLFW_KEY_EQUAL, false)) {
+                BlockGame.getInstance().getLocalPlayer().scrollHotbar(true);
+            }
+
+            if(keys.getOrDefault(GLFW_KEY_MINUS, false)) {
+                BlockGame.getInstance().getLocalPlayer().scrollHotbar(false);
+            }
+        }
     }
 
     public void keyTyped(long window, int codepoint) {

@@ -7,5 +7,6 @@ public class WaterBlock extends Block {
         this.texture = 5;
         this.transparent = true;
         this.solid = false;
+        this.liquid = true;
     }
 }

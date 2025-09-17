@@ -187,7 +187,7 @@ public class LocalPlayer {
         }
 
         // No Clip Logic, else Swimming Logic, else Jumping Logic
-        boolean newSwimming = currentBlock != null && !currentBlock.isSolid();
+        boolean newSwimming = currentBlock != null && currentBlock.isLiquid();
         if(this.swimming && !newSwimming) {
             this.fallVelocity.y = 10;
         }
@@ -281,7 +281,7 @@ public class LocalPlayer {
         Vector3i[] raycast = Raycast.block(origin, dir, 5f);
         if(raycast != null && raycast.length == 2) {
             Block hitBlock = BlockGame.getInstance().getWorld().getBlock(raycast[1].x, raycast[1].y, raycast[1].z);
-            if (hitBlock != null && hitBlock.isSolid()) {
+            if (hitBlock != null && !hitBlock.isLiquid()) {
                 blockOverlay.setPosition(new Vector3f(raycast[1]));
                 blockOverlay.render();
             }
@@ -300,7 +300,7 @@ public class LocalPlayer {
                 mouse.put(GLFW_MOUSE_BUTTON_RIGHT, false);
             }
 
-            if(hitBlock != null && hitBlock.isSolid()) {
+            if(hitBlock != null && hitBlock.isLiquid()) {
                 if(mouse.getOrDefault(GLFW_MOUSE_BUTTON_MIDDLE, false)) {
                     this.changeHand(hitBlock.getId());
                     mouse.put(GLFW_MOUSE_BUTTON_MIDDLE, false);

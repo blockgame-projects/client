@@ -391,7 +391,7 @@ public class ChunkRenderer implements LayeredRenderer {
 
         // Hide face if both blocks are transparent (internal face)
         // Exclude solid blocks from this as it causes leaves/glass to die
-        if (block.isTransparent() && neighbor.isTransparent() && !block.isSolid() && !neighbor.isSolid()) {
+        if (block.isTransparent() && neighbor.isTransparent()) {
             return 0;
         }
 

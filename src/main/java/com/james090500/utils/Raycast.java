@@ -41,7 +41,7 @@ public class Raycast {
         while (distance <= maxDistance) {
             // Check the block
             Block block = BlockGame.getInstance().getWorld().getBlock(current.x, current.y, current.z);
-            if (block != null && block.isSolid()) {
+            if (block != null && !block.isLiquid()) {
                 return new Vector3i[] { previousBlock, current };
             }
 
