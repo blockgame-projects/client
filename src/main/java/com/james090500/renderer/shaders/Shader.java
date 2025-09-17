@@ -1,6 +1,7 @@
 package com.james090500.renderer.shaders;
 
 import com.james090500.BlockGame;
+import com.james090500.world.Fog;
 import com.james090500.world.World;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -97,11 +98,11 @@ public class Shader {
     }
 
     public void useFog() {
-        World.Fog fog = BlockGame.getInstance().getWorld().getFog();
+        Fog fog = BlockGame.getInstance().getWorld().getFog();
 
-        setVec3("fog.color", fog.color());
-        setFloat("fog.start", fog.start());
-        setFloat("fog.density", fog.density());
+        setVec3("fog.color", fog.getColor());
+        setFloat("fog.start", fog.getStart());
+        setFloat("fog.density", fog.getDensity());
     }
 
     public void stop() {

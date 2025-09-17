@@ -31,7 +31,7 @@ public class World {
 
     private final Object2ObjectMap<ChunkPos, Chunk> chunks = new Object2ObjectOpenHashMap<>();
 
-    public record ChunkPos(int x, int y) { }
+    public record ChunkPos(int x, int y) {}
     public record ChunkOffset(int dx, int dz, int distSq) {}
 
     public final Int2ObjectOpenHashMap<Entity> entities = new Int2ObjectOpenHashMap<>();
@@ -45,8 +45,7 @@ public class World {
     private String worldName;
 
     @Getter
-    private Fog fog = new Fog(new Vector3f(0.529f, 0.808f, 0.922f), 10f, 0.05f);
-    public record Fog(Vector3f color, float start, float density) {};
+    private Fog fog;
 
     @Getter @Setter
     private boolean remote = false;
@@ -285,6 +284,11 @@ public class World {
         // No point looping if we aren't moving
         if(playerChunkX == player.getLastChunkX() && playerChunkZ == player.getLastChunkZ() && !this.forceUpdate) return;
 
+        // Update dynamic values
+        if(this.forceUpdate) {
+            this.fog = this.createFog();
+        }
+
         // Render chunks from players pos.
         Set<ChunkPos> requiredChunks = new HashSet<>();
         for (ChunkOffset offset : offsets) {
@@ -400,6 +404,14 @@ public class World {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * Creates fog
+     * @return The fog
+     */
+    private Fog createFog() {
+        return new Fog(new Vector3f(0.529f, 0.808f, 0.922f), 0.8f, 0.005f);
     }
 
     /**

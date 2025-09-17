@@ -14,8 +14,8 @@ public class GlobalShader {
         
             // calculate fog: pos is view-space or world-space RELATIVE to camera
             vec4 calcFog(vec3 pos, vec4 color) {
-                // cylindrical distance (ignore Y)
-                float horizontalDist = length(vec2(pos.x, pos.z));
+                // cylindrical distance
+                float horizontalDist = length(pos);
         
                 // subtract start distance so fog only applies after fog.start
                 float d = max(0.0, horizontalDist - fog.start);
