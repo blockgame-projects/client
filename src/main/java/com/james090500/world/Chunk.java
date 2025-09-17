@@ -12,7 +12,6 @@ import com.james090500.utils.NoiseManager;
 import com.james090500.utils.OpenSimplexNoise;
 import com.james090500.utils.ThreadUtil;
 import lombok.Getter;
-import org.joml.Vector3i;
 
 public class Chunk {
 

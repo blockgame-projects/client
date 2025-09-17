@@ -13,7 +13,6 @@ import com.james090500.world.Chunk;
 import com.james090500.world.ChunkStatus;
 import com.james090500.world.World;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
@@ -221,6 +220,7 @@ public class ChunkRenderer implements LayeredRenderer {
 
         ShaderManager.chunk.use();
         ShaderManager.chunk.setMat4("model", model);
+        ShaderManager.chunk.useFog();
 
         glBindTexture(GL_TEXTURE_2D, TextureManager.terrainTexture);
 
@@ -239,6 +239,7 @@ public class ChunkRenderer implements LayeredRenderer {
 
         ShaderManager.chunk.use();
         ShaderManager.chunk.setMat4("model", model);
+        ShaderManager.chunk.useFog();
 
         glBindTexture(GL_TEXTURE_2D, TextureManager.terrainTexture);
 

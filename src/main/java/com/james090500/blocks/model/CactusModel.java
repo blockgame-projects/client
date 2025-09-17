@@ -6,16 +6,10 @@ import com.james090500.renderer.ShaderManager;
 import com.james090500.utils.TextureManager;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
-import org.joml.Vector3fc;
 import org.joml.Vector3i;
-import org.lwjgl.system.MemoryUtil;
 
-import static org.lwjgl.opengl.GL11.GL_FLOAT;
 import static org.lwjgl.opengl.GL15.*;
-import static org.lwjgl.opengl.GL20.glEnableVertexAttribArray;
-import static org.lwjgl.opengl.GL20.glVertexAttribPointer;
 import static org.lwjgl.opengl.GL30.glBindVertexArray;
-import static org.lwjgl.opengl.GL30.glGenVertexArrays;
 
 public class CactusModel implements IBlockModel {
 
@@ -40,6 +34,7 @@ public class CactusModel implements IBlockModel {
 
         ShaderManager.basicBlockShader.use();
         ShaderManager.basicBlockShader.setMat4("model", model);
+        ShaderManager.basicBlockShader.useFog();
 
         glBindVertexArray(cactusModel.vao());
         glDrawElements(GL_TRIANGLES, cactusModel.indicies(), GL_UNSIGNED_INT, 0);

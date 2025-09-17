@@ -13,11 +13,15 @@ public class BasicBlockShader extends Shader {
                 uniform mat4 view;
                 uniform mat4 projection;
                 
+                out vec3 mvPos;
                 out vec2 vTexCord;
                 
                 void main() {
-                    gl_Position = projection * view * model * vec4(position, 1.0);
                     vTexCord = texCord;
+                
+                    vec4 modelViewMatrix = view * model * vec4(position, 1.0);
+                    gl_Position = projection * modelViewMatrix;
+                    mvPos = modelViewMatrix.xyz;
                 }
                 """;
 
@@ -25,16 +29,20 @@ public class BasicBlockShader extends Shader {
                 """
                 #version 330 core
                 
-                out vec4 FragColor;
-                
+                in vec3 mvPos;
                 in vec2 vTexCord;
                 
+                out vec4 FragColor;
+                
                 uniform sampler2D tex;
+                
+                """ + GlobalShader.FOG_METHOD + """
                 
                 void main() {
                     vec4 color = texture(tex, vTexCord);
                     if (color.a < 0.5) discard;
-                    FragColor = color;
+                
+                    FragColor = calcFog(mvPos, color);
                 }
                 """;
 

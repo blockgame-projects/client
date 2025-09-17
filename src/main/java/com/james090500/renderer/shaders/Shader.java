@@ -1,8 +1,8 @@
 package com.james090500.renderer.shaders;
 
 import com.james090500.BlockGame;
+import com.james090500.world.World;
 import org.joml.Matrix4f;
-import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.lwjgl.system.MemoryStack;
 
@@ -65,17 +65,17 @@ public class Shader {
         return location;
     }
 
-    public void setVec2(String name, Vector2f vec) {
+    public void setFloat(String name, float value) {
         int location = getUniformLocation(name);
         if (location != -1) {
-            glUniform2f(location, vec.x, vec.y);
+            glUniform1f(location, value);
         }
     }
 
-    public void setVec3(String name, Vector3f vec) {
+    public void setVec3(String name, Vector3f vector3f) {
         int location = getUniformLocation(name);
         if (location != -1) {
-            glUniform3f(location, vec.x, vec.y, vec.z);
+            glUniform3f(location, vector3f.x, vector3f.y, vector3f.z);
         }
     }
 
@@ -94,6 +94,14 @@ public class Shader {
         glUseProgram(programId);
         setMat4("view", BlockGame.getInstance().getCamera().getViewMatrix());
         setMat4("projection", BlockGame.getInstance().getCamera().getProjectionMatrix());
+    }
+
+    public void useFog() {
+        World.Fog fog = BlockGame.getInstance().getWorld().getFog();
+
+        setVec3("fog.color", fog.color());
+        setFloat("fog.start", fog.start());
+        setFloat("fog.density", fog.density());
     }
 
     public void stop() {

@@ -44,6 +44,10 @@ public class World {
     @Getter
     private String worldName;
 
+    @Getter
+    private Fog fog = new Fog(new Vector3f(0.529f, 0.808f, 0.922f), 10f, 0.05f);
+    public record Fog(Vector3f color, float start, float density) {};
+
     @Getter @Setter
     private boolean remote = false;
 

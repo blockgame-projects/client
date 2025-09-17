@@ -44,9 +44,7 @@ public class ChunkShader extends Shader {
                 
                 out vec4 FragColor;
                 
-                """
-                + GlobalShader.FOG_METHOD +
-                """
+                """ + GlobalShader.FOG_METHOD + """
 
                 void main() {
                     vec2 tileSize = vec2(0.0625);

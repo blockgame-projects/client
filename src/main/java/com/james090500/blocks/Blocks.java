@@ -1,7 +1,5 @@
 package com.james090500.blocks;
 
-import java.util.Arrays;
-
 public class Blocks {
 
     public static Block[] ids;
