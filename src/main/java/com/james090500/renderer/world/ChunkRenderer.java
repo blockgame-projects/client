@@ -233,14 +233,24 @@ public class ChunkRenderer implements LayeredRenderer {
         glBindVertexArray(0);
         ShaderManager.chunk.stop();
 
-        boolean cullFace = glIsEnabled(GL_CULL_FACE);
-        glDisable(GL_CULL_FACE);
-        for (Object2ObjectMap.Entry<IBlockRender, ObjectList<Vector3i>> e : customBlockModels.object2ObjectEntrySet()) {
-            IBlockRender blockModel = e.getKey();
-            ObjectList<Vector3i> instances = e.getValue();
-            blockModel.render(instances);
+        Vector3f playerPos = BlockGame.getInstance().getLocalPlayer().getPosition();
+        float maxDist = 128f;
+        float maxDistSq = maxDist * maxDist;
+
+        // Filter instances by distance
+        float dx = (chunk.chunkX * chunk.chunkSize) - playerPos.x;
+        float dz = (chunk.chunkZ * chunk.chunkSize) - playerPos.z;
+        float distSq = dx*dx + dz*dz;
+        if (distSq <= maxDistSq) {
+            boolean cullFace = glIsEnabled(GL_CULL_FACE);
+            glDisable(GL_CULL_FACE);
+            for (Object2ObjectMap.Entry<IBlockRender, ObjectList<Vector3i>> e : customBlockModels.object2ObjectEntrySet()) {
+                IBlockRender blockModel = e.getKey();
+                ObjectList<Vector3i> instances = e.getValue();
+                blockModel.render(instances);
+            }
+            if(cullFace) glEnable(GL_CULL_FACE);
         }
-        if(cullFace) glEnable(GL_CULL_FACE);
     }
 
     @Override

@@ -115,35 +115,19 @@ public class InstancedBlockRenderer {
      * @param positions
      */
     public void render(ObjectList<Vector3i> positions) {
-        Vector3f playerPos = BlockGame.getInstance().getLocalPlayer().getPosition();
-        float maxDist = 128f;
-        float maxDistSq = maxDist * maxDist;
-
-        // Filter instances by distance
-        ObjectList<Vector3i> visible = new ObjectArrayList<>();
-        for (Vector3i pos : positions) {
-            float dx = pos.x - playerPos.x;
-            float dy = pos.y - playerPos.y;
-            float dz = pos.z - playerPos.z;
-            float distSq = dx*dx + dy*dy + dz*dz;
-            if (distSq <= maxDistSq) {
-                visible.add(pos);
-            }
-        }
-
         // Build instance data: [x,y,z,rot] per instance
-        int n = visible.size();
+        int n = positions.size();
         if (n == 0) return;
 
         FloatBuffer inst = MemoryUtil.memAllocFloat(n * 3);
-        for (Vector3i p : visible) {
+        for (Vector3i p : positions) {
             inst.put(p.x).put(p.y).put(p.z);
         }
         inst.flip();
 
         glBindBuffer(GL_ARRAY_BUFFER, instanceVbo);
         int strideBytes = 3 * Float.BYTES; // e.g., x,y,z
-        int needed = visible.size() * strideBytes;
+        int needed = positions.size() * strideBytes;
         if (needed > currentCapacity) {
             glBindBuffer(GL_ARRAY_BUFFER, instanceVbo);
             glBufferData(GL_ARRAY_BUFFER, needed, GL_DYNAMIC_DRAW); // reallocate
