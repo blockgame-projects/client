@@ -1,33 +1,41 @@
 package com.james090500.utils;
 
 import com.james090500.BlockGame;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.stb.STBImage;
 
+import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
+import java.nio.file.Path;
 
 import static org.lwjgl.nanovg.NanoVG.*;
 
-public class TextureManager {
+public class TextureLocation {
 
-    public static int logo;
-    public static int pack;
-    public static int background;
-    public static int button;
-    public static int button_active;
-    public static int button_disabled;
-    public static int terrainTexture;
+    private static final Object2IntOpenHashMap<String> textures = new Object2IntOpenHashMap<>();
 
-    static {
-        logo = loadVGTexture("assets/gui/logo.png");
-        pack = loadVGTexture("assets/gui/pack.png");
-        background = loadVGTexture("assets/gui/background.png");
-        button = loadVGTexture("assets/gui/button.png");
-        button_active = loadVGTexture("assets/gui/button_active.png");
-        button_disabled = loadVGTexture("assets/gui/button_disabled.png");
-        terrainTexture = loadGLTexture("assets/terrain.png");
+    /**
+     * Get the texture by name
+     * @param name
+     * @return
+     */
+    public static int get(String name) {
+        String texturePath = name.toLowerCase();
+        if (textures.containsKey(texturePath)) {
+            return textures.getInt(texturePath);
+        } else {
+            int texture;
+            if(texturePath.contains("gui")) {
+                texture = loadVGTexture(texturePath);
+            } else {
+                texture = loadGLTexture(texturePath);
+            }
+            textures.put(texturePath, texture);
+            return texture;
+        }
     }
 
     /**
@@ -35,8 +43,9 @@ public class TextureManager {
      * @param resourceName The name of the file
      * @return
      */
-    public static int loadGLTexture(String resourceName) {
-        return loadTextureFromFile(resourceName);
+    private static int loadGLTexture(String resourceName) {
+        Path filePath = resourceToFilePath(resourceName);
+        return loadTextureFromFile(filePath.toString());
     }
 
     /**
@@ -45,7 +54,24 @@ public class TextureManager {
      * @return
      */
     private static int loadVGTexture(String resourceName) {
-        return nvgCreateImage(BlockGame.getInstance().getClientWindow().getVg(), resourceName, NVG_IMAGE_REPEATX | NVG_IMAGE_REPEATY);
+        Path filePath = resourceToFilePath(resourceName);
+        return nvgCreateImage(BlockGame.getInstance().getClientWindow().getVg(), filePath.toString(), NVG_IMAGE_REPEATX | NVG_IMAGE_REPEATY);
+    }
+
+    /**
+     * Converts a resource string to a file name
+     * @param resource The resource
+     * @return
+     */
+    private static Path resourceToFilePath(String resource) {
+        File file = new File(resource + ".png");
+        if(file.exists()) {
+            BlockGame.getLogger().info("Texture - " + resource + " at " + file);
+            return file.toPath();
+        } else {
+            BlockGame.getLogger().severe("Texture - " + resource + " at " + file);
+            return new File("assets/error.png").toPath();
+        }
     }
 
     /**

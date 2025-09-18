@@ -5,7 +5,6 @@ import org.joml.Vector3i;
 
 public interface IBlockRender {
 
-
     void render(ObjectList<Vector3i> position);
 
 }

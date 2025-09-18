@@ -7,22 +7,19 @@ public class ChunkShader extends Shader {
                 """
                 #version 330 core
                 layout(location = 0) in vec3 position;
-                layout(location = 1) in vec2 uv;
-                layout(location = 2) in vec2 texOffset;
-                layout(location = 3) in float ao;
+                layout(location = 1) in vec2 texCord;
+                layout(location = 2) in float ao;
                
                 uniform mat4 model;
                 uniform mat4 view;
                 uniform mat4 projection;
                
                 out vec3 mvPos;
-                out vec2 vUv;
-                out vec2 vTexOffset;
+                out vec2 vTexCord;
                 out float vAo;
         
                 void main() {
-                    vUv = uv;
-                    vTexOffset = texOffset;
+                    vTexCord = texCord;
                     vAo = ao;
         
                     vec4 modelViewMatrix = view * model * vec4(position, 1.0);
@@ -38,8 +35,7 @@ public class ChunkShader extends Shader {
                 uniform sampler2D baseTexture;
 
                 in vec3 mvPos;
-                in vec2 vUv;
-                in vec2 vTexOffset;
+                in vec2 vTexCord;
                 in float vAo;
                 
                 out vec4 FragColor;
@@ -47,11 +43,9 @@ public class ChunkShader extends Shader {
                 """ + GlobalShader.FOG_METHOD + """
 
                 void main() {
-                    vec2 tileSize = vec2(0.0625);
                     float faceLight = 1.0;
 
-                    vec2 texCoord = fract(vUv) * tileSize + vTexOffset;
-                    vec4 texel = texture(baseTexture, texCoord);
+                    vec4 texel = texture(baseTexture, vTexCord);
                 
                     float finalAO = mix(0.15, 1.0, vAo / 3.0);
 

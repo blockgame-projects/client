@@ -1,6 +1,7 @@
 package com.james090500.blocks;
 
 import com.james090500.blocks.model.CactusModel;
+import com.james090500.utils.TextureLocation;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.joml.Vector3i;
 
@@ -10,18 +11,18 @@ public class CactusBlock extends Block implements IBlockRender {
         super(id);
         this.name = "Cactus";
         this.sound = "cloth";
-        this.texture = 19;
+        this.texture = TextureLocation.get("assets/blocks/cactus_side");
         this.model = new CactusModel();
     }
 
     @Override
-    public float[] getTexture(String face) {
+    public int getTexture(String face) {
         if (face.equalsIgnoreCase("top")) {
-            return this.textureOffset(18);
+            return TextureLocation.get("assets/blocks/cactus_side_top");
         } else if (face.equalsIgnoreCase("bottom")) {
-            return this.textureOffset(20);
+            return TextureLocation.get("assets/blocks/cactus_side_bottom");
         } else {
-            return this.textureOffset(this.texture);
+            return this.texture;
         }
     }
 

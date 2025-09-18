@@ -1,21 +1,23 @@
 package com.james090500.blocks;
 
+import com.james090500.utils.TextureLocation;
+
 public class SnowyGrassBlock extends Block {
     public SnowyGrassBlock(byte id) {
         super(id);
         this.name = "Snowy Grass";
         this.sound = "cloth";
-        this.texture = 17;
+        this.texture = TextureLocation.get("assets/blocks/snowy_grass_block_side");
     }
 
     @Override
-    public float[] getTexture(String face) {
+    public int getTexture(String face) {
         if (face.equalsIgnoreCase("top")) {
-            return this.textureOffset(16);
+            return TextureLocation.get("assets/blocks/snowy_grass_block_top");
         } else if (face.equalsIgnoreCase("bottom")) {
-            return this.textureOffset(2);
+            return TextureLocation.get("assets/blocks/dirt");
         } else {
-            return this.textureOffset(this.texture);
+            return this.texture;
         }
     }
 }

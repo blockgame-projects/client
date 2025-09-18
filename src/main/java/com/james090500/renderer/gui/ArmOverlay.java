@@ -1,13 +1,13 @@
 package com.james090500.renderer.gui;
 
 import com.james090500.BlockGame;
+import com.james090500.blocks.Block;
 import com.james090500.blocks.Blocks;
 import com.james090500.renderer.Renderer;
 import com.james090500.renderer.ShaderManager;
-import com.james090500.utils.TextureManager;
+import com.james090500.utils.TextureLocation;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
-import org.lwjgl.system.MemoryUtil;
 
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.glEnableVertexAttribArray;
@@ -37,27 +37,13 @@ public class ArmOverlay implements Renderer {
             4, 5, 6,   6, 7, 4,       // Top
     };
 
-    private float[] texCoords;
+    Block currentBlock;
 
     public void create() {
-        float[] sideUV = Blocks.get(BlockGame.getInstance().getLocalPlayer().getCurrentBlock()).getTexture();
-        float[] topUV = Blocks.get(BlockGame.getInstance().getLocalPlayer().getCurrentBlock()).getTexture("top");
-
-        float tileSize = 1.0f / 16.0f;
-
-        float[] texCoords = new float[8 * 2]; // 2 faces × 4 vertices × 2 coords
-
-        // Front (side) face
-        texCoords[0] = sideUV[0];                texCoords[1] = sideUV[1];            // bottom-left
-        texCoords[2] = sideUV[0] + tileSize;     texCoords[3] = sideUV[1];            // bottom-right
-        texCoords[4] = sideUV[0] + tileSize;     texCoords[5] = sideUV[1] + tileSize; // top-right
-        texCoords[6] = sideUV[0];                texCoords[7] = sideUV[1] + tileSize; // top-left
-
-        // Top face
-        texCoords[8] = topUV[0];                 texCoords[9] = topUV[1] + tileSize;
-        texCoords[10] = topUV[0] + tileSize;     texCoords[11] = topUV[1] + tileSize;
-        texCoords[12] = topUV[0] + tileSize;     texCoords[13] = topUV[1];
-        texCoords[14] = topUV[0];                texCoords[15] = topUV[1];
+        this.currentBlock = Blocks.get(BlockGame.getInstance().getLocalPlayer().getCurrentBlock());
+        float[] texCoords = new float[16];
+        System.arraycopy(currentBlock.getUv(), 0, texCoords, 0, 8);
+        System.arraycopy(currentBlock.getUv(), 0, texCoords, 8, 8);
 
         vao = glGenVertexArrays();
         glBindVertexArray(vao);
@@ -122,7 +108,7 @@ public class ArmOverlay implements Renderer {
         ShaderManager.basicBlockShader.setMat4("view", view);
         ShaderManager.basicBlockShader.setMat4("projection", projection);
 
-        glBindTexture(GL_TEXTURE_2D, TextureManager.terrainTexture);
+        glBindTexture(GL_TEXTURE_2D, currentBlock.texture);
 
         glBindVertexArray(vao);
         glDrawElements(GL_TRIANGLES, indices.length, GL_UNSIGNED_INT, 0);

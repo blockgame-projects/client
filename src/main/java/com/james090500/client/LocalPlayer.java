@@ -3,7 +3,6 @@ package com.james090500.client;
 import com.james090500.BlockGame;
 import com.james090500.blocks.Block;
 import com.james090500.blocks.Blocks;
-import com.james090500.blocks.GrassBlock;
 import com.james090500.blocks.ShortGrassBlock;
 import com.james090500.renderer.gui.ArmOverlay;
 import com.james090500.renderer.gui.BlockOverlay;

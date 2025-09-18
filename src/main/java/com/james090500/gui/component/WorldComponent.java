@@ -1,7 +1,7 @@
 package com.james090500.gui.component;
 
 import com.james090500.utils.FontManager;
-import com.james090500.utils.TextureManager;
+import com.james090500.utils.TextureLocation;
 import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NVGPaint;
 
@@ -51,7 +51,7 @@ public class WorldComponent extends Component {
 
     private void addIcon(long vg) {
         NVGPaint paint = NVGPaint.calloc();
-        nvgImagePattern(vg, this.getX() + 4, this.getY() + 4, 64, 64, 0f, TextureManager.pack, 1f, paint); // alpha = 1.0
+        nvgImagePattern(vg, this.getX() + 4, this.getY() + 4, 64, 64, 0f, TextureLocation.get("assets/gui/pack"), 1f, paint); // alpha = 1.0
 
         nvgBeginPath(vg);
         nvgRect(vg, this.getX() + 4, this.getY() + 4, 64, 64); // or custom width/height

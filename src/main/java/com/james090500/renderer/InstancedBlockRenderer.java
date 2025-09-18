@@ -1,21 +1,17 @@
 package com.james090500.renderer;
 
 import com.james090500.BlockGame;
-import com.james090500.blocks.IBlockRender;
-import com.james090500.utils.TextureManager;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import com.james090500.blocks.Blocks;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.Setter;
-import org.joml.Vector3f;
 import org.joml.Vector3i;
 import org.lwjgl.system.MemoryUtil;
 
 import java.nio.FloatBuffer;
+import java.util.Arrays;
 
 import static org.lwjgl.opengl.GL11.GL_FLOAT;
 import static org.lwjgl.opengl.GL15.*;
-import static org.lwjgl.opengl.GL15.GL_STATIC_DRAW;
 import static org.lwjgl.opengl.GL20.glEnableVertexAttribArray;
 import static org.lwjgl.opengl.GL20.glVertexAttribPointer;
 import static org.lwjgl.opengl.GL30.glBindVertexArray;
@@ -77,36 +73,14 @@ public class InstancedBlockRenderer {
 
     public void setUV(int faceCount, float[] uvBases) {
         float[][] newUvBases = new float[faceCount][];
-        for(int i = 0; i < faceCount; i++) {
-            newUvBases[i] = new float[] { uvBases[0], uvBases[1] };
-        }
-
+        Arrays.fill(newUvBases, uvBases);
         this.setUV(faceCount, newUvBases);
     }
 
     public void setUV(int faceCount, float[][] uvBases) {
-        float tileSize = 1.0f / 16.0f;
-        texCoords = new float[faceCount * 8];
+        this.texCoords = new float[8 * faceCount];
         for (int face = 0; face < faceCount; face++) {
-            float u0 = uvBases[face][0];
-            float v0 = uvBases[face][1];
-            int dest = face * 8; // 4 verts * 2 coords
-
-            // bottom-left  (0,0)
-            texCoords[dest + 0] = u0 + 0f * tileSize;
-            texCoords[dest + 1] = v0 + 0f * tileSize;
-
-            // bottom-right (1,0)
-            texCoords[dest + 2] = u0 + tileSize;
-            texCoords[dest + 3] = v0 + 0f * tileSize;
-
-            // top-right    (1,1)
-            texCoords[dest + 4] = u0 + tileSize;
-            texCoords[dest + 5] = v0 + tileSize;
-
-            // top-left     (0,1)
-            texCoords[dest + 6] = u0 + 0f * tileSize;
-            texCoords[dest + 7] = v0 + tileSize;
+            System.arraycopy(uvBases[face], 0, this.texCoords, face * 8, 8);
         }
     }
 
@@ -135,9 +109,6 @@ public class InstancedBlockRenderer {
         }
         glBufferSubData(GL_ARRAY_BUFFER, 0, inst);
         MemoryUtil.memFree(inst);
-
-        // State once for the whole vegetation pass ideally (outside this method):
-        glBindTexture(GL_TEXTURE_2D, TextureManager.terrainTexture);
 
         ShaderManager.instancedBlockShader.use();
         ShaderManager.instancedBlockShader.useFog();

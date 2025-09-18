@@ -182,7 +182,6 @@ public class BlockGame {
 
             // Disable back faces
             glEnable(GL_CULL_FACE); // Enable face culling
-            glCullFace(GL_BACK); // Cull back faces (i.e. only render front faces)
 
             // Inputs etc
             clientWindow.poll();

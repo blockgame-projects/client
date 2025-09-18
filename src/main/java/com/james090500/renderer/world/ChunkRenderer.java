@@ -7,7 +7,7 @@ import com.james090500.blocks.IBlockRender;
 import com.james090500.renderer.LayeredRenderer;
 import com.james090500.renderer.RenderManager;
 import com.james090500.renderer.ShaderManager;
-import com.james090500.utils.TextureManager;
+import com.james090500.utils.TextureLocation;
 import com.james090500.utils.ThreadUtil;
 import com.james090500.world.Chunk;
 import com.james090500.world.ChunkStatus;
@@ -174,29 +174,21 @@ public class ChunkRenderer implements LayeredRenderer {
         glEnableVertexAttribArray(0);
         glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
 
-        // --- UV (Attribute 1) ---
-        int uvVBO = glGenBuffers();
-        glBindBuffer(GL_ARRAY_BUFFER, uvVBO);
-        glBufferData(GL_ARRAY_BUFFER, uvBuffer, GL_STATIC_DRAW);
-
-        glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 2, GL_FLOAT, false, 0, 0);
-
-        // --- Texture Offset (Attribute 2) ---
+        // --- Texture Offset (Attribute 1) ---
         int texOffsetVBO = glGenBuffers();
         glBindBuffer(GL_ARRAY_BUFFER, texOffsetVBO);
         glBufferData(GL_ARRAY_BUFFER, texOffsetBuffer, GL_STATIC_DRAW);
 
-        glEnableVertexAttribArray(2);
-        glVertexAttribPointer(2, 2, GL_FLOAT, false, 0, 0);
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 2, GL_FLOAT, false, 0, 0);
 
-        // --- Ambient Occlusion (Attribute 3) ---
+        // --- Ambient Occlusion (Attribute 2) ---
         int aoVBO = glGenBuffers();
         glBindBuffer(GL_ARRAY_BUFFER, aoVBO);
         glBufferData(GL_ARRAY_BUFFER, aoBuffer, GL_STATIC_DRAW);
 
-        glEnableVertexAttribArray(3);
-        glVertexAttribPointer(3, 1, GL_FLOAT, false, 0, 0);
+        glEnableVertexAttribArray(2);
+        glVertexAttribPointer(2, 1, GL_FLOAT, false, 0, 0);
 
         // --- Index Buffer ---
         int ibo = glGenBuffers();
@@ -225,7 +217,8 @@ public class ChunkRenderer implements LayeredRenderer {
         ShaderManager.chunk.setMat4("model", model);
         ShaderManager.chunk.useFog();
 
-        glBindTexture(GL_TEXTURE_2D, TextureManager.terrainTexture);
+        glBindTexture(GL_TEXTURE_2D, TextureLocation.get("assets/blocks/dirt"));
+        //Do we build a fake texture sprite
 
         glBindVertexArray(solidVAO);
         glDrawElements(GL_TRIANGLES, solidVertexCount, GL_UNSIGNED_INT, 0L);
@@ -247,6 +240,7 @@ public class ChunkRenderer implements LayeredRenderer {
             for (Object2ObjectMap.Entry<IBlockRender, ObjectList<Vector3i>> e : customBlockModels.object2ObjectEntrySet()) {
                 IBlockRender blockModel = e.getKey();
                 ObjectList<Vector3i> instances = e.getValue();
+                glBindTexture(GL_TEXTURE_2D, ((Block) blockModel).texture);
                 blockModel.render(instances);
             }
             if(cullFace) glEnable(GL_CULL_FACE);
@@ -261,7 +255,7 @@ public class ChunkRenderer implements LayeredRenderer {
         ShaderManager.chunk.setMat4("model", model);
         ShaderManager.chunk.useFog();
 
-        glBindTexture(GL_TEXTURE_2D, TextureManager.terrainTexture);
+        glBindTexture(GL_TEXTURE_2D, TextureLocation.get("assets/blocks/oak_leaves"));
 
         glBindVertexArray(transVAO);
         glDrawElements(GL_TRIANGLES, transVertexCount, GL_UNSIGNED_INT, 0L);
@@ -540,9 +534,10 @@ public class ChunkRenderer implements LayeredRenderer {
 
                             // Get block and texture offset
                             Block block = Blocks.get(blockId);
-                            float[] texOffset = block.getTexture();
+                            float[] texOffset = block.getUv();
                             if (axis == 1) {
-                                texOffset = block.getTexture(isPositiveFace ? "top" : "bottom");
+                                //TODO
+                                //texOffset = block.getTexture(isPositiveFace ? "top" : "bottom");
                             }
 
                             // Prepare base vertex count and corners

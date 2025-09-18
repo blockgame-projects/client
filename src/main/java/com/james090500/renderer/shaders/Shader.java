@@ -2,7 +2,6 @@ package com.james090500.renderer.shaders;
 
 import com.james090500.BlockGame;
 import com.james090500.world.Fog;
-import com.james090500.world.World;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.lwjgl.system.MemoryStack;

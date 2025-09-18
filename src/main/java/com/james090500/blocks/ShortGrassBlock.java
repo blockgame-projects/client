@@ -1,6 +1,7 @@
 package com.james090500.blocks;
 
 import com.james090500.blocks.model.VegetationModel;
+import com.james090500.utils.TextureLocation;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.joml.Vector3i;
 
@@ -10,10 +11,10 @@ public class ShortGrassBlock extends VegetationBlock implements IBlockRender {
         super(id);
         this.name = "Short Grass";
         this.sound = "grass";
-        this.texture = 21;
+        this.texture = TextureLocation.get("assets/foliage/short_grass");
         this.transparent = true;
         this.solid = false;
-        this.model = new VegetationModel(this.getTexture());
+        this.model = new VegetationModel(this.uv);
     }
 
     @Override
