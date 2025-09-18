@@ -1,6 +1,7 @@
 package com.james090500.blocks;
 
 import com.james090500.blocks.model.CactusModel;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.joml.Vector3i;
 
 public class CactusBlock extends Block implements IBlockRender {
@@ -25,7 +26,7 @@ public class CactusBlock extends Block implements IBlockRender {
     }
 
     @Override
-    public void render(Vector3i position) {
+    public void render(ObjectList<Vector3i> position) {
         this.model.render(position);
     }
 }

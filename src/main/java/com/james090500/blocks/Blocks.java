@@ -1,55 +1,72 @@
 package com.james090500.blocks;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
+
+import java.util.function.Function;
+
 public class Blocks {
 
-    public static Block[] ids;
+    // 0 reserved for "air"/null
+    private static final int MAX_BLOCKS = 256;
+    private static final Int2ObjectArrayMap<Block> REGISTRY = new Int2ObjectArrayMap<>();
+    private static int nextId = 1;
 
-    public static final GrassBlock grassBlock = new GrassBlock((byte) 1);
-    public static final DirtBlock dirtBlock = new DirtBlock((byte) 2);
-    public static final StoneBlock stoneBlock = new StoneBlock((byte) 3);
-    public static final SandBlock sandBlock = new SandBlock((byte) 4);
-    public static final WaterBlock waterBlock = new WaterBlock((byte) 5);
-    public static final OakLeafBlock leafBlock = new OakLeafBlock((byte) 6);
-    public static final SpruceLeafBlock spruceLeafBlock = new SpruceLeafBlock((byte) 7);
-    public static final OakLogBlock logBlock = new OakLogBlock((byte) 8);
-    public static final SpruceLogBlock spruceLogBlock = new SpruceLogBlock((byte) 9);
-    public static final BirchLogBlock birchLogBlock = new BirchLogBlock((byte) 10);
-    public static final OakPlanksBlock oakPlanksBlock = new OakPlanksBlock((byte) 11);
-    public static final SprucePlanksBlock sprucePlanksBlock = new SprucePlanksBlock((byte) 12);
-    public static final BirchPlanksBlock birchPlanksBlock = new BirchPlanksBlock((byte) 13);
-    public static final GlassBlock glassBlock = new GlassBlock((byte) 14);
-    public static final SnowyGrassBlock snowyGrassBlock = new SnowyGrassBlock((byte) 15);
-    public static final CactusBlock cactusBlock = new CactusBlock((byte) 16);
-    public static final ShortGrassBlock shortGrassBlock = new ShortGrassBlock((byte) 17);
-
-    static {
-        ids = new Block[] {
-                null,
-                grassBlock,
-                dirtBlock,
-                stoneBlock,
-                sandBlock,
-                waterBlock,
-                leafBlock,
-                spruceLeafBlock,
-                logBlock,
-                spruceLogBlock,
-                birchLogBlock,
-                oakPlanksBlock,
-                sprucePlanksBlock,
-                birchPlanksBlock,
-                glassBlock,
-                snowyGrassBlock,
-                cactusBlock,
-                shortGrassBlock,
-        };
-
-        // Build models
-        for(Block block : Blocks.ids) {
-            if(block instanceof IBlockRender) {
-                block.getModel().create();
-            }
-        }
+    /**
+     * Stores block in registry by instance
+     * @param ctor The block instance
+     * @return The block instance
+     * @param <T> A block ::new
+     */
+    private static <T extends Block> T register(Function<Byte, T> ctor) {
+        if (nextId >= MAX_BLOCKS) throw new IllegalStateException("Block registry full");
+        byte id = (byte) nextId;
+        T block = ctor.apply(id);
+        REGISTRY.put(id & 0xFF, block);
+        nextId++;
+        return block;
     }
 
+    /**
+     * Get the block by ID (0 is null)
+     * @param id Block ID
+     * @return The block instance
+     */
+    public static Block get(int id) {
+        return REGISTRY.get(id & 0xFF);
+    }
+
+    /**
+     * Get the total blocks added
+     * @return
+     */
+    public static int getTotalBlocks() {
+        return REGISTRY.size();
+    }
+
+    // ---- Declarations (order == IDs). Append new ones at the end. ----
+    public static final GrassBlock grassBlock = register(GrassBlock::new);
+    public static final DirtBlock dirtBlock = register(DirtBlock::new);
+    public static final StoneBlock stoneBlock = register(StoneBlock::new);
+    public static final SandBlock sandBlock = register(SandBlock::new);
+    public static final WaterBlock waterBlock = register(WaterBlock::new);
+    public static final OakLeafBlock leafBlock = register(OakLeafBlock::new);
+    public static final SpruceLeafBlock spruceLeafBlock = register(SpruceLeafBlock::new);
+    public static final OakLogBlock logBlock = register(OakLogBlock::new);
+    public static final SpruceLogBlock spruceLogBlock = register(SpruceLogBlock::new);
+    public static final BirchLogBlock birchLogBlock = register(BirchLogBlock::new);
+    public static final OakPlanksBlock oakPlanksBlock = register(OakPlanksBlock::new);
+    public static final SprucePlanksBlock sprucePlanksBlock = register(SprucePlanksBlock::new);
+    public static final BirchPlanksBlock birchPlanksBlock = register(BirchPlanksBlock::new);
+    public static final GlassBlock glassBlock = register(GlassBlock::new);
+    public static final SnowyGrassBlock snowyGrassBlock  = register(SnowyGrassBlock::new);
+    public static final CactusBlock cactusBlock = register(CactusBlock::new);
+    public static final ShortGrassBlock shortGrassBlock = register(ShortGrassBlock::new);
+    public static final RedFlowerBlock redFlowerBlock = register(RedFlowerBlock::new);
+    public static final YellowFlowerBlock yellowFlowerBlock = register(YellowFlowerBlock::new);
+
+    static {
+        Blocks.REGISTRY.forEach((id, block) -> {
+            if(block instanceof IBlockRender) block.getModel().create();
+        });
+    }
 }

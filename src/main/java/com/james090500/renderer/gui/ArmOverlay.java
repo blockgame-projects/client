@@ -40,8 +40,8 @@ public class ArmOverlay implements Renderer {
     private float[] texCoords;
 
     public void create() {
-        float[] sideUV = Blocks.ids[BlockGame.getInstance().getLocalPlayer().getCurrentBlock()].getTexture();
-        float[] topUV = Blocks.ids[BlockGame.getInstance().getLocalPlayer().getCurrentBlock()].getTexture("top");
+        float[] sideUV = Blocks.get(BlockGame.getInstance().getLocalPlayer().getCurrentBlock()).getTexture();
+        float[] topUV = Blocks.get(BlockGame.getInstance().getLocalPlayer().getCurrentBlock()).getTexture("top");
 
         float tileSize = 1.0f / 16.0f;
 
@@ -65,21 +65,21 @@ public class ArmOverlay implements Renderer {
         // Vertex Position VBO
         int vbo = glGenBuffers();
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glBufferData(GL_ARRAY_BUFFER, MemoryUtil.memAllocFloat(vertices.length).put(vertices).flip(), GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, vertices, GL_STATIC_DRAW);
         glVertexAttribPointer(0, 3, GL_FLOAT, false, 3 * Float.BYTES, 0);
         glEnableVertexAttribArray(0);
 
         // UV VBO
         int tbo = glGenBuffers();
         glBindBuffer(GL_ARRAY_BUFFER, tbo);
-        glBufferData(GL_ARRAY_BUFFER, MemoryUtil.memAllocFloat(texCoords.length).put(texCoords).flip(), GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, texCoords, GL_STATIC_DRAW);
         glVertexAttribPointer(1, 2, GL_FLOAT, false, 2 * Float.BYTES, 0);
         glEnableVertexAttribArray(1);
 
         // Index Buffer (EBO)
         int ebo = glGenBuffers();
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, MemoryUtil.memAllocInt(indices.length).put(indices).flip(), GL_STATIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices, GL_STATIC_DRAW);
     }
 
     @Override

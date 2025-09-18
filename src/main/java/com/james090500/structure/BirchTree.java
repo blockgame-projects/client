@@ -5,12 +5,12 @@ import com.james090500.blocks.Blocks;
 import com.james090500.blocks.GrassBlock;
 import com.james090500.world.Chunk;
 
-public class OakTree implements Structure {
+public class BirchTree implements Structure {
 
     private final double noise;
     private final Chunk chunk;
 
-    public OakTree(double noise, Chunk chunk) {
+    public BirchTree(double noise, Chunk chunk) {
         this.noise = noise;
         this.chunk = chunk;
     }
@@ -22,11 +22,11 @@ public class OakTree implements Structure {
             return false;
         }
 
-        int trunkHeight = (int) (3 + Math.floor((noise - 0.9) * 10)); // 3-5 block tall trunk
+        int trunkHeight = (int) (4 + Math.floor((noise - 0.9) * 10)); // 3-5 block tall trunk
 
         // Build trunk
         for (int t = 0; t < trunkHeight; t++) {
-            chunk.setBlock(x, 1 + y + t, z, Blocks.logBlock.getId());
+            chunk.setBlock(x, 1 + y + t, z, Blocks.birchLogBlock.getId());
         }
 
         // Build leaves
@@ -41,7 +41,7 @@ public class OakTree implements Structure {
                         // narrower as ly goes up
                         byte blockToSet =
                                 ly < 3 && lx == 0 && lz == 0
-                                        ? Blocks.logBlock.getId()
+                                        ? Blocks.birchLogBlock.getId()
                                         : Blocks.leafBlock.getId();
 
                         chunk.setBlock(

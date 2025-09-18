@@ -16,10 +16,10 @@ public class Cactus implements Structure {
     }
 
     @Override
-    public void build(int x, int y, int z) {
+    public boolean build(int x, int y, int z) {
         Block block = chunk.getBlock(x, y, z);
         if (!(block instanceof SandBlock)) {
-            return;
+            return false;
         }
 
         int height = (int) (3 + Math.floor((noise - 0.9) * 10)); // 3-5 block tall trunk
@@ -28,5 +28,7 @@ public class Cactus implements Structure {
         for (int t = 0; t < height; t++) {
             chunk.setBlock(x, 1 + y + t, z, Blocks.cactusBlock.getId());
         }
+
+        return true;
     }
 }

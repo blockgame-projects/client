@@ -47,7 +47,7 @@ public class DebugScreen extends Screen {
             FontManager.create().text("Chunk Trans Vertices: " + chunk.getChunkRenderer().transVertexCount, 20f, 10f, 310f);
 
             FontManager.create().text("Player Info", 20f, 10f, 340f);
-            FontManager.create().text("Player Hand: " + Blocks.ids[BlockGame.getInstance().getLocalPlayer().getCurrentBlock()].getName(), 20f, 10f, 360f);
+            FontManager.create().text("Player Hand: " + Blocks.get(BlockGame.getInstance().getLocalPlayer().getCurrentBlock()).getName(), 20f, 10f, 360f);
         }
 
         super.render();

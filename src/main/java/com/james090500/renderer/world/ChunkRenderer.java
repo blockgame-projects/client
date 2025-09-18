@@ -13,6 +13,9 @@ import com.james090500.world.Chunk;
 import com.james090500.world.ChunkStatus;
 import com.james090500.world.World;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
@@ -36,7 +39,7 @@ public class ChunkRenderer implements LayeredRenderer {
     private int transVAO;
     public int transVertexCount;
 
-    private final Object2ObjectArrayMap<Vector3i, IBlockRender> customBlockModels = new Object2ObjectArrayMap<>();
+    private final Object2ObjectArrayMap<IBlockRender, ObjectList<Vector3i>> customBlockModels = new Object2ObjectArrayMap<>();
 
     public ChunkRenderer(Chunk chunk) {
         this.chunk = chunk;
@@ -52,7 +55,7 @@ public class ChunkRenderer implements LayeredRenderer {
         this.chunk.needsMeshing = false;
 
         // Temp list
-        Object2ObjectArrayMap<Vector3i, IBlockRender> newCustomBlockModels = new Object2ObjectArrayMap<>();
+        Object2ObjectArrayMap<IBlockRender, ObjectList<Vector3i>> newCustomBlockModels = new Object2ObjectArrayMap<>();
 
         VoxelResult solidResult = makeVoxels(new int[]{0, 0, 0}, new int[]{chunk.chunkSize, chunk.chunkHeight, chunk.chunkSize}, (x, y, z) -> {
             Block block = chunk.getBlock(x, y, z);
@@ -60,7 +63,7 @@ public class ChunkRenderer implements LayeredRenderer {
                 return block.getId();
             } else if(block instanceof IBlockRender) {
                 Vector3i position = new Vector3i(x + this.chunk.chunkX * this.chunk.chunkSize, y, z + this.chunk.chunkZ * this.chunk.chunkSize);
-                newCustomBlockModels.put(position, (IBlockRender) block);
+                newCustomBlockModels.computeIfAbsent((IBlockRender) block, b -> new ObjectArrayList<>()).add(position);
                 return 0;
             } else {
                 return 0;
@@ -230,7 +233,14 @@ public class ChunkRenderer implements LayeredRenderer {
         glBindVertexArray(0);
         ShaderManager.chunk.stop();
 
-        customBlockModels.forEach((vector3i, iBlockRender) -> iBlockRender.render(vector3i));
+        boolean cullFace = glIsEnabled(GL_CULL_FACE);
+        glDisable(GL_CULL_FACE);
+        for (Object2ObjectMap.Entry<IBlockRender, ObjectList<Vector3i>> e : customBlockModels.object2ObjectEntrySet()) {
+            IBlockRender blockModel = e.getKey();
+            ObjectList<Vector3i> instances = e.getValue();
+            blockModel.render(instances);
+        }
+        if(cullFace) glEnable(GL_CULL_FACE);
     }
 
     @Override
@@ -375,7 +385,7 @@ public class ChunkRenderer implements LayeredRenderer {
     }
 
     private int getMaskValue(int id, int[] pos, int[] step) {
-        Block block = Blocks.ids[id];
+        Block block = Blocks.get(id);
         Block neighbor = BlockGame.getInstance().getWorld().getChunkBlock(
                 chunk.chunkX,
                 chunk.chunkZ,
@@ -519,7 +529,7 @@ public class ChunkRenderer implements LayeredRenderer {
                             }
 
                             // Get block and texture offset
-                            Block block = Blocks.ids[blockId];
+                            Block block = Blocks.get(blockId);
                             float[] texOffset = block.getTexture();
                             if (axis == 1) {
                                 texOffset = block.getTexture(isPositiveFace ? "top" : "bottom");

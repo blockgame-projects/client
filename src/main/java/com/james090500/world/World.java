@@ -158,7 +158,7 @@ public class World {
      * @param block The block or null if no block
      */
     public void setBlock(int x, int y, int z, byte block) {
-        Block currentBlock = block == 0 ? BlockGame.getInstance().getWorld().getBlock(x, y, z) : Blocks.ids[block];
+        Block currentBlock = block == 0 ? BlockGame.getInstance().getWorld().getBlock(x, y, z) : Blocks.get(block);
         SoundManager.play("assets/sound/block/" + currentBlock.getSound(), 4);
 
         if(this.remote) {

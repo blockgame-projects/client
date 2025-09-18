@@ -1,7 +1,12 @@
 package com.james090500.renderer;
 
+import com.james090500.utils.TextureManager;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
+import org.joml.Vector3i;
 import org.lwjgl.system.MemoryUtil;
+
+import java.nio.FloatBuffer;
 
 import static org.lwjgl.opengl.GL11.GL_FLOAT;
 import static org.lwjgl.opengl.GL15.*;
@@ -9,10 +14,10 @@ import static org.lwjgl.opengl.GL20.glEnableVertexAttribArray;
 import static org.lwjgl.opengl.GL20.glVertexAttribPointer;
 import static org.lwjgl.opengl.GL30.glBindVertexArray;
 import static org.lwjgl.opengl.GL30.glGenVertexArrays;
+import static org.lwjgl.opengl.GL31.glDrawElementsInstanced;
+import static org.lwjgl.opengl.GL33.glVertexAttribDivisor;
 
-public class ModelBuilder {
-
-    public record Model(int vao, int indicies) {};
+public class ModelBuilder extends InstancedBlockRenderer {
 
     protected record Cube(float x, float y, float z, float width, float height, float depth) {
         public float[] getVertices() {
@@ -51,17 +56,7 @@ public class ModelBuilder {
             };
         }
     }
-
     private final ObjectArrayList<Cube> cubes = new ObjectArrayList<>();
-    private float[] texCoords;
-
-    /**
-     * Create a new instance
-     * @return
-     */
-    public static ModelBuilder create() {
-        return new ModelBuilder();
-    }
 
     /**
      * Add a cube to the builder
@@ -84,8 +79,8 @@ public class ModelBuilder {
      * @return ModelBuilder instance
      */
     public ModelBuilder setTexture(float[] texture) {
-        float[][] uvBases = new float[][] { texture, texture, texture, texture, texture, texture };
-        return setTexture(uvBases);
+        this.setUV(6, texture);
+        return this;
     }
 
     /**
@@ -94,29 +89,7 @@ public class ModelBuilder {
      * @return ModelBuilder instance
      */
     public ModelBuilder setTexture(float[][] uvBases) {
-        float tileSize = 1.0f / 16.0f;
-        texCoords = new float[24 * 2];
-        for (int face = 0; face < 6; face++) {
-            float u0 = uvBases[face][0];
-            float v0 = uvBases[face][1];
-            int dest = face * 8; // 4 verts * 2 coords
-
-            // bottom-left  (0,0)
-            texCoords[dest + 0] = u0 + 0f * tileSize;
-            texCoords[dest + 1] = v0 + 0f * tileSize;
-
-            // bottom-right (1,0)
-            texCoords[dest + 2] = u0 + tileSize;
-            texCoords[dest + 3] = v0 + 0f * tileSize;
-
-            // top-right    (1,1)
-            texCoords[dest + 4] = u0 + tileSize;
-            texCoords[dest + 5] = v0 + tileSize;
-
-            // top-left     (0,1)
-            texCoords[dest + 6] = u0 + 0f * tileSize;
-            texCoords[dest + 7] = v0 + tileSize;
-        }
+        this.setUV(6, uvBases);
         return this;
     }
 
@@ -124,7 +97,7 @@ public class ModelBuilder {
      * Build the cubes into a vertices array
      * @return The result
      */
-    public Model build() {
+    public ModelBuilder build() {
         // 1. Precompute total length
         int totalVertices = 0;
         int totalIndices = 0;
@@ -151,28 +124,10 @@ public class ModelBuilder {
             indiPos += indis.length;
         }
 
-        int vao = glGenVertexArrays();
-        glBindVertexArray(vao);
-
-        // Vertex Position VBO
-        int vbo = glGenBuffers();
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glBufferData(GL_ARRAY_BUFFER, MemoryUtil.memAllocFloat(vertices.length).put(vertices).flip(), GL_STATIC_DRAW);
-        glVertexAttribPointer(0, 3, GL_FLOAT, false, 3 * Float.BYTES, 0);
-        glEnableVertexAttribArray(0);
-
-        // UV VBO
-        int tbo = glGenBuffers();
-        glBindBuffer(GL_ARRAY_BUFFER, tbo);
-        glBufferData(GL_ARRAY_BUFFER, MemoryUtil.memAllocFloat(texCoords.length).put(texCoords).flip(), GL_STATIC_DRAW);
-        glVertexAttribPointer(1, 2, GL_FLOAT, false, 2 * Float.BYTES, 0);
-        glEnableVertexAttribArray(1);
-
-        // Index Buffer (EBO)
-        int ebo = glGenBuffers();
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, MemoryUtil.memAllocInt(indices.length).put(indices).flip(), GL_STATIC_DRAW);
-
-        return new Model(vao, indices.length);
+        this.setVertices(vertices);
+        this.setIndices(indices);
+        this.create();
+        
+        return this;
     }
 }

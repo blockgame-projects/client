@@ -3,6 +3,8 @@ package com.james090500.client;
 import com.james090500.BlockGame;
 import com.james090500.blocks.Block;
 import com.james090500.blocks.Blocks;
+import com.james090500.blocks.GrassBlock;
+import com.james090500.blocks.ShortGrassBlock;
 import com.james090500.renderer.gui.ArmOverlay;
 import com.james090500.renderer.gui.BlockOverlay;
 import com.james090500.renderer.gui.CrosshairOverlay;
@@ -293,14 +295,17 @@ public class LocalPlayer {
             }
 
             if(mouse.getOrDefault(GLFW_MOUSE_BUTTON_RIGHT, false)) {
-                if(!aabb.isColliding(origin, raycast[0])) {
-                    Block currentBlock = Blocks.ids[this.currentBlock];
+                Block currentBlock = Blocks.get(this.currentBlock);
+                Block lookingAt = BlockGame.getInstance().getWorld().getBlock(raycast[1].x, raycast[1].y, raycast[1].z);
+                if(lookingAt instanceof ShortGrassBlock && !aabb.isColliding(origin, raycast[1])) {
+                    BlockGame.getInstance().getWorld().setBlock(raycast[1].x, raycast[1].y, raycast[1].z, currentBlock.getId());
+                } else if(!aabb.isColliding(origin, raycast[0])) {
                     BlockGame.getInstance().getWorld().setBlock(raycast[0].x, raycast[0].y, raycast[0].z, currentBlock.getId());
                 }
                 mouse.put(GLFW_MOUSE_BUTTON_RIGHT, false);
             }
 
-            if(hitBlock != null && hitBlock.isLiquid()) {
+            if(hitBlock != null && !hitBlock.isLiquid()) {
                 if(mouse.getOrDefault(GLFW_MOUSE_BUTTON_MIDDLE, false)) {
                     this.changeHand(hitBlock.getId());
                     mouse.put(GLFW_MOUSE_BUTTON_MIDDLE, false);
@@ -361,10 +366,10 @@ public class LocalPlayer {
     public void scrollHotbar(boolean increase) {
         int newBlock = increase ? this.currentBlock + 1 : this.currentBlock - 1;
 
-        if(newBlock > Blocks.ids.length - 1) {
+        if(newBlock > Blocks.getTotalBlocks()) {
             this.changeHand(1);
         } else if(newBlock <= 0) {
-            this.changeHand(Blocks.ids.length - 1);
+            this.changeHand(Blocks.getTotalBlocks());
         } else {
             this.changeHand(newBlock);
         }
