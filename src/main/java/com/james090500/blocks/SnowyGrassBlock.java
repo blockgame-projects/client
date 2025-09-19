@@ -1,6 +1,6 @@
 package com.james090500.blocks;
 
-import com.james090500.utils.TextureLocation;
+import com.james090500.textures.TextureLocation;
 
 public class SnowyGrassBlock extends Block {
     public SnowyGrassBlock(byte id) {
@@ -11,7 +11,7 @@ public class SnowyGrassBlock extends Block {
     }
 
     @Override
-    public int getTexture(String face) {
+    public TextureLocation getTexture(String face) {
         if (face.equalsIgnoreCase("top")) {
             return TextureLocation.get("assets/blocks/snowy_grass_block_top");
         } else if (face.equalsIgnoreCase("bottom")) {

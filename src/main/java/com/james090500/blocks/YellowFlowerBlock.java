@@ -1,7 +1,7 @@
 package com.james090500.blocks;
 
 import com.james090500.blocks.model.VegetationModel;
-import com.james090500.utils.TextureLocation;
+import com.james090500.textures.TextureLocation;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.joml.Vector3i;
 

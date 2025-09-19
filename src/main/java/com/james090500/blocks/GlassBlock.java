@@ -1,6 +1,6 @@
 package com.james090500.blocks;
 
-import com.james090500.utils.TextureLocation;
+import com.james090500.textures.TextureLocation;
 
 public class GlassBlock extends Block {
     public GlassBlock(byte id) {

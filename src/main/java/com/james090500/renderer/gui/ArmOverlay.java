@@ -5,7 +5,6 @@ import com.james090500.blocks.Block;
 import com.james090500.blocks.Blocks;
 import com.james090500.renderer.Renderer;
 import com.james090500.renderer.ShaderManager;
-import com.james090500.utils.TextureLocation;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
@@ -108,7 +107,7 @@ public class ArmOverlay implements Renderer {
         ShaderManager.basicBlockShader.setMat4("view", view);
         ShaderManager.basicBlockShader.setMat4("projection", projection);
 
-        glBindTexture(GL_TEXTURE_2D, currentBlock.texture);
+        glBindTexture(GL_TEXTURE_2D, currentBlock.texture.getTexture());
 
         glBindVertexArray(vao);
         glDrawElements(GL_TRIANGLES, indices.length, GL_UNSIGNED_INT, 0);

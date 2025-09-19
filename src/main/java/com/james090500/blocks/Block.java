@@ -1,7 +1,7 @@
 package com.james090500.blocks;
 
 import com.james090500.blocks.model.IBlockModel;
-import com.james090500.utils.TextureLocation;
+import com.james090500.textures.TextureLocation;
 import lombok.Getter;
 
 public class Block {
@@ -9,7 +9,7 @@ public class Block {
     @Getter
     byte id;
     @Getter
-    public int texture = TextureLocation.get("assets/error");
+    public TextureLocation texture = TextureLocation.get("assets/error");
     @Getter
     boolean transparent = false;
     @Getter
@@ -34,7 +34,7 @@ public class Block {
         this.id = id;
     }
 
-    public int getTexture(String face) {
+    public TextureLocation getTexture(String face) {
         return this.texture;
     }
 }

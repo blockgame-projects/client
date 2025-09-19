@@ -1,7 +1,5 @@
 package com.james090500.renderer;
 
-import com.james090500.BlockGame;
-import com.james090500.blocks.Blocks;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.Setter;
 import org.joml.Vector3i;

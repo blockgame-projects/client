@@ -2,9 +2,9 @@ package com.james090500.gui;
 
 import com.james090500.BlockGame;
 import com.james090500.gui.component.Component;
+import com.james090500.textures.TextureLocation;
 import com.james090500.utils.FontManager;
 import com.james090500.utils.SoundManager;
-import com.james090500.utils.TextureLocation;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -79,7 +79,7 @@ public class Screen {
         float scale = (float) BlockGame.getInstance().getClientWindow().getFramebufferWidth() / BlockGame.getInstance().getClientWindow().getWindowWidth();
 
         NVGPaint paint = NVGPaint.calloc();
-        nvgImagePattern(vg, -32 * scale, -32 * scale, 64 * scale, 64 * scale, 0f, TextureLocation.get("assets/gui/background"), 1f, paint);
+        nvgImagePattern(vg, -32 * scale, -32 * scale, 64 * scale, 64 * scale, 0f, TextureLocation.get("assets/gui/background").getTexture(), 1f, paint);
 
         nvgBeginPath(vg);
         nvgRect(vg, 0, 0, BlockGame.getInstance().getClientWindow().getFramebufferWidth(), BlockGame.getInstance().getClientWindow().getFramebufferHeight());

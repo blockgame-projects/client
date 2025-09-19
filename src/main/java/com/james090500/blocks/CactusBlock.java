@@ -1,7 +1,7 @@
 package com.james090500.blocks;
 
 import com.james090500.blocks.model.CactusModel;
-import com.james090500.utils.TextureLocation;
+import com.james090500.textures.TextureLocation;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.joml.Vector3i;
 
@@ -16,7 +16,7 @@ public class CactusBlock extends Block implements IBlockRender {
     }
 
     @Override
-    public int getTexture(String face) {
+    public TextureLocation getTexture(String face) {
         if (face.equalsIgnoreCase("top")) {
             return TextureLocation.get("assets/blocks/cactus_side_top");
         } else if (face.equalsIgnoreCase("bottom")) {

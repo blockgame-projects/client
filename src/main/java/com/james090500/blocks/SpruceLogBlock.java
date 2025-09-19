@@ -1,6 +1,6 @@
 package com.james090500.blocks;
 
-import com.james090500.utils.TextureLocation;
+import com.james090500.textures.TextureLocation;
 
 public class SpruceLogBlock extends Block {
     public SpruceLogBlock(byte id) {
@@ -11,7 +11,7 @@ public class SpruceLogBlock extends Block {
     }
 
     @Override
-    public int getTexture(String face) {
+    public TextureLocation getTexture(String face) {
         if (face.equalsIgnoreCase("top") || face.equalsIgnoreCase("bottom")) {
             return TextureLocation.get("assets/blocks/spruce_log_top");
         } else {

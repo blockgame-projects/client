@@ -1,6 +1,6 @@
 package com.james090500.blocks;
 
-import com.james090500.utils.TextureLocation;
+import com.james090500.textures.TextureLocation;
 
 public class OakPlanksBlock extends Block {
     public OakPlanksBlock(byte id) {

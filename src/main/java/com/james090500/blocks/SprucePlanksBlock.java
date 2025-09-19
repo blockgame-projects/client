@@ -1,6 +1,6 @@
 package com.james090500.blocks;
 
-import com.james090500.utils.TextureLocation;
+import com.james090500.textures.TextureLocation;
 
 public class SprucePlanksBlock extends Block {
     public SprucePlanksBlock(byte id) {

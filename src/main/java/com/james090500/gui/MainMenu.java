@@ -5,7 +5,7 @@ import com.james090500.gui.component.StandardButton;
 import com.james090500.gui.multiplayer.MultiplayerScreen;
 import com.james090500.gui.options.OptionsScreen;
 import com.james090500.gui.singleplayer.WorldScreen;
-import com.james090500.utils.TextureLocation;
+import com.james090500.textures.TextureLocation;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.nanovg.NVGPaint;
 
@@ -79,16 +79,16 @@ public class MainMenu extends Screen {
     }
 
     private void addLogo() {
-        int logoTexture = TextureLocation.get("assets/gui/logo");
+        TextureLocation logoTexture = TextureLocation.get("assets/gui/logo");
 
         IntBuffer w = BufferUtils.createIntBuffer(1);
         IntBuffer h = BufferUtils.createIntBuffer(1);
-        nvgImageSize(this.vg, logoTexture, w, h);
+        nvgImageSize(this.vg, logoTexture.getTexture(), w, h);
         int imgWidth = w.get(0);
         int imgHeight = h.get(0);
 
         NVGPaint paint = NVGPaint.calloc();
-        nvgImagePattern(this.vg, this.width / 2 - (float) imgWidth / 2, 0f, imgWidth, imgHeight, 0f, logoTexture, 1f, paint); // alpha = 1.0
+        nvgImagePattern(this.vg, this.width / 2 - (float) imgWidth / 2, 0f, imgWidth, imgHeight, 0f, logoTexture.getTexture(), 1f, paint); // alpha = 1.0
 
         nvgBeginPath(this.vg);
         nvgRect(this.vg, this.width / 2 - (float) imgWidth / 2, 0f, imgWidth, imgHeight); // or custom width/height

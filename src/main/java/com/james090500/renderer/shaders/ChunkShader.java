@@ -6,23 +6,27 @@ public class ChunkShader extends Shader {
         String vertexSrc =
                 """
                 #version 330 core
-                layout(location = 0) in vec3 position;
-                layout(location = 1) in vec2 texCord;
-                layout(location = 2) in float ao;
-               
+                layout(location = 0) in vec3 aPos;
+                layout(location = 1) in vec2 aUv;
+                layout(location = 2) in uint aLayer;
+                layout(location = 3) in float aAo;
+
                 uniform mat4 model;
                 uniform mat4 view;
                 uniform mat4 projection;
                
+                out vec2 vUv;
+                flat out uint vLayer;
                 out vec3 mvPos;
                 out vec2 vTexCord;
                 out float vAo;
         
                 void main() {
-                    vTexCord = texCord;
-                    vAo = ao;
+                    vUv = aUv;
+                    vLayer = aLayer;
+                    vAo = aAo;
         
-                    vec4 modelViewMatrix = view * model * vec4(position, 1.0);
+                    vec4 modelViewMatrix = view * model * vec4(aPos, 1.0);
                     gl_Position = projection * modelViewMatrix;
                     mvPos = modelViewMatrix.xyz;
                 }
@@ -32,11 +36,12 @@ public class ChunkShader extends Shader {
                 """
                 #version 330 core
                 
-                uniform sampler2D baseTexture;
-
                 in vec3 mvPos;
-                in vec2 vTexCord;
+                in vec2 vUv;
+                flat in uint vLayer;
                 in float vAo;
+                
+                uniform sampler2DArray texArray;
                 
                 out vec4 FragColor;
                 
@@ -45,7 +50,7 @@ public class ChunkShader extends Shader {
                 void main() {
                     float faceLight = 1.0;
 
-                    vec4 texel = texture(baseTexture, vTexCord);
+                    vec4 texel = texture(texArray, vec3(vUv, float(vLayer)));
                 
                     float finalAO = mix(0.15, 1.0, vAo / 3.0);
 

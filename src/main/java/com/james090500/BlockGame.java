@@ -9,6 +9,7 @@ import com.james090500.gui.PauseScreen;
 import com.james090500.gui.ScreenManager;
 import com.james090500.io.AssetManager;
 import com.james090500.renderer.RenderManager;
+import com.james090500.textures.TextureManager;
 import com.james090500.utils.GameLogger;
 import com.james090500.utils.SoundManager;
 import com.james090500.utils.ThreadUtil;
@@ -26,6 +27,7 @@ import static org.lwjgl.opengl.GL11.*;
 public class BlockGame {
 
     @Getter private static BlockGame instance;
+    @Getter private TextureManager textureManager;
     private final Config config = new Config();
     @Getter private static final Logger logger = GameLogger.get("BlockGame");
     private final ClientWindow clientWindow;
@@ -44,6 +46,7 @@ public class BlockGame {
 
         // Extract Assets
         AssetManager.extractAssets();
+        this.textureManager = new TextureManager();
 
         // Start the Menu
         ScreenManager.add(new MainMenu());

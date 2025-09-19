@@ -1,7 +1,7 @@
 package com.james090500.gui.component;
 
+import com.james090500.textures.TextureLocation;
 import com.james090500.utils.FontManager;
-import com.james090500.utils.TextureLocation;
 import lombok.Getter;
 import lombok.Setter;
 import org.lwjgl.nanovg.NVGPaint;
@@ -60,11 +60,11 @@ public class Component {
 
         int btnTexture;
         if(!enabled) {
-            btnTexture = TextureLocation.get("assets/gui/button_disabled");
+            btnTexture = TextureLocation.get("assets/gui/button_disabled").getTexture();
         } else if(hovered) {
-            btnTexture = TextureLocation.get("assets/gui/button_active");
+            btnTexture = TextureLocation.get("assets/gui/button_active").getTexture();
         } else {
-            btnTexture = TextureLocation.get("assets/gui/button");
+            btnTexture = TextureLocation.get("assets/gui/button").getTexture();
         }
         nvgImagePattern(vg, x, y, width, height,0f, btnTexture,1f, paint);
 

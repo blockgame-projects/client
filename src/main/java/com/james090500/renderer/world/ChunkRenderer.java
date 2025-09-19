@@ -7,7 +7,7 @@ import com.james090500.blocks.IBlockRender;
 import com.james090500.renderer.LayeredRenderer;
 import com.james090500.renderer.RenderManager;
 import com.james090500.renderer.ShaderManager;
-import com.james090500.utils.TextureLocation;
+import com.james090500.textures.TextureLocation;
 import com.james090500.utils.ThreadUtil;
 import com.james090500.world.Chunk;
 import com.james090500.world.ChunkStatus;
@@ -101,7 +101,7 @@ public class ChunkRenderer implements LayeredRenderer {
         FloatBuffer vertexBuffer = ByteBuffer.allocateDirect(numVertices * 3 * Float.BYTES).order(ByteOrder.nativeOrder()).asFloatBuffer();
         IntBuffer indexBuffer = ByteBuffer.allocateDirect(numFaces * 6 * Integer.BYTES).order(ByteOrder.nativeOrder()).asIntBuffer();
         FloatBuffer uvBuffer = ByteBuffer.allocateDirect(numVertices * 2 * Float.BYTES).order(ByteOrder.nativeOrder()).asFloatBuffer();
-        FloatBuffer texOffsetBuffer = ByteBuffer.allocateDirect(numVertices * 2 * Float.BYTES).order(ByteOrder.nativeOrder()).asFloatBuffer();
+        IntBuffer texLayerBuffer = ByteBuffer.allocateDirect(numVertices * Integer.BYTES).order(ByteOrder.nativeOrder()).asIntBuffer();
         FloatBuffer aoBuffer = ByteBuffer.allocateDirect(numVertices * Float.BYTES).order(ByteOrder.nativeOrder()).asFloatBuffer();
 
         for (int i = 0; i < chunkMesh.vertices.size(); i++) {
@@ -130,11 +130,10 @@ public class ChunkRenderer implements LayeredRenderer {
 
 
         for (int i = 0; i < chunkMesh.texOffset.size(); i++) {
-            float[] t = chunkMesh.texOffset.get(i);
-            for (int j = 0; j < 4; j++) {
-                texOffsetBuffer.put(t[0]);
-                texOffsetBuffer.put(t[1]);
-            }
+            texLayerBuffer.put(chunkMesh.texOffset.get(i));
+            texLayerBuffer.put(chunkMesh.texOffset.get(i));
+            texLayerBuffer.put(chunkMesh.texOffset.get(i));
+            texLayerBuffer.put(chunkMesh.texOffset.get(i));
         }
 
         for (int i = 0; i < chunkMesh.aos.size(); i++) {
@@ -149,7 +148,7 @@ public class ChunkRenderer implements LayeredRenderer {
         vertexBuffer.flip();
         indexBuffer.flip();
         uvBuffer.flip();
-        texOffsetBuffer.flip();
+        texLayerBuffer.flip();
         aoBuffer.flip();
 
         if(transparent) {
@@ -171,24 +170,32 @@ public class ChunkRenderer implements LayeredRenderer {
         glBindBuffer(GL_ARRAY_BUFFER, vertexVBO);
         glBufferData(GL_ARRAY_BUFFER, vertexBuffer, GL_STATIC_DRAW);
 
-        glEnableVertexAttribArray(0);
         glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
+        glEnableVertexAttribArray(0);
 
-        // --- Texture Offset (Attribute 1) ---
+        // --- UV (Attribute 1) ---
+        int uvVBO = glGenBuffers();
+        glBindBuffer(GL_ARRAY_BUFFER, uvVBO);
+        glBufferData(GL_ARRAY_BUFFER, uvBuffer, GL_STATIC_DRAW);
+
+        glVertexAttribPointer(1, 2, GL_FLOAT, false, 0, 0);
+        glEnableVertexAttribArray(1);
+
+        // --- Texture Offset (Attribute 2) ---
         int texOffsetVBO = glGenBuffers();
         glBindBuffer(GL_ARRAY_BUFFER, texOffsetVBO);
-        glBufferData(GL_ARRAY_BUFFER, texOffsetBuffer, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, texLayerBuffer, GL_STATIC_DRAW);
 
-        glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 2, GL_FLOAT, false, 0, 0);
+        glEnableVertexAttribArray(2);
+        glVertexAttribIPointer(2, 1, GL_UNSIGNED_INT, 0, 0);
 
-        // --- Ambient Occlusion (Attribute 2) ---
+        // --- Ambient Occlusion (Attribute 3) ---
         int aoVBO = glGenBuffers();
         glBindBuffer(GL_ARRAY_BUFFER, aoVBO);
         glBufferData(GL_ARRAY_BUFFER, aoBuffer, GL_STATIC_DRAW);
 
-        glEnableVertexAttribArray(2);
-        glVertexAttribPointer(2, 1, GL_FLOAT, false, 0, 0);
+        glEnableVertexAttribArray(3);
+        glVertexAttribPointer(3, 1, GL_FLOAT, false, 0, 0);
 
         // --- Index Buffer ---
         int ibo = glGenBuffers();
@@ -217,8 +224,8 @@ public class ChunkRenderer implements LayeredRenderer {
         ShaderManager.chunk.setMat4("model", model);
         ShaderManager.chunk.useFog();
 
-        glBindTexture(GL_TEXTURE_2D, TextureLocation.get("assets/blocks/dirt"));
-        //Do we build a fake texture sprite
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D_ARRAY, BlockGame.getInstance().getTextureManager().getChunkTexture());
 
         glBindVertexArray(solidVAO);
         glDrawElements(GL_TRIANGLES, solidVertexCount, GL_UNSIGNED_INT, 0L);
@@ -240,7 +247,7 @@ public class ChunkRenderer implements LayeredRenderer {
             for (Object2ObjectMap.Entry<IBlockRender, ObjectList<Vector3i>> e : customBlockModels.object2ObjectEntrySet()) {
                 IBlockRender blockModel = e.getKey();
                 ObjectList<Vector3i> instances = e.getValue();
-                glBindTexture(GL_TEXTURE_2D, ((Block) blockModel).texture);
+                glBindTexture(GL_TEXTURE_2D, ((Block) blockModel).texture.getTexture());
                 blockModel.render(instances);
             }
             if(cullFace) glEnable(GL_CULL_FACE);
@@ -255,7 +262,8 @@ public class ChunkRenderer implements LayeredRenderer {
         ShaderManager.chunk.setMat4("model", model);
         ShaderManager.chunk.useFog();
 
-        glBindTexture(GL_TEXTURE_2D, TextureLocation.get("assets/blocks/oak_leaves"));
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D_ARRAY, BlockGame.getInstance().getTextureManager().getChunkTexture());
 
         glBindVertexArray(transVAO);
         glDrawElements(GL_TRIANGLES, transVertexCount, GL_UNSIGNED_INT, 0L);
@@ -268,14 +276,14 @@ public class ChunkRenderer implements LayeredRenderer {
         ArrayList<float[]> vertices;
         ArrayList<int[]> indices;
         ArrayList<float[]> uvs;
-        ArrayList<float[]> texOffset;
+        ArrayList<Integer> texOffset;
         ArrayList<float[]> aos;
 
         public ChunkMesh(
                 ArrayList<float[]> vertices,
                 ArrayList<int[]> indices,
                 ArrayList<float[]> uvs,
-                ArrayList<float[]> texOffset,
+                ArrayList<Integer> texOffset,
                 ArrayList<float[]> aos
         ) {
             this.vertices = vertices;
@@ -339,7 +347,7 @@ public class ChunkRenderer implements LayeredRenderer {
         return voxels[x + dims[0] * (y + dims[1] * z)];
     }
 
-    private int getAo(int[] currentPos, int[] step, int axis, boolean neg) {
+    private int getAo(int[] currentPos, int[] step, int axis, boolean positive) {
         int[] aoLevels = new int[4];
         int x = currentPos[0];
         int y = currentPos[1];
@@ -360,9 +368,9 @@ public class ChunkRenderer implements LayeredRenderer {
             int s1 = cornerOffsets[i][0];
             int s2 = cornerOffsets[i][1];
 
-            int[] side1 = neg ? new int[]{-step[0], -step[1], -step[2]} : new int[]{0, 0, 0};
-            int[] side2 = neg ? new int[]{-step[0], -step[1], -step[2]} : new int[]{0, 0, 0};
-            int[] corner = neg ? new int[]{-step[0], -step[1], -step[2]} : new int[]{0, 0, 0};
+            int[] side1 = positive ? new int[]{0, 0, 0} : new int[]{-step[0], -step[1], -step[2]};
+            int[] side2 = positive ? new int[]{0, 0, 0} : new int[]{-step[0], -step[1], -step[2]};
+            int[] corner = positive ? new int[]{0, 0, 0} : new int[]{-step[0], -step[1], -step[2]};
 
             side1[a1] += s1;
             side2[a2] += s2;
@@ -418,14 +426,30 @@ public class ChunkRenderer implements LayeredRenderer {
         return id;
     }
 
+    private int getTextureValue(int id, int axis, boolean positive) {
+        if(id == 0) return 0; //0 can still be a valid texture so we must return texture + 1;
+
+        Block block = Blocks.get(id);
+        int texture;
+
+        if (axis == 1) {
+            texture = block.getTexture(positive ? "top" : "bottom").getId();
+        } else {
+            texture = block.getTexture().getId();
+        }
+
+        return texture + 1;
+    }
+
     private ChunkMesh generateMesh(int[] dims, int[] voxels) {
         int[] mask = new int[0];
         int[] aoMask = new int[0];
+        int[] texMask = new int[0];
 
         ArrayList<float[]> vertices = new ArrayList<>();
         ArrayList<int[]> indices = new ArrayList<>();
         ArrayList<float[]> uvs = new ArrayList<>();
-        ArrayList<float[]> textures = new ArrayList<>();
+        ArrayList<Integer> textures = new ArrayList<>();
         ArrayList<float[]> aos = new ArrayList<>();
 
         // Sweep across 3 dimensions: X, Y, Z (0, 1, 2)
@@ -440,6 +464,7 @@ public class ChunkRenderer implements LayeredRenderer {
             if (mask.length < dims[u] * dims[v]) {
                 mask = new int[dims[u] * dims[v]];
                 aoMask = new int[dims[u] * dims[v]];
+                texMask = new int[dims[u] * dims[v]];
             }
 
             for (pos[axis] = -1; pos[axis] < dims[axis]; ) {
@@ -459,6 +484,7 @@ public class ChunkRenderer implements LayeredRenderer {
                         if ((currID != 0) == (nextID != 0)) {
                             mask[n] = 0;
                             aoMask[n] = 3;
+                            texMask[n] = 0;
                         } else {
                             // Generate an AO for the block, the value will be a bitwise total unique to the AO pattern
                             if (currID != 0) {
@@ -467,16 +493,18 @@ public class ChunkRenderer implements LayeredRenderer {
                                         nextPos,
                                         step,
                                         axis,
-                                        false
+                                        true
                                 );
+                                texMask[n] = getTextureValue(currID, axis, true);
                             } else {
                                 mask[n] = -getMaskValue(nextID, pos, new int[] { 0, 0, 0 });
                                 aoMask[n] = -this.getAo(
                                         nextPos,
                                         step,
                                         axis,
-                                        true
+                                        false
                                 );
+                                texMask[n] = -getTextureValue(nextID, axis, false);
                             }
                         }
                     }
@@ -490,10 +518,11 @@ public class ChunkRenderer implements LayeredRenderer {
                     for (int i = 0; i < dims[u]; ) {
                         int blockId = mask[n];
                         int aoVal = aoMask[n];
+                        int texVal = texMask[n];
                         if (blockId != 0) {
                             // Calculate quad width
                             int width = 1;
-                            while (i + width < dims[u] && blockId == mask[n + width] && aoVal == aoMask[n + width]) {
+                            while (i + width < dims[u] && blockId == mask[n + width] && aoVal == aoMask[n + width] && texVal == texMask[n + width]) {
                                 ++width;
                             }
 
@@ -502,7 +531,7 @@ public class ChunkRenderer implements LayeredRenderer {
                             boolean stop = false;
                             while (j + height < dims[v]) {
                                 for (int k = 0; k < width; ++k) {
-                                    if (blockId != mask[n + k + height * dims[u]] || aoVal != aoMask[n + k + height * dims[u]]) {
+                                    if (blockId != mask[n + k + height * dims[u]] || aoVal != aoMask[n + k + height * dims[u]] || texVal != texMask[n + k + height * dims[u]]) {
                                         stop = true;
                                         break;
                                     }
@@ -518,26 +547,16 @@ public class ChunkRenderer implements LayeredRenderer {
                             int[] dv = new int[]{0, 0, 0};
 
                             // Determine face orientation
-                            boolean isPositiveFace;
+                            boolean isPositiveFace = blockId > 0;
+                            texVal = Math.abs(texVal) - 1;
 
-                            if (blockId > 0) {
-                                isPositiveFace = true;
+                            if (isPositiveFace) {
                                 du[u] = width;
                                 dv[v] = height;
                             } else {
-                                isPositiveFace = false;
-                                blockId = -blockId;
                                 aoVal = -aoVal;
                                 dv[u] = width;
                                 du[v] = height;
-                            }
-
-                            // Get block and texture offset
-                            Block block = Blocks.get(blockId);
-                            float[] texOffset = block.getUv();
-                            if (axis == 1) {
-                                //TODO
-                                //texOffset = block.getTexture(isPositiveFace ? "top" : "bottom");
                             }
 
                             // Prepare base vertex count and corners
@@ -609,14 +628,14 @@ public class ChunkRenderer implements LayeredRenderer {
                                 });
                             }
 
+                            // UV
+                            uvs.add(uv);
+
                             // Tex Offset
-                            textures.add(texOffset);
+                            textures.add(texVal);
 
                             // AO Values
                             aos.add(faceAO);
-
-                            // UV
-                            uvs.add(uv);
 
                             // Zero the mask
                             for (int dy = 0; dy < height; ++dy) {
