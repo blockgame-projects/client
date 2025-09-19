@@ -1,6 +1,9 @@
 package com.james090500.renderer;
 
+import com.james090500.textures.TextureLocation;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
+import java.util.Arrays;
 
 public class ModelBuilder extends InstancedBlockRenderer {
 
@@ -63,18 +66,24 @@ public class ModelBuilder extends InstancedBlockRenderer {
      * @param texture The texture to add to all sides
      * @return ModelBuilder instance
      */
-    public ModelBuilder setTexture(float[] texture) {
+    public ModelBuilder setUV(float[] texture) {
         this.setUV(6, texture);
         return this;
     }
 
-    /**
-     * Adds the UV texture to the cube
-     * @param uvBases The float array of texture order
-     * @return ModelBuilder instance
-     */
-    public ModelBuilder setTexture(float[][] uvBases) {
-        this.setUV(6, uvBases);
+    public ModelBuilder setTexture(TextureLocation[] texture) {
+        int[] textures = new int[6];
+        for(int i = 0; i < 6; i++) {
+            textures[i] = texture[i].getId();
+        }
+        super.setTexture(textures);
+        return this;
+    }
+
+    public ModelBuilder setTexture(TextureLocation texture) {
+        int[] textures = new int[6];
+        Arrays.fill(textures, texture.getId());
+        super.setTexture(textures);
         return this;
     }
 

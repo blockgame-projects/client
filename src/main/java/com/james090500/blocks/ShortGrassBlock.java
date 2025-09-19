@@ -14,11 +14,11 @@ public class ShortGrassBlock extends VegetationBlock implements IBlockRender {
         this.texture = TextureLocation.get("assets/foliage/short_grass");
         this.transparent = true;
         this.solid = false;
-        this.model = new VegetationModel(this.uv);
+        this.model = new VegetationModel(this.uv, this.texture);
     }
 
     @Override
-    public void render(ObjectList<Vector3i> position) {
-        this.model.render(position);
+    public void render(ObjectList<Vector3i> positions) {
+        this.model.render(positions);
     }
 }

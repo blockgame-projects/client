@@ -27,7 +27,7 @@ public class CactusBlock extends Block implements IBlockRender {
     }
 
     @Override
-    public void render(ObjectList<Vector3i> position) {
-        this.model.render(position);
+    public void render(ObjectList<Vector3i> positions) {
+        this.model.render(positions);
     }
 }

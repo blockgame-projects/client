@@ -22,6 +22,7 @@ public class Chunk {
     public final int chunkX;
     public final int chunkZ;
 
+    private boolean visible = true;
     private boolean queued = false;
 
     public boolean needsMeshing = false;
@@ -120,7 +121,7 @@ public class Chunk {
      * Handle chunk generation
      */
     public void generate() {
-        if (this.queued || this.chunkStatus == ChunkStatus.FINISHED) return;
+        if (this.queued || !this.visible || this.chunkStatus == ChunkStatus.FINISHED) return;
 
         this.queued = true;
         ThreadUtil.getQueue("worldGen").submit(() -> {

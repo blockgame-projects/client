@@ -18,7 +18,6 @@ public class ChunkShader extends Shader {
                 out vec2 vUv;
                 flat out uint vLayer;
                 out vec3 mvPos;
-                out vec2 vTexCord;
                 out float vAo;
         
                 void main() {

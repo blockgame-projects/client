@@ -40,7 +40,7 @@ public class TextureManager {
             String filePath = assets.get(i);
             ByteBuffer pixels = loadTextureFromFile(filePath);
 
-            if(filePath.contains("assets/blocks")) {
+            if(filePath.contains("assets/blocks") || filePath.contains("assets/foliage")) {
                 glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, tileSize, tileSize, 1, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
                 TextureLocation.get(filePath).setId(i);
             }

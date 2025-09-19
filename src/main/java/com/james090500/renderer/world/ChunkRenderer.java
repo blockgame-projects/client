@@ -12,6 +12,7 @@ import com.james090500.utils.ThreadUtil;
 import com.james090500.world.Chunk;
 import com.james090500.world.ChunkStatus;
 import com.james090500.world.World;
+import it.unimi.dsi.fastutil.ints.Int2IntArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -39,6 +40,7 @@ public class ChunkRenderer implements LayeredRenderer {
     private int transVAO;
     public int transVertexCount;
 
+    private final Int2IntArrayMap customVBO = new Int2IntArrayMap();
     private final Object2ObjectArrayMap<IBlockRender, ObjectList<Vector3i>> customBlockModels = new Object2ObjectArrayMap<>();
 
     public ChunkRenderer(Chunk chunk) {
@@ -84,64 +86,53 @@ public class ChunkRenderer implements LayeredRenderer {
 
         ThreadUtil.getMainQueue().add(() -> {
             RenderManager.remove(this);
-            this.createMesh(solidChunkMesh, false);
-            this.createMesh(transparentChunkMesh, true);
-            RenderManager.add(this);
 
             customBlockModels.clear();
             customBlockModels.putAll(newCustomBlockModels);
+
+            this.createMesh(solidChunkMesh, false);
+            this.createMesh(transparentChunkMesh, true);
+
+            RenderManager.add(this);
         });
     }
 
     private void createMesh(ChunkMesh chunkMesh, boolean transparent) {
         int numVertices = chunkMesh.vertices.size();
-        int numFaces = chunkMesh.indices.size();
+        int numQuads = chunkMesh.indices.size();
 
-        // Allocate buffers with exact size
+        // Allocate exact sizes
         FloatBuffer vertexBuffer = ByteBuffer.allocateDirect(numVertices * 3 * Float.BYTES).order(ByteOrder.nativeOrder()).asFloatBuffer();
-        IntBuffer indexBuffer = ByteBuffer.allocateDirect(numFaces * 6 * Integer.BYTES).order(ByteOrder.nativeOrder()).asIntBuffer();
-        FloatBuffer uvBuffer = ByteBuffer.allocateDirect(numVertices * 2 * Float.BYTES).order(ByteOrder.nativeOrder()).asFloatBuffer();
-        IntBuffer texLayerBuffer = ByteBuffer.allocateDirect(numVertices * Integer.BYTES).order(ByteOrder.nativeOrder()).asIntBuffer();
-        FloatBuffer aoBuffer = ByteBuffer.allocateDirect(numVertices * Float.BYTES).order(ByteOrder.nativeOrder()).asFloatBuffer();
+        IntBuffer indexBuffer = ByteBuffer.allocateDirect(numQuads * 6 * Integer.BYTES).order(ByteOrder.nativeOrder()).asIntBuffer();
+        FloatBuffer uvBuffer = ByteBuffer.allocateDirect(numQuads * 8 * Float.BYTES).order(ByteOrder.nativeOrder()).asFloatBuffer();
+        IntBuffer texLayerBuffer = ByteBuffer.allocateDirect(numQuads * 4 * Integer.BYTES).order(ByteOrder.nativeOrder()).asIntBuffer();
+        FloatBuffer aoBuffer = ByteBuffer.allocateDirect(numQuads * 4 * Float.BYTES).order(ByteOrder.nativeOrder()).asFloatBuffer();
 
-        for (int i = 0; i < chunkMesh.vertices.size(); i++) {
-            float[] v = chunkMesh.vertices.get(i);
-            vertexBuffer.put(v[0]);
-            vertexBuffer.put(v[1]);
-            vertexBuffer.put(v[2]);
+        // Positions (vec3 per vertex)
+        for (float[] v : chunkMesh.vertices) {
+            vertexBuffer.put(v, 0, 3);
         }
 
-        for(int i = 0; i < chunkMesh.indices.size(); i++) {
-            int[] in = chunkMesh.indices.get(i);
-            indexBuffer.put(in[0]);
-            indexBuffer.put(in[1]);
-            indexBuffer.put(in[2]);
-            indexBuffer.put(in[0]);
-            indexBuffer.put(in[2]);
-            indexBuffer.put(in[3]);
+        // Indices (quad -> two triangles)
+        for (int[] q : chunkMesh.indices) {
+            indexBuffer
+                    .put(q[0]).put(q[1]).put(q[2])
+                    .put(q[0]).put(q[2]).put(q[3]);
         }
 
-        for (int i = 0; i < chunkMesh.uvs.size(); i++) {
-            float[] t = chunkMesh.uvs.get(i);
-            for (int j = 0; j < 8; j++) {
-                uvBuffer.put(t[j]);
-            }
+        // UVs (8 floats per quad)
+        for (float[] uv : chunkMesh.uvs) {
+            uvBuffer.put(uv, 0, 8);
         }
 
-
-        for (int i = 0; i < chunkMesh.texOffset.size(); i++) {
-            texLayerBuffer.put(chunkMesh.texOffset.get(i));
-            texLayerBuffer.put(chunkMesh.texOffset.get(i));
-            texLayerBuffer.put(chunkMesh.texOffset.get(i));
-            texLayerBuffer.put(chunkMesh.texOffset.get(i));
+        // Texture layer (same layer repeated for the quad’s 4 vertices)
+        for (int layer : chunkMesh.texOffset) {
+            texLayerBuffer.put(layer).put(layer).put(layer).put(layer);
         }
 
-        for (int i = 0; i < chunkMesh.aos.size(); i++) {
-            float[] a = chunkMesh.aos.get(i);
-            aoBuffer.put(a[0]);
-            aoBuffer.put(a[1]);
-            aoBuffer.put(a[2]);
-            aoBuffer.put(a[3]);
+        // Ambient occlusion (4 verts per quad)
+        for (float[] a : chunkMesh.aos) {
+            aoBuffer.put(a, 0, 4);
         }
 
         // Flip for OpenGL
@@ -233,25 +224,15 @@ public class ChunkRenderer implements LayeredRenderer {
         glBindVertexArray(0);
         ShaderManager.chunk.stop();
 
-        Vector3f playerPos = BlockGame.getInstance().getLocalPlayer().getPosition();
-        float maxDist = 128f;
-        float maxDistSq = maxDist * maxDist;
-
-        // Filter instances by distance
-        float dx = (chunk.chunkX * chunk.chunkSize) - playerPos.x;
-        float dz = (chunk.chunkZ * chunk.chunkSize) - playerPos.z;
-        float distSq = dx*dx + dz*dz;
-        if (distSq <= maxDistSq) {
-            boolean cullFace = glIsEnabled(GL_CULL_FACE);
-            glDisable(GL_CULL_FACE);
-            for (Object2ObjectMap.Entry<IBlockRender, ObjectList<Vector3i>> e : customBlockModels.object2ObjectEntrySet()) {
-                IBlockRender blockModel = e.getKey();
-                ObjectList<Vector3i> instances = e.getValue();
-                glBindTexture(GL_TEXTURE_2D, ((Block) blockModel).texture.getTexture());
-                blockModel.render(instances);
-            }
-            if(cullFace) glEnable(GL_CULL_FACE);
+        // Render foliage
+        boolean cullFace = glIsEnabled(GL_CULL_FACE);
+        glDisable(GL_CULL_FACE);
+        for (Object2ObjectMap.Entry<IBlockRender, ObjectList<Vector3i>> e : customBlockModels.object2ObjectEntrySet()) {
+            IBlockRender blockModel = e.getKey();
+            ObjectList<Vector3i> instances = e.getValue();
+            blockModel.render(instances);
         }
+        if(cullFace) glEnable(GL_CULL_FACE);
     }
 
     @Override
