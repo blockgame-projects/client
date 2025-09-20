@@ -19,11 +19,12 @@ public class CactusModel implements IBlockModel {
         TextureLocation bottomTexture = Blocks.cactusBlock.getTexture("bottom");
         TextureLocation[] textures = new TextureLocation[] { sideTexture, sideTexture, sideTexture, sideTexture, topTexture, bottomTexture };
 
-        cactusModel = new ModelBuilder()
-                .addCube(0f, 0f, 0f, 1f, 1f, 0.9375f)
-                .setUV(uv)
-                .setTexture(textures)
-                .build();
+        cactusModel = new ModelBuilder();
+        cactusModel.addCube(0f, 0f, 0f, 1f, 1f, 0.9375f);
+        cactusModel.setFaces(6);
+        cactusModel.setUV(uv);
+        cactusModel.setTexture(textures);
+        cactusModel.build();
     }
 
     /**

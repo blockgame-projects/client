@@ -1,0 +1,29 @@
+plugins {
+    id 'java'
+}
+
+group = 'com.james090500.profiler'
+version = '0.0.1'
+
+repositories {
+    mavenCentral()
+    maven {
+        name 'luck-repo'
+        url 'https://repo.lucko.me/'
+    }
+}
+
+dependencies {
+    implementation "net.kyori:adventure-text-serializer-plain:4.24.0"
+    implementation "me.lucko:spark-common:1.10.142-SNAPSHOT"
+    implementation 'org.slf4j:slf4j-simple:2.0.16'
+    implementation 'com.google.code.gson:gson:2.9.0'
+    implementation('com.google.guava:guava:31.1-jre') {
+        exclude(module: 'jsr305')
+        exclude(module: 'error_prone_annotations')
+        exclude(module: 'failureaccess')
+        exclude(module: 'listenablefuture')
+        exclude(module: 'j2objc-annotations')
+        exclude(module: 'checker-qual')
+    }
+}

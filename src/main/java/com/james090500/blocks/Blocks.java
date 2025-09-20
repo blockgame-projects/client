@@ -66,7 +66,7 @@ public class Blocks {
 
     static {
         Blocks.REGISTRY.forEach((id, block) -> {
-            if(block instanceof IBlockRender) block.getModel().create();
+            if(block.getModel() != null) block.getModel().create();
         });
     }
 }

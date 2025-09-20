@@ -1,9 +1,6 @@
 package com.james090500.renderer;
 
-import com.james090500.textures.TextureLocation;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-
-import java.util.Arrays;
 
 public class ModelBuilder extends InstancedBlockRenderer {
 
@@ -48,50 +45,23 @@ public class ModelBuilder extends InstancedBlockRenderer {
 
     /**
      * Add a cube to the builder
-     * @param x Start X position
-     * @param y Start Y position
-     * @param z Start z position
-     * @param width Width of the cube
+     *
+     * @param x      Start X position
+     * @param y      Start Y position
+     * @param z      Start z position
+     * @param width  Width of the cube
      * @param height Height of the cube
-     * @param depth Depth of the cube
-     * @return ModelBuilder instance
+     * @param depth  Depth of the cube
      */
-    public ModelBuilder addCube(float x, float y, float z, float width, float height, float depth) {
+    public void addCube(float x, float y, float z, float width, float height, float depth) {
         cubes.add(new Cube(x, y, z, width, height, depth));
-        return this;
-    }
-
-    /**
-     * Adds the UV texture to the cube
-     * @param texture The texture to add to all sides
-     * @return ModelBuilder instance
-     */
-    public ModelBuilder setUV(float[] texture) {
-        this.setUV(6, texture);
-        return this;
-    }
-
-    public ModelBuilder setTexture(TextureLocation[] texture) {
-        int[] textures = new int[6];
-        for(int i = 0; i < 6; i++) {
-            textures[i] = texture[i].getId();
-        }
-        super.setTexture(textures);
-        return this;
-    }
-
-    public ModelBuilder setTexture(TextureLocation texture) {
-        int[] textures = new int[6];
-        Arrays.fill(textures, texture.getId());
-        super.setTexture(textures);
-        return this;
     }
 
     /**
      * Build the cubes into a vertices array
      * @return The result
      */
-    public ModelBuilder build() {
+    public void build() {
         // 1. Precompute total length
         int totalVertices = 0;
         int totalIndices = 0;
@@ -121,7 +91,5 @@ public class ModelBuilder extends InstancedBlockRenderer {
         this.setVertices(vertices);
         this.setIndices(indices);
         this.create();
-        
-        return this;
     }
 }

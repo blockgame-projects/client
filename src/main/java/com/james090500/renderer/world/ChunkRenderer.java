@@ -4,6 +4,7 @@ import com.james090500.BlockGame;
 import com.james090500.blocks.Block;
 import com.james090500.blocks.Blocks;
 import com.james090500.blocks.IBlockRender;
+import com.james090500.blocks.model.IBlockModel;
 import com.james090500.renderer.LayeredRenderer;
 import com.james090500.renderer.RenderManager;
 import com.james090500.renderer.ShaderManager;
@@ -40,8 +41,7 @@ public class ChunkRenderer implements LayeredRenderer {
     private int transVAO;
     public int transVertexCount;
 
-    private final Int2IntArrayMap customVBO = new Int2IntArrayMap();
-    private final Object2ObjectArrayMap<IBlockRender, ObjectList<Vector3i>> customBlockModels = new Object2ObjectArrayMap<>();
+    private final Object2ObjectArrayMap<IBlockModel, ObjectList<Vector3i>> customBlockModels = new Object2ObjectArrayMap<>();
 
     public ChunkRenderer(Chunk chunk) {
         this.chunk = chunk;
@@ -57,15 +57,15 @@ public class ChunkRenderer implements LayeredRenderer {
         this.chunk.needsMeshing = false;
 
         // Temp list
-        Object2ObjectArrayMap<IBlockRender, ObjectList<Vector3i>> newCustomBlockModels = new Object2ObjectArrayMap<>();
+        Object2ObjectArrayMap<IBlockModel, ObjectList<Vector3i>> newCustomBlockModels = new Object2ObjectArrayMap<>();
 
         VoxelResult solidResult = makeVoxels(new int[]{0, 0, 0}, new int[]{chunk.chunkSize, chunk.chunkHeight, chunk.chunkSize}, (x, y, z) -> {
             Block block = chunk.getBlock(x, y, z);
-            if (block != null && !block.isTransparent() && !(block instanceof IBlockRender)) {
+            if (block != null && !block.isTransparent() && block.getModel() == null) {
                 return block.getId();
-            } else if(block instanceof IBlockRender) {
+            } else if(block != null && block.getModel() != null) {
                 Vector3i position = new Vector3i(x + this.chunk.chunkX * this.chunk.chunkSize, y, z + this.chunk.chunkZ * this.chunk.chunkSize);
-                newCustomBlockModels.computeIfAbsent((IBlockRender) block, b -> new ObjectArrayList<>()).add(position);
+                newCustomBlockModels.computeIfAbsent(block.getModel(), b -> new ObjectArrayList<>()).add(position);
                 return 0;
             } else {
                 return 0;
@@ -74,7 +74,7 @@ public class ChunkRenderer implements LayeredRenderer {
 
         VoxelResult transparentResult = makeVoxels(new int[]{0, 0, 0}, new int[]{chunk.chunkSize, chunk.chunkHeight, chunk.chunkSize}, (x, y, z) -> {
             Block block = chunk.getBlock(x, y, z);
-            if (block != null && block.isTransparent() && !(block instanceof IBlockRender)) {
+            if (block != null && block.isTransparent() && block.getModel() == null) {
                 return block.getId();
             } else {
                 return 0;
@@ -227,8 +227,8 @@ public class ChunkRenderer implements LayeredRenderer {
         // Render foliage
         boolean cullFace = glIsEnabled(GL_CULL_FACE);
         glDisable(GL_CULL_FACE);
-        for (Object2ObjectMap.Entry<IBlockRender, ObjectList<Vector3i>> e : customBlockModels.object2ObjectEntrySet()) {
-            IBlockRender blockModel = e.getKey();
+        for (Object2ObjectMap.Entry<IBlockModel, ObjectList<Vector3i>> e : customBlockModels.object2ObjectEntrySet()) {
+            IBlockModel blockModel = e.getKey();
             ObjectList<Vector3i> instances = e.getValue();
             blockModel.render(instances);
         }

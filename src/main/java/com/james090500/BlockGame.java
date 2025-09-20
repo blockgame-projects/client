@@ -41,6 +41,8 @@ public class BlockGame {
     public BlockGame() {
         instance = this;
 
+        //spark = new Spark("start open");
+
         clientWindow = new ClientWindow();
         clientWindow.create();
 
@@ -143,6 +145,8 @@ public class BlockGame {
         this.localPlayer = null;
         this.world = null;
         this.camera = null;
+
+        //spark.disable();
 
         glfwSetInputMode(clientWindow.getWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     }

@@ -1,6 +1,7 @@
 package com.james090500.renderer;
 
 import com.james090500.BlockGame;
+import com.james090500.textures.TextureLocation;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.Setter;
 import org.joml.Vector3i;
@@ -29,15 +30,14 @@ public class InstancedBlockRenderer {
     @Setter
     int[] indices;
 
-    @Setter
     float[] uv;
 
     @Setter
+    int faces;
+
     int[] texture;
 
     public void create() {
-        System.out.println(1);
-        System.out.println(Arrays.toString(texture));
         vao = glGenVertexArrays();
         glBindVertexArray(vao);
 
@@ -82,16 +82,37 @@ public class InstancedBlockRenderer {
         glBindVertexArray(0);
     }
 
-    public void setUV(int faceCount, float[] uvBases) {
-        float[][] newUvBases = new float[faceCount][];
-        Arrays.fill(newUvBases, uvBases);
-        this.setUV(faceCount, newUvBases);
+    public void setTexture(TextureLocation layer) {
+        int numVerts = this.faces * 4;
+        this.texture = new int[numVerts];
+        Arrays.fill(this.texture, layer.getId());
     }
 
-    public void setUV(int faceCount, float[][] uvBases) {
-        this.uv = new float[8 * faceCount];
-        for (int face = 0; face < faceCount; face++) {
-            System.arraycopy(uvBases[face], 0, this.uv, face * 8, 8);
+    public void setTexture(TextureLocation[] faceLayers) {
+        if (faceLayers == null) throw new IllegalArgumentException("faceLayers is null");
+        if (faceLayers.length < this.faces) {
+            throw new IllegalArgumentException("faceLayers.length (" + faceLayers.length + ") < faces (" + this.faces + ")");
+        }
+
+        int numVerts = this.faces * 4;
+        this.texture = new int[numVerts];
+        for (int face = 0; face < this.faces; face++) {
+            int id = faceLayers[face].getId();
+            int base = face * 4;
+            this.texture[base] = id;
+            this.texture[base + 1] = id;
+            this.texture[base + 2] = id;
+            this.texture[base + 3] = id;
+        }
+    }
+
+    public void setUV(float[] uvBases) {
+        if (uvBases == null || uvBases.length != 8) {
+            throw new IllegalArgumentException("UV must have 8 floats (4 verts × 2 coords).");
+        }
+        this.uv = new float[8 * this.faces];
+        for (int face = 0; face < this.faces; face++) {
+            System.arraycopy(uvBases, 0, this.uv, face * 8, 8);
         }
     }
 

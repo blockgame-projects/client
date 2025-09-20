@@ -6,8 +6,12 @@ import com.james090500.textures.TextureLocation;
 public class VegetationModel extends InstancedBlockRenderer implements IBlockModel {
 
     float[] vertices = {
-        0f, 0f, 0f, 1f, 0f, 1f, 1f, 1f, 1f, 0f, 1f, 0f,
-        1f, 0f, 0f, 0f, 0f, 1f, 0f, 1f, 1f, 1f, 1f, 0f,
+        0f, 0f, 0f, 1f,
+        0f, 1f, 1f, 1f,
+        1f, 0f, 1f, 0f,
+        1f, 0f, 0f, 0f,
+        0f, 1f, 0f, 1f,
+        1f, 1f, 1f, 0f,
     };
 
     int[] indices = {
@@ -16,18 +20,10 @@ public class VegetationModel extends InstancedBlockRenderer implements IBlockMod
     };
 
     public VegetationModel(float[] uvBases, TextureLocation textureLocation) {
+        this.setFaces(2);
         this.setIndices(indices);
         this.setVertices(vertices);
-        this.setUV(2, uvBases);
-        this.setTexture(new int[]{
-                textureLocation.getId(),
-                textureLocation.getId(),
-                textureLocation.getId(),
-                textureLocation.getId(),
-                textureLocation.getId(),
-                textureLocation.getId(),
-                textureLocation.getId(),
-                textureLocation.getId(),
-        });
+        this.setUV(uvBases);
+        this.setTexture(textureLocation);
     }
 }
