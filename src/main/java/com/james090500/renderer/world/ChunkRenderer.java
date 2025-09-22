@@ -12,11 +12,7 @@ import com.james090500.utils.ThreadUtil;
 import com.james090500.world.Chunk;
 import com.james090500.world.ChunkStatus;
 import com.james090500.world.World;
-import it.unimi.dsi.fastutil.ints.Int2IntArrayMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectList;
+import it.unimi.dsi.fastutil.objects.*;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
@@ -26,6 +22,7 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
+import java.util.Map;
 
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL30.*;
@@ -40,7 +37,7 @@ public class ChunkRenderer implements LayeredRenderer {
     private int transVAO;
     public int transVertexCount;
 
-    private final Object2ObjectArrayMap<IBlockModel, ObjectList<Vector3i>> decorPos = new Object2ObjectArrayMap<>();
+    private final Object2ObjectArrayMap<IBlockModel, InstancedBlockRenderer> blockModels = new Object2ObjectArrayMap<>();
 
     public ChunkRenderer(Chunk chunk) {
         this.chunk = chunk;
@@ -56,13 +53,14 @@ public class ChunkRenderer implements LayeredRenderer {
         this.chunk.needsMeshing = false;
 
         // Temp list
+        Object2ObjectArrayMap<IBlockModel, ObjectList<Vector3i>> blockModelPos = new Object2ObjectArrayMap<>();
         VoxelResult solidResult = makeVoxels(new int[]{0, 0, 0}, new int[]{chunk.chunkSize, chunk.chunkHeight, chunk.chunkSize}, (x, y, z) -> {
             Block block = chunk.getBlock(x, y, z);
             if (block != null && !block.isTransparent() && block.getModel() == null) {
                 return block.getId();
             } else if(block != null && block.getModel() != null) {
                 Vector3i position = new Vector3i(x + this.chunk.chunkX * this.chunk.chunkSize, y, z + this.chunk.chunkZ * this.chunk.chunkSize);
-                decorPos.computeIfAbsent(block.getModel(), b -> new ObjectArrayList<>()).add(position);
+                blockModelPos.computeIfAbsent(block.getModel(), b -> new ObjectArrayList<>()).add(position);
                 return 0;
             } else {
                 return 0;
@@ -84,12 +82,23 @@ public class ChunkRenderer implements LayeredRenderer {
         ThreadUtil.getMainQueue().add(() -> {
             RenderManager.remove(this);
 
-            for (Object2ObjectMap.Entry<IBlockModel, ObjectList<Vector3i>> e : decorPos.object2ObjectEntrySet()) {
-                IBlockModel blockModel = e.getKey();
-                ObjectList<Vector3i> instances = e.getValue();
-                blockModel.updatePositions(instances);
+            for (Object2ObjectMap.Entry<IBlockModel, ObjectList<Vector3i>> e : blockModelPos.object2ObjectEntrySet()) {
+                IBlockModel model = e.getKey();
+                ObjectList<Vector3i> positions = e.getValue();
+
+                InstancedBlockRenderer r = blockModels.computeIfAbsent(model, InstancedBlockRenderer::new);
+                r.updatePositions(positions);
             }
-            decorPos.clear();
+
+            ObjectSet<IBlockModel> toRemove = new ObjectOpenHashSet<>(blockModels.keySet());
+            toRemove.removeAll(blockModelPos.keySet());
+
+            for (IBlockModel dead : toRemove) {
+                InstancedBlockRenderer r = blockModels.remove(dead);
+                if (r != null) {
+                    r.updatePositions(ObjectLists.emptyList());
+                }
+            }
 
             this.createMesh(solidChunkMesh, false);
             this.createMesh(transparentChunkMesh, true);
@@ -225,15 +234,13 @@ public class ChunkRenderer implements LayeredRenderer {
         glBindVertexArray(0);
         ShaderManager.chunk.stop();
 
-//        // Render foliage
-//        boolean cullFace = glIsEnabled(GL_CULL_FACE);
-//        glDisable(GL_CULL_FACE);
-//        for (Object2ObjectMap.Entry<IBlockModel, ObjectList<Vector3i>> e : customBlockModels.object2ObjectEntrySet()) {
-//            IBlockModel blockModel = e.getKey();
-//            ObjectList<Vector3i> instances = e.getValue();
-//            blockModel.render();
-//        }
-//        if(cullFace) glEnable(GL_CULL_FACE);
+        // Render foliage
+        boolean cullFace = glIsEnabled(GL_CULL_FACE);
+        glDisable(GL_CULL_FACE);
+        for (Object2ObjectMap.Entry<IBlockModel, InstancedBlockRenderer> e : blockModels.object2ObjectEntrySet()) {
+            e.getValue().render();
+        }
+        if(cullFace) glEnable(GL_CULL_FACE);
     }
 
     @Override
@@ -297,24 +304,24 @@ public class ChunkRenderer implements LayeredRenderer {
     /**
      * Create the voxels which should be renderer
      *
-     * @param l
-     * @param h
+     * @param start The start position
+     * @param end The end position
      * @param f
      */
-    private static VoxelResult makeVoxels(int[] l, int[] h, VoxelFunction f) {
+    private static VoxelResult makeVoxels(int[] start, int[] end, VoxelFunction f) {
         int[] dims = new int[]{
-                h[0] - l[0],
-                h[1] - l[1],
-                h[2] - l[2]
+                end[0] - start[0],
+                end[1] - start[1],
+                end[2] - start[2]
         };
 
         int totalSize = dims[0] * dims[1] * dims[2];
         int[] voxels = new int[totalSize];
         int n = 0;
 
-        for (int k = l[2]; k < h[2]; ++k) {
-            for (int j = l[1]; j < h[1]; ++j) {
-                for (int i = l[0]; i < h[0]; ++i, ++n) {
+        for (int k = start[2]; k < end[2]; ++k) {
+            for (int j = start[1]; j < end[1]; ++j) {
+                for (int i = start[0]; i < end[0]; ++i, ++n) {
                     voxels[n] = f.apply(i, j, k);
                 }
             }

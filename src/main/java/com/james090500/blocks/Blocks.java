@@ -63,10 +63,4 @@ public class Blocks {
     public static final ShortGrassBlock shortGrassBlock = register(ShortGrassBlock::new);
     public static final RedFlowerBlock redFlowerBlock = register(RedFlowerBlock::new);
     public static final YellowFlowerBlock yellowFlowerBlock = register(YellowFlowerBlock::new);
-
-    static {
-        Blocks.REGISTRY.forEach((id, block) -> {
-            if(block.getModel() != null) block.getModel().create();
-        });
-    }
 }

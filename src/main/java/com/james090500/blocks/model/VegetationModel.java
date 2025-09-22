@@ -1,8 +1,9 @@
 package com.james090500.blocks.model;
 
-import com.james090500.renderer.InstancedBlockRenderer;
 import com.james090500.textures.TextureLocation;
 import lombok.Getter;
+
+import java.util.Arrays;
 
 public class VegetationModel implements IBlockModel {
 
@@ -29,10 +30,16 @@ public class VegetationModel implements IBlockModel {
     float[] uv;
 
     @Getter
-    TextureLocation texture;
+    TextureLocation[] texture;
 
     public VegetationModel(float[] uvBases, TextureLocation textureLocation) {
         this.uv = uvBases;
-        this.texture = textureLocation;
+        this.setTexture(textureLocation);
+    }
+
+    public void setTexture(TextureLocation layer) {
+        int numVerts = this.faces * 4;
+        this.texture = new TextureLocation[numVerts];
+        Arrays.fill(this.texture, layer);
     }
 }
