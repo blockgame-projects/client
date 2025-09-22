@@ -23,6 +23,7 @@ public class InstancedBlockRenderer {
 
     private int vao;
     private int instanceVbo;
+    private int totalElements;
 
     @Setter
     float[] vertices;
@@ -37,7 +38,7 @@ public class InstancedBlockRenderer {
 
     int[] texture;
 
-    public void create() {
+    public InstancedBlockRenderer() {
         vao = glGenVertexArrays();
         glBindVertexArray(vao);
 
@@ -116,16 +117,11 @@ public class InstancedBlockRenderer {
         }
     }
 
-    /**
-     * Render
-     */
-    public void render(ObjectList<Vector3i> positions) {
-        // TODO Remove - Ideally need a Instance for each chunk.
-        int totalElements = positions.size();
-        int needed = positions.size() * 3 * Float.BYTES;
-
-        FloatBuffer inst = MemoryUtil.memAllocFloat(totalElements * 3);
-        for (Vector3i p : positions) {
+    public void updatePositions(ObjectList<Vector3i> positions) {
+        totalElements = positions.size();
+        int needed = totalElements * 3 * Float.BYTES;
+        FloatBuffer inst = MemoryUtil.memAllocFloat(needed);
+        for(Vector3i p : positions) {
             inst.put(p.x).put(p.y).put(p.z);
         }
         inst.flip();
@@ -135,8 +131,12 @@ public class InstancedBlockRenderer {
         ByteBuffer dst = glMapBufferRange(GL_ARRAY_BUFFER, 0, needed, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
         dst.asFloatBuffer().put(inst);
         glUnmapBuffer(GL_ARRAY_BUFFER);
-        // TODO End
+    }
 
+    /**
+     * Render
+     */
+    public void render() {
         ShaderManager.instancedBlockShader.use();
         ShaderManager.instancedBlockShader.useFog();
 

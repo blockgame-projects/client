@@ -1,8 +1,15 @@
 package com.james090500.renderer;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import lombok.Getter;
 
-public class ModelBuilder extends InstancedBlockRenderer {
+public class ModelBuilder {
+
+    @Getter
+    private float[] vertices;
+
+    @Getter
+    private int[] indices;
 
     protected record Cube(float x, float y, float z, float width, float height, float depth) {
         public float[] getVertices() {
@@ -88,8 +95,7 @@ public class ModelBuilder extends InstancedBlockRenderer {
             indiPos += indis.length;
         }
 
-        this.setVertices(vertices);
-        this.setIndices(indices);
-        this.create();
+        this.vertices = vertices;
+        this.indices = indices;
     }
 }
