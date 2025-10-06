@@ -153,7 +153,7 @@ public class LocalPlayer {
 
         // Stop playing falling through the world
         if (getPosition().y < -30) {
-            getPosition().y = 100;
+            camera.y = 100;
         }
 
         // Dampen movement

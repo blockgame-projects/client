@@ -163,77 +163,83 @@ public class BlockGame {
      * @param clientWindow
      */
     private void loop(ClientWindow clientWindow) {
+        final double TICKS_PER_SECOND = 20.0;
+        final double NS_PER_TICK = 1_000_000_000.0 / TICKS_PER_SECOND; // 50_000_000 ns
+        final float FIXED_DELTA_SECONDS = 1.0f / (float)TICKS_PER_SECOND; // 0.05 seconds
+
         int fps = 0;
-        int ticks = 0;
-        long start = System.currentTimeMillis();
+        int tps = 0;
+        long fpsTimer = System.currentTimeMillis();
 
-        // Set the clear color
-        glClearColor(0.529f, 0.808f, 0.922f, 1.0f);
+        long lastTime = System.nanoTime();
+        double accumulator = 0.0;
 
-        // Run the rendering loop until the user has attempted to close
         double currentFrame = glfwGetTime();
         double lastFrame = currentFrame;
         double deltaTime;
 
-        while(!glfwWindowShouldClose(clientWindow.getWindow())) {
-            long tickLength = 50;
-            long endOfTick = System.currentTimeMillis() + tickLength;
-            long currentTime = System.currentTimeMillis();
-            ticks++;
+        // Set the clear color once
+        glClearColor(0.529f, 0.808f, 0.922f, 1.0f);
 
-            while (endOfTick >= currentTime) {
-                currentFrame = glfwGetTime();
-                deltaTime = currentFrame - lastFrame;
-                lastFrame = currentFrame;
+        while (!glfwWindowShouldClose(clientWindow.getWindow())) {
+            currentFrame = glfwGetTime();
+            deltaTime = currentFrame - lastFrame;
+            lastFrame = currentFrame;
 
-                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear the framebuffer
 
-                // Blending
-                glEnable(GL_BLEND);
-                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            long now = System.nanoTime();
+            long elapsedNanos = now - lastTime;
+            lastTime = now;
+            accumulator += (double) elapsedNanos;
 
-                // 3D Depth
-                glEnable(GL_DEPTH_TEST);
+            // Process input/events every frame
+            glfwPollEvents();          // make sure to poll events each loop
 
-                // Disable back faces
-                glEnable(GL_CULL_FACE); // Enable face culling
-
-                // Inputs etc
-                clientWindow.poll();
-
-                // Render all pending objects
-                RenderManager.render();
-
-                //TODO Temp I think
-                if(this.localPlayer != null) {
-                    this.localPlayer.render();
+            // Run fixed ticks while we've accumulated one-or-more tick durations
+            boolean didTick = false;
+            while (accumulator >= NS_PER_TICK) {
+                // --- TICK: update game logic at fixed rate ---
+                if (!BlockGame.getInstance().getConfig().isPaused()) {
+                    world.update(); // game logic should use FIXED_DELTA_SECONDS where appropriate
                 }
 
-                if(!BlockGame.getInstance().getConfig().isPaused()) {
-                    this.world.update();
+                accumulator -= NS_PER_TICK;
+                tps++;
+                didTick = true;
+            }
+
+            if(!BlockGame.getInstance().getConfig().isPaused()) {
+                if (this.localPlayer != null) {
                     this.localPlayer.update(deltaTime);
                 }
+            }
 
-                //Run a single main thread queue
-                ThreadUtil.runMainQueue();
+            ThreadUtil.runMainQueue(); // run main-thread queued tasks on tick
 
-                // Render UI
-                ScreenManager.render();
+            // Prepare GL state and render
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            glEnable(GL_DEPTH_TEST);
+            glEnable(GL_CULL_FACE);
 
-                // Swap the buffers
-                glfwSwapBuffers(clientWindow.getWindow());
+            // Inputs, render managers and UI (per-frame)
+            clientWindow.poll(); // your code — keep per-frame input/polling
+            RenderManager.render();
+            if (this.localPlayer != null) this.localPlayer.render(); // rendering uses alpha if desired
 
-                // FPS Calculator
-                currentTime = System.currentTimeMillis();
-                if (currentTime - start >= 1000) {
-                    BlockGame.getInstance().getConfig().setFPS(fps);
-                    BlockGame.getInstance().getConfig().setTicks(ticks);
-                    start = currentTime;
-                    fps = 0;
-                    ticks = 0;
-                } else {
-                    fps++;
-                }
+            ScreenManager.render();
+
+            glfwSwapBuffers(clientWindow.getWindow());
+            fps++;
+
+            // FPS / TPS reporting (once per second)
+            if (System.currentTimeMillis() - fpsTimer >= 1000) {
+                BlockGame.getInstance().getConfig().setFPS(fps);
+                BlockGame.getInstance().getConfig().setTicks(tps);
+                fps = 0;
+                tps = 0;
+                fpsTimer += 1000;
             }
         }
     }

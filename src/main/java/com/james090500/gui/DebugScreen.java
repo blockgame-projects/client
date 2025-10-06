@@ -38,12 +38,12 @@ public class DebugScreen extends Screen {
         Chunk chunk = BlockGame.getInstance().getWorld().getChunk(playerPosX, playerPosZ);
 
         if(chunk != null) {
-            FontManager.create().text("Current Chunk Info", 20f, 10f, 1900f);
+            FontManager.create().text("Current Chunk Info", 20f, 10f, 190f);
             FontManager.create().text("Chunk Coords: " + playerPosX + ", " + playerPosZ, 20f, 10f, 210f);
             FontManager.create().text("Chunk Status: " + chunk.chunkStatus.toString(), 20f, 10f, 230f);
             FontManager.create().text("Chunk Biome: " + BiomeGenerator.getBiome((int) position.x, (int) position.z), 20f, 10f, 250f);
             FontManager.create().text("Chunk Needs Meshing: " + chunk.needsMeshing, 20f, 10f, 270f);
-            FontManager.create().text("Chunk Needs Saving: " + chunk.needsSaving, 20f, 10f, 280f);
+            FontManager.create().text("Chunk Needs Saving: " + chunk.needsSaving, 20f, 10f, 290f);
             FontManager.create().text("Chunk Solid Vertices: " + chunk.getChunkRenderer().solidVertexCount, 20f, 10f, 310f);
             FontManager.create().text("Chunk Trans Vertices: " + chunk.getChunkRenderer().transVertexCount, 20f, 10f, 330f);
 

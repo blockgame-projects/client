@@ -53,6 +53,9 @@ public class World {
     @Getter @Setter
     private boolean forceUpdate = true;
 
+    @Getter @Setter
+    private long time;
+
     /**
      * Starts a remote world
      */
@@ -255,6 +258,11 @@ public class World {
      * update the world. This also loads and remove chunks as needed
      */
     public void update() {
+        this.time++;
+        if(this.time > 24000) {
+            this.time = 0;
+        }
+
         LocalPlayer player = BlockGame.getInstance().getLocalPlayer();
         int playerChunkX = (int) Math.floor(player.getPosition().x / 16);
         int playerChunkZ = (int) Math.floor(player.getPosition().z / 16);
