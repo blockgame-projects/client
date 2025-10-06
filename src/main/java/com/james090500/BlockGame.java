@@ -164,6 +164,7 @@ public class BlockGame {
      */
     private void loop(ClientWindow clientWindow) {
         int fps = 0;
+        int ticks = 0;
         long start = System.currentTimeMillis();
 
         // Set the clear color
@@ -173,56 +174,66 @@ public class BlockGame {
         double currentFrame = glfwGetTime();
         double lastFrame = currentFrame;
         double deltaTime;
-        while ( !glfwWindowShouldClose(clientWindow.getWindow()) ) {
-            currentFrame = glfwGetTime();
-            deltaTime = currentFrame - lastFrame;
-            lastFrame = currentFrame;
 
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear the framebuffer
+        while(!glfwWindowShouldClose(clientWindow.getWindow())) {
+            long tickLength = 50;
+            long endOfTick = System.currentTimeMillis() + tickLength;
+            long currentTime = System.currentTimeMillis();
+            ticks++;
 
-            // Blending
-            glEnable(GL_BLEND);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            while (endOfTick >= currentTime) {
+                currentFrame = glfwGetTime();
+                deltaTime = currentFrame - lastFrame;
+                lastFrame = currentFrame;
 
-            // 3D Depth
-            glEnable(GL_DEPTH_TEST);
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear the framebuffer
 
-            // Disable back faces
-            glEnable(GL_CULL_FACE); // Enable face culling
+                // Blending
+                glEnable(GL_BLEND);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-            // Inputs etc
-            clientWindow.poll();
+                // 3D Depth
+                glEnable(GL_DEPTH_TEST);
 
-            // Render all pending objects
-            RenderManager.render();
+                // Disable back faces
+                glEnable(GL_CULL_FACE); // Enable face culling
 
-            //TODO Temp I think
-            if(this.localPlayer != null) {
-                this.localPlayer.render();
-            }
+                // Inputs etc
+                clientWindow.poll();
 
-            if(!BlockGame.getInstance().getConfig().isPaused()) {
-                this.world.update();
-                this.localPlayer.update(deltaTime);
-            }
+                // Render all pending objects
+                RenderManager.render();
 
-            //Run a single main thread queue
-            ThreadUtil.runMainQueue();
+                //TODO Temp I think
+                if(this.localPlayer != null) {
+                    this.localPlayer.render();
+                }
 
-            // Render UI
-            ScreenManager.render();
+                if(!BlockGame.getInstance().getConfig().isPaused()) {
+                    this.world.update();
+                    this.localPlayer.update(deltaTime);
+                }
 
-            // Swap the buffers
-            glfwSwapBuffers(clientWindow.getWindow());
+                //Run a single main thread queue
+                ThreadUtil.runMainQueue();
 
-            // FPS Calculator
-            long now = System.currentTimeMillis();
-            if (now - start >= 1000) {
-                BlockGame.getInstance().getConfig().setFPS(fps);
-                start = now;
-                fps = 0;
-            } else {
-                fps++;
+                // Render UI
+                ScreenManager.render();
+
+                // Swap the buffers
+                glfwSwapBuffers(clientWindow.getWindow());
+
+                // FPS Calculator
+                currentTime = System.currentTimeMillis();
+                if (currentTime - start >= 1000) {
+                    BlockGame.getInstance().getConfig().setFPS(fps);
+                    BlockGame.getInstance().getConfig().setTicks(ticks);
+                    start = currentTime;
+                    fps = 0;
+                    ticks = 0;
+                } else {
+                    fps++;
+                }
             }
         }
     }

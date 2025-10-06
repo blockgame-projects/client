@@ -27,27 +27,28 @@ public class DebugScreen extends Screen {
         String playerPos = String.format("Position: %.2f, %.2f, %.2f", position.x, position.y, position.z);
 
         FontManager.create().text("FPS: " + BlockGame.getInstance().getConfig().getFPS(), 20f, 10f, 50f);
-        FontManager.create().text(playerPos, 20f, 10f, 70f);
-        FontManager.create().text("Direction: " + getDirection(), 20f, 10f, 90f);
-        FontManager.create().text("Active Chunks: " + BlockGame.getInstance().getWorld().getChunkCount(), 20f, 10f, 110f);
-        FontManager.create().text("Seed: " + BlockGame.getInstance().getWorld().getWorldSeed(), 20f, 10f, 130f);
+        FontManager.create().text("Ticks: " + BlockGame.getInstance().getConfig().getTicks(), 20f, 10f, 70f);
+        FontManager.create().text(playerPos, 20f, 10f, 90f);
+        FontManager.create().text("Direction: " + getDirection(), 20f, 10f, 110f);
+        FontManager.create().text("Active Chunks: " + BlockGame.getInstance().getWorld().getChunkCount(), 20f, 10f, 130f);
+        FontManager.create().text("Seed: " + BlockGame.getInstance().getWorld().getWorldSeed(), 20f, 10f, 150f);
 
         int playerPosX = (int) Math.floor(position.x / 16);
         int playerPosZ = (int) Math.floor(position.z / 16);
         Chunk chunk = BlockGame.getInstance().getWorld().getChunk(playerPosX, playerPosZ);
 
         if(chunk != null) {
-            FontManager.create().text("Current Chunk Info", 20f, 10f, 170f);
-            FontManager.create().text("Chunk Coords: " + playerPosX + ", " + playerPosZ, 20f, 10f, 190f);
-            FontManager.create().text("Chunk Status: " + chunk.chunkStatus.toString(), 20f, 10f, 210f);
-            FontManager.create().text("Chunk Biome: " + BiomeGenerator.getBiome((int) position.x, (int) position.z), 20f, 10f, 230f);
-            FontManager.create().text("Chunk Needs Meshing: " + chunk.needsMeshing, 20f, 10f, 250f);
-            FontManager.create().text("Chunk Needs Saving: " + chunk.needsSaving, 20f, 10f, 270f);
-            FontManager.create().text("Chunk Solid Vertices: " + chunk.getChunkRenderer().solidVertexCount, 20f, 10f, 290f);
-            FontManager.create().text("Chunk Trans Vertices: " + chunk.getChunkRenderer().transVertexCount, 20f, 10f, 310f);
+            FontManager.create().text("Current Chunk Info", 20f, 10f, 1900f);
+            FontManager.create().text("Chunk Coords: " + playerPosX + ", " + playerPosZ, 20f, 10f, 210f);
+            FontManager.create().text("Chunk Status: " + chunk.chunkStatus.toString(), 20f, 10f, 230f);
+            FontManager.create().text("Chunk Biome: " + BiomeGenerator.getBiome((int) position.x, (int) position.z), 20f, 10f, 250f);
+            FontManager.create().text("Chunk Needs Meshing: " + chunk.needsMeshing, 20f, 10f, 270f);
+            FontManager.create().text("Chunk Needs Saving: " + chunk.needsSaving, 20f, 10f, 280f);
+            FontManager.create().text("Chunk Solid Vertices: " + chunk.getChunkRenderer().solidVertexCount, 20f, 10f, 310f);
+            FontManager.create().text("Chunk Trans Vertices: " + chunk.getChunkRenderer().transVertexCount, 20f, 10f, 330f);
 
-            FontManager.create().text("Player Info", 20f, 10f, 340f);
-            FontManager.create().text("Player Hand: " + Blocks.get(BlockGame.getInstance().getLocalPlayer().getCurrentBlock()).getName(), 20f, 10f, 360f);
+            FontManager.create().text("Player Info", 20f, 10f, 360f);
+            FontManager.create().text("Player Hand: " + Blocks.get(BlockGame.getInstance().getLocalPlayer().getCurrentBlock()).getName(), 20f, 10f, 380f);
         }
 
         super.render();

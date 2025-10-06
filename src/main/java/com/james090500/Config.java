@@ -18,6 +18,7 @@ public class Config {
 
     private boolean paused = true;
     private long FPS;
+    private int ticks;
 
     @Getter @Setter
     public static class UserOptions {
