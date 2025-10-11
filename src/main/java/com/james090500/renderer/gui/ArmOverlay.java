@@ -5,14 +5,14 @@ import com.james090500.blocks.Block;
 import com.james090500.blocks.Blocks;
 import com.james090500.renderer.Renderer;
 import com.james090500.renderer.ShaderManager;
+import com.james090500.textures.TextureLocation;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.glEnableVertexAttribArray;
 import static org.lwjgl.opengl.GL20.glVertexAttribPointer;
-import static org.lwjgl.opengl.GL30.glBindVertexArray;
-import static org.lwjgl.opengl.GL30.glGenVertexArrays;
+import static org.lwjgl.opengl.GL30.*;
 
 public class ArmOverlay implements Renderer {
     private int vao;
@@ -40,9 +40,11 @@ public class ArmOverlay implements Renderer {
 
     public void create() {
         this.currentBlock = Blocks.get(BlockGame.getInstance().getLocalPlayer().getCurrentBlock());
-        float[] texCoords = new float[16];
-        System.arraycopy(currentBlock.getUv(), 0, texCoords, 0, 8);
-        System.arraycopy(currentBlock.getUv(), 0, texCoords, 8, 8);
+        float[] uv = this.setUV(currentBlock.getUv());
+        int[] textures = this.setTexture(new TextureLocation[] {
+                currentBlock.getTexture("side"),
+                currentBlock.getTexture("top")
+        });
 
         vao = glGenVertexArrays();
         glBindVertexArray(vao);
@@ -57,14 +59,33 @@ public class ArmOverlay implements Renderer {
         // UV VBO
         int tbo = glGenBuffers();
         glBindBuffer(GL_ARRAY_BUFFER, tbo);
-        glBufferData(GL_ARRAY_BUFFER, texCoords, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, uv, GL_STATIC_DRAW);
         glVertexAttribPointer(1, 2, GL_FLOAT, false, 2 * Float.BYTES, 0);
         glEnableVertexAttribArray(1);
+
+        // Texture
+        int texOffsetVBO = glGenBuffers();
+        glBindBuffer(GL_ARRAY_BUFFER, texOffsetVBO);
+        glBufferData(GL_ARRAY_BUFFER, textures, GL_STATIC_DRAW);
+
+        glVertexAttribIPointer(2, 1, GL_UNSIGNED_INT, 0, 0);
+        glEnableVertexAttribArray(2);
 
         // Index Buffer (EBO)
         int ebo = glGenBuffers();
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices, GL_STATIC_DRAW);
+    }
+
+    private float[] setUV(float[] uvBases) {
+        if (uvBases == null || uvBases.length != 8) {
+            throw new IllegalArgumentException("UV must have 8 floats (4 verts × 2 coords).");
+        }
+        float[] uv = new float[8 * 2];
+        for (int face = 0; face < 2; face++) {
+            System.arraycopy(uvBases, 0, uv, face * 8, 8);
+        }
+        return uv;
     }
 
     @Override
@@ -83,6 +104,26 @@ public class ArmOverlay implements Renderer {
                 .rotateX((float) Math.toRadians(10)) // Optional tilt
                 .rotateY((float) Math.toRadians(-35))
                 .scale(0.5f); // Scale down to fit in view
+    }
+
+    /**
+     * Convert texture array into an int of IDs
+     * @param faceLayers The texture to use
+     * @return
+     */
+    public int[] setTexture(TextureLocation[] faceLayers) {
+        int numVerts = 4 * 2;
+        int[] texture = new int[numVerts];
+        for (int face = 0; face < 2; face++) {
+            int id = faceLayers[face].getId();
+            int base = face * 4;
+            texture[base] = id;
+            texture[base + 1] = id;
+            texture[base + 2] = id;
+            texture[base + 3] = id;
+        }
+
+        return texture;
     }
 
     @Override
@@ -107,7 +148,8 @@ public class ArmOverlay implements Renderer {
         ShaderManager.basicBlockShader.setMat4("view", view);
         ShaderManager.basicBlockShader.setMat4("projection", projection);
 
-        glBindTexture(GL_TEXTURE_2D, currentBlock.texture.getTexture());
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D_ARRAY, BlockGame.getInstance().getTextureManager().getChunkTexture());
 
         glBindVertexArray(vao);
         glDrawElements(GL_TRIANGLES, indices.length, GL_UNSIGNED_INT, 0);

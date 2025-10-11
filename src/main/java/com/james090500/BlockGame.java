@@ -196,7 +196,6 @@ public class BlockGame {
             glfwPollEvents();          // make sure to poll events each loop
 
             // Run fixed ticks while we've accumulated one-or-more tick durations
-            boolean didTick = false;
             while (accumulator >= NS_PER_TICK) {
                 // --- TICK: update game logic at fixed rate ---
                 if (!BlockGame.getInstance().getConfig().isPaused()) {
@@ -205,7 +204,6 @@ public class BlockGame {
 
                 accumulator -= NS_PER_TICK;
                 tps++;
-                didTick = true;
             }
 
             if(!BlockGame.getInstance().getConfig().isPaused()) {
