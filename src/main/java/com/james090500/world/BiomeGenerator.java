@@ -20,9 +20,6 @@ public class BiomeGenerator {
      * @return
      */
     public static Biomes getBiome(int x, int z) {
-        double elev = (NoiseManager.elevationNoise(x, z) + 1.0) / 2.0; // 0..1
-        if (elev < 0.5) return Biomes.OCEAN;
-
         double noise = NoiseManager.biomeNoise(x, z); // [-1, 1]
         double n = (noise + 1.0) / 2.0;
 

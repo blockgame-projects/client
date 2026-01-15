@@ -146,7 +146,7 @@ public class Chunk {
      * Generates the actual terrain
      */
     private void generateTerrain() {
-        int landLevel = 70;
+        int lowestLevel = 45;
         int waterLevel = 64;
 
         for (int x = 0; x < chunkSize; x++) {
@@ -156,37 +156,26 @@ public class Chunk {
 
                 Biomes biome = BiomeGenerator.getBiome(nx, nz);
 
-                // column elevation noise is 0..1
-                double colElev = (NoiseManager.elevationNoise(nx, nz) + 1.0) / 2.0; // already 0..1 per you
-                int colTargetY = mapElevToSurfaceY(colElev, waterLevel, this.chunkHeight - 1);
-
-                boolean enforceBelowWater = (colElev < 0.5); // only force down when elevation ≤ 0.5
-
                 int topSoilDepth = -1;
 
                 for (int y = this.chunkHeight - 1; y >= 0; y--) {
-                    double density = NoiseManager.chunkNoise(biome, nx, y, nz);
+                    double density = NoiseManager.chunkNoise(nx, y, nz);
 
                     // your original heightFactor adjustments (keeps caves/overhang feel)
-                    double heightFactor = (landLevel - y) / (double) landLevel;
+                    double heightFactor = (waterLevel - y) / (double) waterLevel;
 
-                    // *** NEW: if this column must be below water, smoothly push density negative above colTargetY ***
-                    if (enforceBelowWater) {
-                        // smoothstep goes 0 at colTargetY and 1 at (colTargetY + FORCE_TRANSITION)
-                        density += heightFactor * 2.0;
-                        double t = smoothstep(colTargetY, colTargetY + 6, y);
-                        density -= t * 2.0;
-                        // result: density unaffected below target, gradually reduced above target,
-                        // strongly reduced above target + FORCE_TRANSITION.
-                    } else if (y > waterLevel) {
-                        if (density > 0.35) {
-                            density += heightFactor;
+                    if (y > lowestLevel) {
+                        if (y > waterLevel) {
+                            if (density > 0.35 && (biome.equals(Biomes.FOREST) || biome.equals(Biomes.PLAINS))) {
+                                density += heightFactor / 2;
+                            } else {
+                                density += heightFactor * 1.5;
+                            }
                         } else {
-                            density += heightFactor * 2.0;
+                            density += heightFactor;
                         }
                     } else {
                         density += heightFactor * 6.0;
-                        density += (smoothstep(colTargetY, colTargetY + 6, y) * 2.0);
                     }
 
                     byte nextBlock = 0;
@@ -285,21 +274,6 @@ public class Chunk {
                 }
             }
         }
-    }
-
-    private int mapElevToSurfaceY(double elev01, int waterLevel, int maxHeight) {
-        if (elev01 <= 0.5) {
-            return (int)Math.round((elev01 / 0.5) * waterLevel);
-        } else {
-            return waterLevel + (int)Math.round(((elev01 - 0.5) / 0.5) * (maxHeight - waterLevel));
-        }
-    }
-
-    private static double smoothstep(double edge0, double edge1, double y) {
-        if (edge0 == edge1) return y < edge0 ? 0.0 : 1.0;
-        double t = (y - edge0) / (edge1 - edge0);
-        t = Math.clamp(t, 0.0, 1.0);
-        return t * t * (3.0 - 2.0 * t);
     }
 
     public void saveChunk() {

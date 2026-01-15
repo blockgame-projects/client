@@ -1,7 +1,6 @@
 package com.james090500.utils;
 
 import com.james090500.BlockGame;
-import com.james090500.world.Biomes;
 
 public class NoiseManager {
 
@@ -12,7 +11,7 @@ public class NoiseManager {
      * @param z The Z Coordinate
      * @return The resulting noise
      */
-    public static double chunkNoise(Biomes biome, int x, int y, int z) {
+    public static double chunkNoise(int x, int y, int z) {
         int octaves = 4;
         double persistence = 0.5;
         double lacunarity = 2.0;

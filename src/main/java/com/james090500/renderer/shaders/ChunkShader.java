@@ -10,6 +10,7 @@ public class ChunkShader extends Shader {
                 layout(location = 1) in vec2 aUv;
                 layout(location = 2) in uint aLayer;
                 layout(location = 3) in float aAo;
+                layout(location = 4) in uint aLight;
 
                 uniform mat4 model;
                 uniform mat4 view;
@@ -19,11 +20,13 @@ public class ChunkShader extends Shader {
                 flat out uint vLayer;
                 out vec3 mvPos;
                 out float vAo;
+                flat out uint vLight;
         
                 void main() {
                     vUv = aUv;
                     vLayer = aLayer;
                     vAo = aAo;
+                    vLight = aLight;
         
                     vec4 modelViewMatrix = view * model * vec4(aPos, 1.0);
                     gl_Position = projection * modelViewMatrix;
@@ -39,6 +42,7 @@ public class ChunkShader extends Shader {
                 in vec2 vUv;
                 flat in uint vLayer;
                 in float vAo;
+                flat in uint vLight;
                 
                 uniform sampler2DArray texArray;
                 
@@ -47,7 +51,7 @@ public class ChunkShader extends Shader {
                 """ + GlobalShader.FOG_METHOD + """
 
                 void main() {
-                    float faceLight = 1.0;
+                    float faceLight = (1.0 / 16) * vLight;
 
                     vec4 texel = texture(texArray, vec3(vUv, float(vLayer)));
                 

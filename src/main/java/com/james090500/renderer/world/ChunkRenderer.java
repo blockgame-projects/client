@@ -22,7 +22,7 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
-import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL30.*;
@@ -117,6 +117,7 @@ public class ChunkRenderer implements LayeredRenderer {
         FloatBuffer uvBuffer = ByteBuffer.allocateDirect(numQuads * 8 * Float.BYTES).order(ByteOrder.nativeOrder()).asFloatBuffer();
         IntBuffer texLayerBuffer = ByteBuffer.allocateDirect(numQuads * 4 * Integer.BYTES).order(ByteOrder.nativeOrder()).asIntBuffer();
         FloatBuffer aoBuffer = ByteBuffer.allocateDirect(numQuads * 4 * Float.BYTES).order(ByteOrder.nativeOrder()).asFloatBuffer();
+        IntBuffer lightBuffer = ByteBuffer.allocateDirect(numQuads * 4 * Integer.BYTES).order(ByteOrder.nativeOrder()).asIntBuffer();
 
         // Positions (vec3 per vertex)
         for (float[] v : chunkMesh.vertices) {
@@ -135,7 +136,7 @@ public class ChunkRenderer implements LayeredRenderer {
             uvBuffer.put(uv, 0, 8);
         }
 
-        // Texture layer (same layer repeated for the quad’s 4 vertices)
+        // Texture layer (same layer repeated for the quad's 4 vertices)
         for (int layer : chunkMesh.texOffset) {
             texLayerBuffer.put(layer).put(layer).put(layer).put(layer);
         }
@@ -145,12 +146,18 @@ public class ChunkRenderer implements LayeredRenderer {
             aoBuffer.put(a, 0, 4);
         }
 
+        // Light Buffer  (same layer repeated for the quad's 4 vertices)
+        for (int light : chunkMesh.light) {
+            lightBuffer.put(light).put(light).put(light).put(light);
+        }
+
         // Flip for OpenGL
         vertexBuffer.flip();
         indexBuffer.flip();
         uvBuffer.flip();
         texLayerBuffer.flip();
         aoBuffer.flip();
+        lightBuffer.flip();
 
         if(transparent) {
             transVertexCount = indexBuffer.limit();
@@ -197,6 +204,14 @@ public class ChunkRenderer implements LayeredRenderer {
 
         glEnableVertexAttribArray(3);
         glVertexAttribPointer(3, 1, GL_FLOAT, false, 0, 0);
+
+        // --- Ambient Occlusion (Attribute 4) ---
+        int lightVBO = glGenBuffers();
+        glBindBuffer(GL_ARRAY_BUFFER, lightVBO);
+        glBufferData(GL_ARRAY_BUFFER, lightBuffer, GL_STATIC_DRAW);
+
+        glEnableVertexAttribArray(4);
+        glVertexAttribPointer(4, 1, GL_FLOAT, false, 0, 0);
 
         // --- Index Buffer ---
         int ibo = glGenBuffers();
@@ -267,19 +282,22 @@ public class ChunkRenderer implements LayeredRenderer {
         ArrayList<float[]> uvs;
         ArrayList<Integer> texOffset;
         ArrayList<float[]> aos;
+        ArrayList<Integer> light;
 
         public ChunkMesh(
                 ArrayList<float[]> vertices,
                 ArrayList<int[]> indices,
                 ArrayList<float[]> uvs,
                 ArrayList<Integer> texOffset,
-                ArrayList<float[]> aos
+                ArrayList<float[]> aos,
+                ArrayList<Integer> light
         ) {
             this.vertices = vertices;
             this.indices = indices;
             this.uvs = uvs;
             this.texOffset = texOffset;
             this.aos = aos;
+            this.light = light;
         }
     }
 
@@ -385,6 +403,10 @@ public class ChunkRenderer implements LayeredRenderer {
                 ((aoLevels[3] & 0b11) << 6);   // BR
     }
 
+    private int getLightLevel(int currID, int[] pos, int[] step) {
+        return ThreadLocalRandom.current().nextInt(0, 16 + 1);
+    }
+
     private int getMaskValue(int id, int[] pos, int[] step) {
         Block block = Blocks.get(id);
         Block neighbor = BlockGame.getInstance().getWorld().getChunkBlock(
@@ -433,12 +455,14 @@ public class ChunkRenderer implements LayeredRenderer {
     private ChunkMesh generateMesh(int[] dims, int[] voxels) {
         int[] mask = new int[0];
         int[] aoMask = new int[0];
+        int[] lightMask = new int[0];
         int[] texMask = new int[0];
 
         ArrayList<float[]> vertices = new ArrayList<>();
         ArrayList<int[]> indices = new ArrayList<>();
         ArrayList<float[]> uvs = new ArrayList<>();
         ArrayList<Integer> textures = new ArrayList<>();
+        ArrayList<Integer> light = new ArrayList<>();
         ArrayList<float[]> aos = new ArrayList<>();
 
         // Sweep across 3 dimensions: X, Y, Z (0, 1, 2)
@@ -453,6 +477,7 @@ public class ChunkRenderer implements LayeredRenderer {
             if (mask.length < dims[u] * dims[v]) {
                 mask = new int[dims[u] * dims[v]];
                 aoMask = new int[dims[u] * dims[v]];
+                lightMask = new int[dims[u] * dims[v]];
                 texMask = new int[dims[u] * dims[v]];
             }
 
@@ -473,11 +498,13 @@ public class ChunkRenderer implements LayeredRenderer {
                         if ((currID != 0) == (nextID != 0)) {
                             mask[n] = 0;
                             aoMask[n] = 3;
+                            lightMask[n] = 0;
                             texMask[n] = 0;
                         } else {
                             // Generate an AO for the block, the value will be a bitwise total unique to the AO pattern
                             if (currID != 0) {
                                 mask[n] = getMaskValue(currID, pos, step);
+                                lightMask[n] = getLightLevel(currID, pos, step);
                                 aoMask[n] = this.getAo(
                                         nextPos,
                                         step,
@@ -487,6 +514,7 @@ public class ChunkRenderer implements LayeredRenderer {
                                 texMask[n] = getTextureValue(currID, axis, true);
                             } else {
                                 mask[n] = -getMaskValue(nextID, pos, new int[] { 0, 0, 0 });
+                                lightMask[n] = -getLightLevel(currID, pos, step);
                                 aoMask[n] = -this.getAo(
                                         nextPos,
                                         step,
@@ -507,11 +535,18 @@ public class ChunkRenderer implements LayeredRenderer {
                     for (int i = 0; i < dims[u]; ) {
                         int blockId = mask[n];
                         int aoVal = aoMask[n];
+                        int lightLevel = lightMask[n];
                         int texVal = texMask[n];
                         if (blockId != 0) {
                             // Calculate quad width
                             int width = 1;
-                            while (i + width < dims[u] && blockId == mask[n + width] && aoVal == aoMask[n + width] && texVal == texMask[n + width]) {
+                            while (
+                                    i + width < dims[u] &&
+                                    blockId == mask[n + width] &&
+                                    lightLevel == lightMask[n + width] &&
+                                    aoVal == aoMask[n + width] &&
+                                    texVal == texMask[n + width]
+                            ) {
                                 ++width;
                             }
 
@@ -520,7 +555,12 @@ public class ChunkRenderer implements LayeredRenderer {
                             boolean stop = false;
                             while (j + height < dims[v]) {
                                 for (int k = 0; k < width; ++k) {
-                                    if (blockId != mask[n + k + height * dims[u]] || aoVal != aoMask[n + k + height * dims[u]] || texVal != texMask[n + k + height * dims[u]]) {
+                                    if (
+                                            blockId != mask[n + k + height * dims[u]] ||
+                                            lightLevel == lightMask[n + k + height * dims[u]] ||
+                                            aoVal != aoMask[n + k + height * dims[u]] ||
+                                            texVal != texMask[n + k + height * dims[u]]
+                                    ) {
                                         stop = true;
                                         break;
                                     }
@@ -543,6 +583,7 @@ public class ChunkRenderer implements LayeredRenderer {
                                 du[u] = width;
                                 dv[v] = height;
                             } else {
+                                lightLevel = -lightLevel;
                                 aoVal = -aoVal;
                                 dv[u] = width;
                                 du[v] = height;
@@ -620,6 +661,9 @@ public class ChunkRenderer implements LayeredRenderer {
                             // UV
                             uvs.add(uv);
 
+                            // LightVal
+                            light.add(lightLevel);
+
                             // Tex Offset
                             textures.add(texVal);
 
@@ -644,6 +688,6 @@ public class ChunkRenderer implements LayeredRenderer {
                 }
             }
         }
-        return new ChunkMesh(vertices, indices, uvs, textures, aos);
+        return new ChunkMesh(vertices, indices, uvs, textures, aos, light);
     }
 }
