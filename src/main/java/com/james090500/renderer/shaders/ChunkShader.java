@@ -51,7 +51,7 @@ public class ChunkShader extends Shader {
                 """ + GlobalShader.FOG_METHOD + """
 
                 void main() {
-                    float faceLight = (1.0 / 16) * vLight;
+                    float faceLight = (1.0 / 15) * vLight;
 
                     vec4 texel = texture(texArray, vec3(vUv, float(vLayer)));
                 

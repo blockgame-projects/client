@@ -54,7 +54,7 @@ public class Chunk {
      * @param z The z in the chunk
      * @return The index returned (null/-1 if invalid)
      */
-    private int getIndex(int x, int y, int z) {
+    public int getIndex(int x, int y, int z) {
         if (
                 x >= this.chunkSize || x < 0 ||
                         y >= this.chunkHeight || y < 0 ||

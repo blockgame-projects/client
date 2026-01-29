@@ -9,9 +9,7 @@ import com.james090500.renderer.LayeredRenderer;
 import com.james090500.renderer.RenderManager;
 import com.james090500.renderer.ShaderManager;
 import com.james090500.utils.ThreadUtil;
-import com.james090500.world.Chunk;
-import com.james090500.world.ChunkStatus;
-import com.james090500.world.World;
+import com.james090500.world.*;
 import it.unimi.dsi.fastutil.objects.*;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -30,6 +28,7 @@ import static org.lwjgl.opengl.GL30.*;
 public class ChunkRenderer implements LayeredRenderer {
 
     private final Chunk chunk;
+    private int[] chunkLight;
 
     private int solidVAO;
     public int solidVertexCount;
@@ -44,13 +43,35 @@ public class ChunkRenderer implements LayeredRenderer {
     }
 
     public void mesh() {
-        //Really we shouldn't mesh until we know the neighbours are generated (not meshed)
+        //Really we shouldn't mesh until we know the neighbors are generated (not meshed)
         if(!chunk.isNeighbors(ChunkStatus.FINISHED)) {
             this.chunk.needsMeshing = true;
             return;
         }
 
         this.chunk.needsMeshing = false;
+
+        // Calculate Lighting
+        this.chunkLight = new int[chunk.chunkSize * chunk.chunkSize * chunk.chunkHeight];
+        for (int x = 0; x < chunk.chunkSize; x++) {
+            for (int z = 0; z < chunk.chunkSize; z++) {
+                for (int y = chunk.chunkHeight - 1; y >= 0; y--) {
+                    //Top of world
+                    if(y == chunk.chunkHeight - 1) {
+                        this.chunkLight[chunk.getIndex(x, y, z)] = 15;
+                        continue;
+                    }
+
+                    if (chunk.getBlock(x, y + 1, z) == null) {
+                        this.chunkLight[chunk.getIndex(x, y, z)] = 15;
+                    } else {
+                        //int newLight = this.chunkLight[chunk.getIndex(x, y + 1, z)] - 1;
+                        //this.chunkLight[chunk.getIndex(x, y + 1, z)] = (byte) Math.max(0, newLight);
+                        this.chunkLight[chunk.getIndex(x, y, z)] = 5;
+                    }
+                }
+            }
+        }
 
         // Temp list
         Object2ObjectArrayMap<IBlockModel, ObjectList<Vector3i>> blockModelPos = new Object2ObjectArrayMap<>();
@@ -211,7 +232,7 @@ public class ChunkRenderer implements LayeredRenderer {
         glBufferData(GL_ARRAY_BUFFER, lightBuffer, GL_STATIC_DRAW);
 
         glEnableVertexAttribArray(4);
-        glVertexAttribPointer(4, 1, GL_FLOAT, false, 0, 0);
+        glVertexAttribIPointer(4, 1, GL_UNSIGNED_INT, 0, 0);
 
         // --- Index Buffer ---
         int ibo = glGenBuffers();
@@ -403,8 +424,17 @@ public class ChunkRenderer implements LayeredRenderer {
                 ((aoLevels[3] & 0b11) << 6);   // BR
     }
 
-    private int getLightLevel(int currID, int[] pos, int[] step) {
-        return ThreadLocalRandom.current().nextInt(0, 16 + 1);
+    private int getLightLevel(int[] pos) {
+        int index = chunk.getIndex(pos[0], pos[1], pos[2]);
+        int light;
+        if(index == -1) {
+            // Index is -1 if pos contains 16 trying to get neighbour :(
+            //System.out.println(pos[0] + ", " + pos[1] + ", " + pos[2]);
+            light = 0;
+        } else {
+            light = this.chunkLight[index];
+        }
+        return light;
     }
 
     private int getMaskValue(int id, int[] pos, int[] step) {
@@ -504,7 +534,7 @@ public class ChunkRenderer implements LayeredRenderer {
                             // Generate an AO for the block, the value will be a bitwise total unique to the AO pattern
                             if (currID != 0) {
                                 mask[n] = getMaskValue(currID, pos, step);
-                                lightMask[n] = getLightLevel(currID, pos, step);
+                                lightMask[n] = getLightLevel(nextPos);
                                 aoMask[n] = this.getAo(
                                         nextPos,
                                         step,
@@ -514,7 +544,7 @@ public class ChunkRenderer implements LayeredRenderer {
                                 texMask[n] = getTextureValue(currID, axis, true);
                             } else {
                                 mask[n] = -getMaskValue(nextID, pos, new int[] { 0, 0, 0 });
-                                lightMask[n] = -getLightLevel(currID, pos, step);
+                                lightMask[n] = -getLightLevel(nextPos);
                                 aoMask[n] = -this.getAo(
                                         nextPos,
                                         step,
@@ -557,7 +587,7 @@ public class ChunkRenderer implements LayeredRenderer {
                                 for (int k = 0; k < width; ++k) {
                                     if (
                                             blockId != mask[n + k + height * dims[u]] ||
-                                            lightLevel == lightMask[n + k + height * dims[u]] ||
+                                            lightLevel != lightMask[n + k + height * dims[u]] ||
                                             aoVal != aoMask[n + k + height * dims[u]] ||
                                             texVal != texMask[n + k + height * dims[u]]
                                     ) {
