@@ -1,7 +1,7 @@
 plugins {
     id 'java'
-    id("io.freefair.lombok") version "8.13.1"
-    id("com.osmerion.lwjgl3") version "0.5.0"
+    id("io.freefair.lombok") version "9.2.0"
+    id("com.osmerion.lwjgl3") version "0.6.0"
 }
 
 group = 'com.james090500.client'
@@ -25,8 +25,8 @@ dependencies {
     implementation 'org.cloudburstmc.fastutil.maps:int-object-maps:8.5.15'
     implementation 'org.cloudburstmc.fastutil.maps:int-int-maps:8.5.15'
     implementation "org.joml:joml:1.10.8"
-    implementation 'org.lz4:lz4-java:1.8.0'
-    implementation 'io.netty:netty-all:4.2.6.Final'
+    implementation 'at.yawk.lz4:lz4-java:1.10.4'
+    implementation 'io.netty:netty-all:4.2.10.Final'
 }
 
 lwjgl3 {
